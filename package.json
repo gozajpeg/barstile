@@ -1,0 +1,51 @@
+{
+  "name": "barstile",
+  "version": "1.0.0",
+  "description": "Zero-dependency invisible Proof-of-Work anti-bot turnstile for Node.js, browsers, and APIs",
+  "main": "./src/index.js",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.js",
+    "./server": "./src/server/index.js",
+    "./client": "./src/client/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gozajpeg/barstile.git"
+  },
+  "homepage": "https://github.com/gozajpeg/barstile#readme",
+  "bugs": {
+    "url": "https://github.com/gozajpeg/barstile/issues"
+  },
+  "files": [
+    "src",
+    "assets",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node --test test/**/*.test.js",
+    "test:watch": "node --test --watch test/**/*.test.js"
+  },
+  "keywords": [
+    "anti-bot",
+    "bot-protection",
+    "captcha",
+    "turnstile",
+    "cloudflare-turnstile",
+    "proof-of-work",
+    "pow",
+    "ddos-protection",
+    "rate-limit",
+    "web-security",
+    "zero-dependency",
+    "sha256"
+  ],
+  "author": "gozajpeg",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}
