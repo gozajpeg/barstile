@@ -1,8 +1,8 @@
 <div align="center">
   <img src="https://raw.githubusercontent.com/gozajpeg/barstile/main/assets/barstileLogo.webp" alt="barstile logo" width="340" />
   <h1>barstile</h1>
-  <p><strong>The zero-dependency, invisible Proof-of-Work turnstile for Node.js, browsers, and APIs.</strong></p>
-  <p>Real humans pass through in ~25ms without visual puzzles. Automated scrapers and bot farms get stopped by pure math.</p>
+  <p><strong>Zero-dependency Proof-of-Work anti-bot turnstile for Node.js, browsers, and APIs.</strong></p>
+  <p>Applies asymmetric computational cost to automated scrapers without visual puzzles or third-party tracking cookies.</p>
 
   <p>
     <a href="https://nodejs.org"><img src="https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg?style=flat-square" alt="node version" /></a>
@@ -14,15 +14,15 @@
 
 ---
 
-Traditional CAPTCHAs force real users to click crosswalks and bicycles. Third-party cloud widgets track user IPs and charge monthly enterprise fees.
+Traditional CAPTCHAs interrupt users with visual image puzzles, while commercial cloud widgets often track client telemetry and require external infrastructure.
 
-**Barstile** takes a different approach: it puts a cryptographic turnstile in front of your endpoints. Real human visitors solve a tiny 25ms SHA-256 puzzle in the background without noticing. Automated scrapers and bot farms attempting 1,000 requests per second pin their CPUs to 100% and get stopped by pure physics.
+**Barstile** provides a self-hosted, headless alternative: your server issues an HMAC-signed cryptographic challenge when protection is needed. Legitimate clients solve the challenge in the background using native SHA-256, while automated scripts attempting high-frequency requests face significant computational overhead.
 
-- **Zero dependencies:** Pure Node.js `node:crypto` on the server, pure typed-array SHA-256 on the client.
-- **Invisible:** No checkboxes, no visual puzzles, and no tracking cookies.
-- **Zero-config:** Auto-generates a secure in-memory HMAC secret on boot.
-- **Stateless verification:** The server validates challenges in ~0.02ms with zero database lookups.
-- **Replay-proof:** Automatic bounded in-memory cache rejects reused nonces.
+- **Zero dependencies:** Standard `node:crypto` on the server; pure typed-array SHA-256 in the browser.
+- **Headless:** Operates via HTTP headers (`449 Retry With`) without DOM widgets or checkboxes.
+- **Zero-config:** Generates an in-memory 256-bit HMAC secret on startup if none is specified.
+- **Stateless verification:** The server validates solutions with a single SHA-256 hash check and zero database queries.
+- **Replay mitigation:** Bounded in-memory cache rejects nonces reused within their challenge validity window.
 
 ---
 
@@ -40,12 +40,11 @@ Traditional CAPTCHAs force real users to click crosswalks and bicycles. Third-pa
         |                                                        |
         |  [BACKGROUND SOLVER]                                   |
         |  Calculates SHA-256 nonces until target matches.       |
-        |  Takes ~25ms on human hardware (invisible).            |
         |                                                        |
         |  3. Retries original request with solution             |
         |     Header: X-Barstile-Solution: challenge:nonce       |
         |------------------------------------------------------->|
-        |                                                        | (Single hash check, ~0.02ms)
+        |                                                        | (Single hash check, no DB reads)
         |  4. 200 OK (Turnstile turns, request proceeds)         |
         |<-------------------------------------------------------|
 ```
@@ -141,24 +140,26 @@ const result = solveSync(challengeToken);
 
 ## Difficulty Scaling
 
-| Difficulty | Leading Hex Zeros | Average Hashes | Human Time (JS) | Bot at 1,000 req/s |
+| Difficulty | Required Hex Zeros | Expected Hashes ($16^D$) | Est. Client Time (JS)* | Expected Hashes at 1,000 req/s |
 | :---: | :---: | :---: | :---: | :---: |
 | **1** | `0...` | ~16 | < 1 ms | 16,000 hashes/s |
 | **2** | `00...` | ~256 | ~1 ms | 256,000 hashes/s |
-| **3** | `000...` | ~4,096 | ~3 ms | 4,096,000 hashes/s |
-| **4 (Default)** | `0000...` | ~65,536 | ~25–40 ms | 65,536,000 hashes/s |
-| **5** | `00000...` | ~1,048,576 | ~400 ms | 1.04 Billion hashes/s |
+| **3** | `000...` | ~4,096 | ~3–10 ms | 4,096,000 hashes/s |
+| **4 (Default)** | `0000...` | ~65,536 | ~20–50 ms | 65,536,000 hashes/s |
+| **5** | `00000...` | ~1,048,576 | ~300–800 ms | 1.04 Billion hashes/s |
 
-A human submitting a form once every few minutes will never notice a 25ms calculation. An automated scraping script trying to crawl 500 pages per second will see its concurrency collapse as CPU consumption surges by millions of operations.
+*\*Estimated on modern desktop hardware running single-threaded JavaScript. Actual client duration varies based on device hardware, browser engine, and thermal state.*
+
+For occasional human requests (e.g. login, comment submission), the background computation is typically brief. For automated scrapers sending thousands of requests concurrently, the cumulative CPU work scales exponentially with difficulty.
 
 ---
 
 ## Security Model
 
-1. **Tamper-Proof Challenges:** Challenges are signed with HMAC-SHA256 (`salt:difficulty:expiresAt`). If an attacker alters the difficulty from `4` to `1`, the server rejects it before doing any hashing.
-2. **Replay Protection:** Solved nonces are cached in an in-memory ring buffer until their challenge expiration timestamp. Re-submitting the exact same solution returns `403 Forbidden`.
-3. **No Timing Attacks:** Signature verification uses constant-time comparison (`crypto.timingSafeEqual`) to prevent side-channel timing leaks.
-4. **Bounded Memory:** The anti-replay cache automatically evicts expired entries on a sliding window, keeping server memory footprint small and predictable.
+1. **HMAC Challenge Integrity:** Challenges are signed with HMAC-SHA256 (`salt:difficulty:expiresAt`). If a client alters the difficulty or expiry parameter, the signature check fails immediately before any hashing occurs.
+2. **Replay Mitigation:** Solved nonces are recorded in an in-memory cache until the challenge expires. Re-submitting an identical `{challenge, nonce}` pair within that window returns `403 Forbidden`. Note: Under extreme request volumes exceeding `maxSize` (default 50,000), older entries are evicted to preserve server memory.
+3. **Constant-Time Verification:** Signature validation uses `crypto.timingSafeEqual` to avoid timing side-channel leaks.
+4. **Stateless Operations:** The server does not store active challenges in memory or databases; state is only kept for spent nonces until expiration.
 
 ---
 
