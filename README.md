@@ -1,7 +1,7 @@
 <div align="center">
   <img src="https://raw.githubusercontent.com/gozajpeg/barstile/main/assets/barstileLogo.webp" alt="barstile logo" width="340" />
   <h1>barstile</h1>
-  <p><strong>Zero-dependency Proof-of-Work anti-bot turnstile for Node.js, browsers, and APIs.</strong></p>
+  <p><strong>Zero-dependency Proof-of-Work anti-bot shield for Node.js, browsers, and APIs.</strong></p>
   <p>Applies asymmetric computational cost to automated scrapers without visual puzzles or third-party tracking cookies.</p>
 
   <p>
@@ -20,7 +20,7 @@ Barstile has **zero external dependencies** and provides two clean entry points:
 
 ### 1. Server (`barstile/server`)
 - `barstileMiddleware()`: Plug-and-play HTTP guard for native Node.js `http`, Express, Connect, or Fastify.
-- `createTurnstile()`: Standalone engine to generate challenges and verify solutions manually.
+- `createBarstile()`: Standalone engine to generate challenges and verify solutions manually.
 
 ### 2. Client (`barstile/client`)
 - `barstileFetch()`: Drop-in replacement for standard `fetch()` that detects challenges, solves them in the background, and retries automatically.
@@ -52,7 +52,7 @@ import { barstileMiddleware } from 'barstile/server';
 const guard = barstileMiddleware();
 
 const server = http.createServer((req, res) => {
-  // Pass request through the turnstile guard
+  // Pass request through the barstile guard
   guard(req, res, () => {
     // If request reached here, the client solved the challenge
     res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -97,7 +97,7 @@ That's it. Real humans experience a brief background calculation (~20–50ms). A
         |  1. POST /api/data                                     |
         |------------------------------------------------------->|
         |                                                        | (No solution attached)
-        |  2. 449 Retry With Turnstile                           |
+        |  2. 449 Retry With Barstile                            |
         |     Header: X-Barstile-Challenge: salt.diff.exp.sig    |
         |<-------------------------------------------------------| (Stateless HMAC)
         |                                                        |
@@ -108,7 +108,7 @@ That's it. Real humans experience a brief background calculation (~20–50ms). A
         |     Header: X-Barstile-Solution: challenge:nonce       |
         |------------------------------------------------------->|
         |                                                        | (Single hash verification)
-        |  4. 200 OK (Turnstile turns, request proceeds)         |
+        |  4. 200 OK (Barstile unlocks, request proceeds)        |
         |<-------------------------------------------------------|
 ```
 
@@ -121,15 +121,15 @@ If you don't want to use the HTTP middleware and prefer full manual control:
 ### Server: Manual Challenge & Verification
 
 ```javascript
-import { createTurnstile } from 'barstile/server';
+import { createBarstile } from 'barstile/server';
 
-const turnstile = createTurnstile({ difficulty: 4 });
+const barstile = createBarstile({ difficulty: 4 });
 
 // 1. Issue challenge token string
-const challenge = turnstile.issueChallenge();
+const challenge = barstile.issueChallenge();
 
 // 2. Later, verify the solution submitted by client:
-const result = turnstile.verify(submittedSolution);
+const result = barstile.verify(submittedSolution);
 
 if (result.valid) {
   console.log('Passed!', result.nonce, result.hash);

@@ -13,7 +13,7 @@ describe('HTTP Middleware Integration', () => {
 
     const server = http.createServer((req, res) => {
       middleware(req, res, () => {
-        // Route handler reached if turnstile passed
+        // Route handler reached if barstile passed
         res.statusCode = 200;
         res.setHeader('Content-Type', 'application/json');
         res.end(JSON.stringify({ success: true, telemetry: req.barstile }));
@@ -97,7 +97,7 @@ describe('HTTP Middleware Integration', () => {
       });
       assert.equal(pass2.status, 403);
       const body = await pass2.json();
-      assert.equal(body.error, 'turnstile_failed');
+      assert.equal(body.error, 'barstile_failed');
       assert.equal(body.reason, 'replay_detected');
     } finally {
       await close();

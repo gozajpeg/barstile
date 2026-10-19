@@ -1,7 +1,7 @@
 // Server exports
 export {
-  Turnstile,
-  createTurnstile,
+  Barstile,
+  createBarstile,
   barstileMiddleware,
   verifySolution,
   parseSolution,

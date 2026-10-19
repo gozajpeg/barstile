@@ -1,4 +1,4 @@
-export { Turnstile, createTurnstile } from './turnstile.js';
+export { Barstile, createBarstile } from './engine.js';
 export { barstileMiddleware } from './middleware.js';
 export { verifySolution, parseSolution } from '../core/verifier.js';
 export { createChallengeToken, parseChallengeToken, verifyChallengeToken } from '../core/challenge.js';

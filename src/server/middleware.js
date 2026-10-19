@@ -1,10 +1,11 @@
-import { Turnstile } from './turnstile.js';
+import { Barstile } from './engine.js';
 
 /**
  * Creates plug-and-play middleware for Express, Connect, and native Node.js HTTP servers.
  *
  * @param {Object} [options]
- * @param {Turnstile} [options.turnstile] - Existing Turnstile engine instance
+ * @param {Barstile} [options.barstile] - Existing Barstile engine instance
+ * @param {Barstile} [options.engine] - Alias for options.barstile
  * @param {string} [options.secret] - Secret key (auto-generated if omitted)
  * @param {number} [options.difficulty=4] - Proof-of-Work difficulty (leading hex zeros)
  * @param {number} [options.ttlMs=60000] - Expiration window in milliseconds
@@ -16,9 +17,10 @@ import { Turnstile } from './turnstile.js';
  * @returns {(req: any, res: any, next: (err?: any) => void) => void}
  */
 export function barstileMiddleware(options = {}) {
-  const engine = options.turnstile instanceof Turnstile
-    ? options.turnstile
-    : new Turnstile({
+  const customEngine = options.barstile || options.engine;
+  const engine = customEngine instanceof Barstile
+    ? customEngine
+    : new Barstile({
         secret: options.secret,
         difficulty: options.difficulty,
         ttlMs: options.ttlMs
@@ -49,7 +51,7 @@ export function barstileMiddleware(options = {}) {
 
       const payload = JSON.stringify({
         error: 'pow_required',
-        message: 'Proof of work required to pass turnstile',
+        message: 'Proof of work required to pass barstile',
         challenge,
         header: challengeHeader
       });
@@ -74,7 +76,7 @@ export function barstileMiddleware(options = {}) {
       res.setHeader('Content-Type', 'application/json');
       return res.end(
         JSON.stringify({
-          error: 'turnstile_failed',
+          error: 'barstile_failed',
           reason: result.reason,
           challenge: freshChallenge
         })

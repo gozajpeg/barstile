@@ -4,9 +4,9 @@ import { ReplayCache } from '../core/replay-cache.js';
 import { verifySolution } from '../core/verifier.js';
 
 /**
- * High-performance, zero-dependency Turnstile engine for backend applications.
+ * High-performance, zero-dependency Barstile engine for backend applications.
  */
-export class Turnstile {
+export class Barstile {
   /**
    * @param {Object} [options]
    * @param {string} [options.secret] - HMAC secret key (defaults to auto-generated 256-bit key)
@@ -70,10 +70,10 @@ export class Turnstile {
 }
 
 /**
- * Factory function to instantiate a Turnstile instance.
+ * Factory function to instantiate a Barstile engine instance.
  * @param {Object} [options]
- * @returns {Turnstile}
+ * @returns {Barstile}
  */
-export function createTurnstile(options) {
-  return new Turnstile(options);
+export function createBarstile(options) {
+  return new Barstile(options);
 }

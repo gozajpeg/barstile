@@ -1,7 +1,7 @@
 {
   "name": "barstile",
   "version": "1.0.0",
-  "description": "Zero-dependency invisible Proof-of-Work anti-bot turnstile for Node.js, browsers, and APIs",
+  "description": "Zero-dependency invisible Proof-of-Work anti-bot shield for Node.js, browsers, and APIs",
   "main": "./src/index.js",
   "type": "module",
   "exports": {
