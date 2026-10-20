@@ -53,6 +53,13 @@ export async function barstileFetch(input, init = {}, options = {}) {
     return initialResponse;
   }
 
+  // Guard against unbuffered ReadableStream bodies that cannot be re-read
+  if (init?.body && typeof init.body.getReader === 'function' && init.body.locked) {
+    throw new Error(
+      'barstileFetch: request body is an unbuffered ReadableStream that has already been consumed and cannot be replayed after a challenge. Buffer the body before passing to fetch.'
+    );
+  }
+
   // 2. Solve the challenge in the background
   const solutionResult = await solve(challenge, options.solverOptions);
 

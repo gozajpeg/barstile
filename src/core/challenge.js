@@ -1,4 +1,7 @@
 import { hmacSign, hmacVerify, randomSalt } from './crypto.js';
+import { parseChallengeToken } from './token.js';
+
+export { parseChallengeToken };
 
 /**
  * Creates and signs a new challenge token.
@@ -24,37 +27,6 @@ export function createChallengeToken({ secret, difficulty = 4, ttlMs = 60000, sa
   const signature = hmacSign(payload, secret);
 
   return `${challengeSalt}.${numericDifficulty}.${expiresAt}.${signature}`;
-}
-
-/**
- * Parses and validates the structural components of a challenge token.
- *
- * @param {string} token
- * @returns {{ salt: string, difficulty: number, expiresAt: number, signature: string } | null}
- */
-export function parseChallengeToken(token) {
-  if (typeof token !== 'string') return null;
-
-  const parts = token.split('.');
-  if (parts.length !== 4) return null;
-
-  const [salt, diffStr, expStr, signature] = parts;
-  const difficulty = Number.parseInt(diffStr, 10);
-  const expiresAt = Number.parseInt(expStr, 10);
-
-  if (
-    !salt ||
-    !signature ||
-    Number.isNaN(difficulty) ||
-    difficulty < 1 ||
-    difficulty > 8 ||
-    Number.isNaN(expiresAt) ||
-    expiresAt <= 0
-  ) {
-    return null;
-  }
-
-  return { salt, difficulty, expiresAt, signature };
 }
 
 /**

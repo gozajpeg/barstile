@@ -2,6 +2,8 @@
  * Ultra-fast pure JavaScript SHA-256 implementation using 32-bit integer operations.
  * Runs synchronously without Promise overhead, making it ideal for client-side PoW solving
  * in browsers, Web Workers, Node.js, and edge runtimes.
+ *
+ * Fully supports multi-byte UTF-8 character encoding with an optimized fast-path for ASCII strings.
  */
 
 // Initial hash values (first 32 bits of fractional parts of square roots of first 8 primes 2..19)
@@ -31,6 +33,59 @@ const K = new Uint32Array([
 ]);
 
 const W = new Uint32Array(64);
+const sharedEncoder = typeof TextEncoder !== 'undefined' ? new TextEncoder() : null;
+
+/**
+ * Converts string to UTF-8 bytes with fast-path for ASCII strings.
+ * @param {string} str
+ * @returns {Uint8Array}
+ */
+function encodeUtf8(str) {
+  const len = str.length;
+  // Quick scan for non-ASCII characters
+  let isAscii = true;
+  for (let i = 0; i < len; i++) {
+    if (str.charCodeAt(i) > 127) {
+      isAscii = false;
+      break;
+    }
+  }
+
+  if (isAscii) {
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+      bytes[i] = str.charCodeAt(i);
+    }
+    return bytes;
+  }
+
+  if (sharedEncoder) {
+    return sharedEncoder.encode(str);
+  }
+
+  // Fallback UTF-8 manual encoding
+  const out = [];
+  for (let i = 0; i < len; i++) {
+    let c = str.charCodeAt(i);
+    if (c < 0x80) {
+      out.push(c);
+    } else if (c < 0x800) {
+      out.push(0xc0 | (c >> 6), 0x80 | (c & 0x3f));
+    } else if (c < 0xd800 || c >= 0xe000) {
+      out.push(0xe0 | (c >> 12), 0x80 | ((c >> 6) & 0x3f), 0x80 | (c & 0x3f));
+    } else {
+      i++;
+      c = 0x10000 + (((c & 0x3ff) << 10) | (str.charCodeAt(i) & 0x3ff));
+      out.push(
+        0xf0 | (c >> 18),
+        0x80 | ((c >> 12) & 0x3f),
+        0x80 | ((c >> 6) & 0x3f),
+        0x80 | (c & 0x3f)
+      );
+    }
+  }
+  return new Uint8Array(out);
+}
 
 /**
  * Computes SHA-256 hash of a string, returning lowercase hex string.
@@ -38,20 +93,16 @@ const W = new Uint32Array(64);
  * @returns {string}
  */
 export function sha256Sync(str) {
-  // Convert UTF-8 string to bytes
-  const strLen = str.length;
-  // Calculate padded length: message length + 1 (0x80) + padding zeros + 8 (length in bits)
+  const rawBytes = encodeUtf8(str);
+  const strLen = rawBytes.length;
   const bitLen = strLen * 8;
   const paddedLen = ((strLen + 9 + 63) >> 6) << 6;
   const bytes = new Uint8Array(paddedLen);
 
-  for (let i = 0; i < strLen; i++) {
-    bytes[i] = str.charCodeAt(i);
-  }
+  bytes.set(rawBytes);
   bytes[strLen] = 0x80;
 
   // Append length in bits as 64-bit big-endian integer
-  // High 32 bits (for strings < 500MB, high bits are 0)
   const highBits = Math.floor(bitLen / 0x100000000);
   const lowBits = bitLen >>> 0;
 

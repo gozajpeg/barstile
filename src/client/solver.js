@@ -1,4 +1,4 @@
-import { parseChallengeToken } from '../core/challenge.js';
+import { parseChallengeToken } from '../core/token.js';
 import { sha256Sync } from '../core/sha256-pure.js';
 
 /**

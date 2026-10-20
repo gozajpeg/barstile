@@ -121,4 +121,61 @@ describe('HTTP Middleware Integration', () => {
       await close();
     }
   });
+
+  test('appends to existing Access-Control-Expose-Headers without overwriting', async () => {
+    const middleware = barstileMiddleware({ difficulty: 2 });
+    const server = http.createServer((req, res) => {
+      res.setHeader('Access-Control-Expose-Headers', 'X-Custom-Token');
+      middleware(req, res, () => {
+        res.statusCode = 200;
+        res.end();
+      });
+    });
+
+    const { url, close } = await new Promise((resolve) => {
+      server.listen(0, '127.0.0.1', () => {
+        const port = server.address().port;
+        resolve({
+          url: `http://127.0.0.1:${port}`,
+          close: () => new Promise((r) => server.close(r))
+        });
+      });
+    });
+
+    try {
+      const res = await fetch(url);
+      const exposed = res.headers.get('access-control-expose-headers');
+      assert.ok(exposed.includes('X-Custom-Token'), 'Expected custom header to be preserved');
+      assert.ok(exposed.includes('x-barstile-challenge'), 'Expected barstile header to be appended');
+    } finally {
+      await close();
+    }
+  });
+
+  test('supports custom pluggable replayCache store', async () => {
+    const customStore = {
+      seen: new Set(),
+      has(k) { return this.seen.has(k); },
+      add(k) { this.seen.add(k); }
+    };
+
+    const { url, close } = await createTestServer({
+      replayCache: customStore
+    });
+
+    try {
+      const initialRes = await fetch(url);
+      const challenge = initialRes.headers.get('x-barstile-challenge');
+      const { solution } = solveSync(challenge);
+
+      const pass1 = await fetch(url, { headers: { 'x-barstile-solution': solution } });
+      assert.equal(pass1.status, 200);
+      assert.equal(customStore.seen.size, 1);
+
+      const pass2 = await fetch(url, { headers: { 'x-barstile-solution': solution } });
+      assert.equal(pass2.status, 403);
+    } finally {
+      await close();
+    }
+  });
 });

@@ -12,13 +12,14 @@ export class Barstile {
    * @param {string} [options.secret] - HMAC secret key (defaults to auto-generated 256-bit key)
    * @param {number} [options.difficulty=4] - Required leading hex zeros (1-8)
    * @param {number} [options.ttlMs=60000] - Challenge validity window in milliseconds
-   * @param {number} [options.maxCached=50000] - Maximum capacity of the anti-replay cache
+   * @param {number} [options.maxCached=50000] - Maximum capacity of the default anti-replay cache
+   * @param {{ has: (key: string) => boolean, add: (key: string, expiresAt: number) => void, destroy?: () => void, size?: number }} [options.replayCache] - Optional custom replay cache
    */
   constructor(options = {}) {
     this._secret = options.secret || generateSecret();
     this.difficulty = options.difficulty !== undefined ? Math.floor(options.difficulty) : 4;
     this.ttlMs = options.ttlMs !== undefined ? Math.floor(options.ttlMs) : 60000;
-    this.replayCache = new ReplayCache({
+    this.replayCache = options.replayCache || new ReplayCache({
       maxSize: options.maxCached || 50000
     });
   }
@@ -58,14 +59,16 @@ export class Barstile {
    * @returns {number}
    */
   get cacheSize() {
-    return this.replayCache.size;
+    return this.replayCache.size || 0;
   }
 
   /**
    * Disposes of timers and clears internal state.
    */
   destroy() {
-    this.replayCache.destroy();
+    if (typeof this.replayCache.destroy === 'function') {
+      this.replayCache.destroy();
+    }
   }
 }
 

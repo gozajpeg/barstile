@@ -7,6 +7,7 @@ import {
   randomSalt,
   generateSecret
 } from '../src/core/crypto.js';
+import { sha256Sync } from '../src/core/sha256-pure.js';
 
 describe('Crypto Primitives', () => {
   test('sha256 produces valid 64-character hex digest', () => {
@@ -15,6 +16,23 @@ describe('Crypto Primitives', () => {
     assert.equal(hash.length, 64);
     assert.match(hash, /^[0-9a-f]{64}$/);
     assert.equal(hash, sha256('barstile')); // Deterministic
+  });
+
+  test('sha256Sync accurately hashes multi-byte UTF-8, emojis, and unicode strings', () => {
+    const vectors = [
+      '',
+      'hello world',
+      'salt_abc123:49201',
+      'Barstile 🛡️ Anti-Bot Guard',
+      '⚔️🐱 Paladin Cat Nonce: 999999',
+      'Multi-byte: 中文 Español Français Русский 🚀🔥'
+    ];
+
+    for (const v of vectors) {
+      const native = sha256(v);
+      const pure = sha256Sync(v);
+      assert.equal(pure, native, `Mismatch on vector: ${v}`);
+    }
   });
 
   test('hmacSign creates repeatable signature with secret', () => {
