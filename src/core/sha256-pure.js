@@ -33,7 +33,7 @@ const K = new Uint32Array([
 ]);
 
 const W = new Uint32Array(64);
-const sharedEncoder = typeof TextEncoder !== 'undefined' ? new TextEncoder() : null;
+const textEncoder = new TextEncoder();
 
 /**
  * Converts string to UTF-8 bytes with fast-path for ASCII strings.
@@ -42,49 +42,16 @@ const sharedEncoder = typeof TextEncoder !== 'undefined' ? new TextEncoder() : n
  */
 function encodeUtf8(str) {
   const len = str.length;
-  // Quick scan for non-ASCII characters
-  let isAscii = true;
   for (let i = 0; i < len; i++) {
     if (str.charCodeAt(i) > 127) {
-      isAscii = false;
-      break;
+      return textEncoder.encode(str);
     }
   }
-
-  if (isAscii) {
-    const bytes = new Uint8Array(len);
-    for (let i = 0; i < len; i++) {
-      bytes[i] = str.charCodeAt(i);
-    }
-    return bytes;
-  }
-
-  if (sharedEncoder) {
-    return sharedEncoder.encode(str);
-  }
-
-  // Fallback UTF-8 manual encoding
-  const out = [];
+  const bytes = new Uint8Array(len);
   for (let i = 0; i < len; i++) {
-    let c = str.charCodeAt(i);
-    if (c < 0x80) {
-      out.push(c);
-    } else if (c < 0x800) {
-      out.push(0xc0 | (c >> 6), 0x80 | (c & 0x3f));
-    } else if (c < 0xd800 || c >= 0xe000) {
-      out.push(0xe0 | (c >> 12), 0x80 | ((c >> 6) & 0x3f), 0x80 | (c & 0x3f));
-    } else {
-      i++;
-      c = 0x10000 + (((c & 0x3ff) << 10) | (str.charCodeAt(i) & 0x3ff));
-      out.push(
-        0xf0 | (c >> 18),
-        0x80 | ((c >> 12) & 0x3f),
-        0x80 | ((c >> 6) & 0x3f),
-        0x80 | (c & 0x3f)
-      );
-    }
+    bytes[i] = str.charCodeAt(i);
   }
-  return new Uint8Array(out);
+  return bytes;
 }
 
 /**

@@ -16,25 +16,15 @@ export function parseSolution(solution) {
   if (typeof solution === 'string') {
     const colonIdx = solution.lastIndexOf(':');
     if (colonIdx === -1) return null;
-
     const token = solution.slice(0, colonIdx);
-    const nonceStr = solution.slice(colonIdx + 1);
-    const nonce = Number.parseInt(nonceStr, 10);
-
-    if (Number.isNaN(nonce) || nonce < 0) return null;
-    return { token, nonce };
+    const nonce = Number(solution.slice(colonIdx + 1));
+    return !token || Number.isNaN(nonce) || nonce < 0 ? null : { token, nonce };
   }
 
   if (typeof solution === 'object') {
     const token = solution.challenge;
-    const nonce = typeof solution.nonce === 'number'
-      ? solution.nonce
-      : Number.parseInt(String(solution.nonce), 10);
-
-    if (typeof token !== 'string' || Number.isNaN(nonce) || nonce < 0) {
-      return null;
-    }
-    return { token, nonce };
+    const nonce = Number(solution.nonce);
+    return typeof token !== 'string' || Number.isNaN(nonce) || nonce < 0 ? null : { token, nonce };
   }
 
   return null;
