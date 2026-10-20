@@ -65,4 +65,24 @@ describe('Transparent barstileFetch Interceptor', () => {
       await close();
     }
   });
+
+  test('subsequent barstileFetch calls reuse clearance without solving again', async () => {
+    const { url, close } = await createTestServer();
+
+    try {
+      // 1. First call: solves challenge, obtains clearance
+      const res1 = await barstileFetch(`${url}/api/one`);
+      assert.equal(res1.status, 200);
+
+      // 2. Second call: attaches clearance token, passes immediately
+      const res2 = await barstileFetch(`${url}/api/two`);
+      assert.equal(res2.status, 200);
+
+      // 3. Third call: still passes immediately with clearance
+      const res3 = await barstileFetch(`${url}/api/three`);
+      assert.equal(res3.status, 200);
+    } finally {
+      await close();
+    }
+  });
 });

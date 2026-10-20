@@ -139,7 +139,7 @@ const result = barstile.verify(submittedSolution);
 if (result.valid) {
   console.log('Passed:', result.nonce, result.hash);
 } else {
-  console.log('Rejected:', result.reason); // 'insufficient_difficulty_work' | 'challenge_expired' | 'token_replayed'
+  console.log('Rejected:', result.reason); // 'invalid_work' | 'challenge_expired' | 'replay_detected' | 'invalid_signature'
 }
 ```
 

@@ -1,6 +1,6 @@
 /**
- * High-performance, memory-bounded replay cache with automatic TTL pruning.
- * Guarantees that a solved Proof-of-Work nonce can never be reused.
+ * Memory-bounded replay cache with automatic TTL pruning.
+ * Mitigates replay attacks by caching spent solutions until expiration or LRU eviction.
  */
 export class ReplayCache {
   /**

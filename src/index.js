@@ -8,6 +8,8 @@ export {
   createChallengeToken,
   parseChallengeToken,
   verifyChallengeToken,
+  createClearanceToken,
+  verifyClearanceToken,
   ReplayCache,
   generateSecret,
   sha256,
@@ -21,5 +23,7 @@ export {
   solve,
   solveSync,
   barstileFetch,
+  clearClearance,
+  getActiveClearance,
   sha256Sync
 } from './client/index.js';

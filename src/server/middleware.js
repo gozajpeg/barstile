@@ -19,6 +19,40 @@ function appendExposeHeader(res, headerName) {
 }
 
 /**
+ * Appends a Set-Cookie header without overwriting existing cookies.
+ * @param {any} res
+ * @param {string} cookieStr
+ */
+function appendSetCookie(res, cookieStr) {
+  if (typeof res.getHeader !== 'function' || typeof res.setHeader !== 'function') return;
+  const existing = res.getHeader('Set-Cookie');
+  if (!existing) {
+    res.setHeader('Set-Cookie', [cookieStr]);
+  } else if (Array.isArray(existing)) {
+    res.setHeader('Set-Cookie', [...existing, cookieStr]);
+  } else {
+    res.setHeader('Set-Cookie', [String(existing), cookieStr]);
+  }
+}
+
+/**
+ * Extracts a cookie value from req.cookies or req.headers.cookie.
+ * @param {any} req
+ * @param {string} name
+ * @returns {string | null}
+ */
+function extractCookie(req, name) {
+  if (req.cookies && typeof req.cookies[name] === 'string') {
+    return req.cookies[name];
+  }
+  const cookieHeader = req.headers?.cookie;
+  if (!cookieHeader || typeof cookieHeader !== 'string') return null;
+  const escaped = name.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+  const match = new RegExp('(?:^|;\\s*)' + escaped + '=([^;]+)').exec(cookieHeader);
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
+/**
  * Creates plug-and-play middleware for Express, Connect, and native Node.js HTTP servers.
  *
  * @param {Object} [options]
@@ -26,7 +60,11 @@ function appendExposeHeader(res, headerName) {
  * @param {Barstile} [options.engine] - Alias for options.barstile
  * @param {string} [options.secret] - Secret key (auto-generated if omitted)
  * @param {number} [options.difficulty=4] - Proof-of-Work difficulty (leading hex zeros)
- * @param {number} [options.ttlMs=60000] - Expiration window in milliseconds
+ * @param {number} [options.ttlMs=60000] - Challenge expiration window in milliseconds
+ * @param {boolean} [options.clearance=true] - Issue persistent clearance tokens to verified clients
+ * @param {number} [options.clearanceTtlMs=900000] - Clearance duration in ms (default: 15 minutes)
+ * @param {string} [options.clearanceHeader='x-barstile-clearance'] - Clearance header name
+ * @param {string} [options.clearanceCookie='barstile_clearance'] - Clearance cookie name
  * @param {any} [options.replayCache] - Optional custom replay cache instance
  * @param {string} [options.challengeHeader='x-barstile-challenge'] - Response header containing challenge
  * @param {string} [options.solutionHeader='x-barstile-solution'] - Request header containing client solution
@@ -48,14 +86,41 @@ export function barstileMiddleware(options = {}) {
 
   const challengeHeader = (options.challengeHeader || 'x-barstile-challenge').toLowerCase();
   const solutionHeader = (options.solutionHeader || 'x-barstile-solution').toLowerCase();
+  const clearanceHeader = (options.clearanceHeader || 'x-barstile-clearance').toLowerCase();
+  const clearanceCookie = options.clearanceCookie || 'barstile_clearance';
+  const enableClearance = options.clearance !== false;
+  const clearanceTtlMs = options.clearanceTtlMs || 900_000;
   const statusCode = options.statusCode || 449;
 
   return function middleware(req, res, next) {
+    if (res.headersSent) {
+      return next ? next() : undefined;
+    }
+
     if (typeof options.shouldChallenge === 'function' && !options.shouldChallenge(req)) {
       return next ? next() : undefined;
     }
 
-    // Check for solution in header, query, or body
+    // 1. Check for persistent clearance token (header or cookie)
+    if (enableClearance) {
+      const clearanceToken =
+        req.headers?.[clearanceHeader] ||
+        extractCookie(req, clearanceCookie);
+
+      if (clearanceToken) {
+        const clearanceRes = engine.verifyClearance(clearanceToken);
+        if (clearanceRes.valid) {
+          req.barstile = {
+            verified: true,
+            clearance: true,
+            expiresAt: clearanceRes.expiresAt
+          };
+          return next ? next() : undefined;
+        }
+      }
+    }
+
+    // 2. Check for PoW solution in header, query, or body
     const solution =
       req.headers?.[solutionHeader] ||
       req.query?.barstile_solution ||
@@ -79,7 +144,7 @@ export function barstileMiddleware(options = {}) {
       return res.end(payload);
     }
 
-    // Verify submitted solution
+    // 3. Verify submitted solution
     const result = engine.verify(solution);
 
     if (!result.valid) {
@@ -103,12 +168,25 @@ export function barstileMiddleware(options = {}) {
       );
     }
 
+    // 4. Issue clearance token for subsequent requests
+    let issuedClearance = null;
+    if (enableClearance) {
+      issuedClearance = engine.issueClearance(clearanceTtlMs);
+      res.setHeader(clearanceHeader, issuedClearance);
+      appendExposeHeader(res, clearanceHeader);
+
+      const maxAgeSec = Math.floor(clearanceTtlMs / 1000);
+      const cookieStr = `${clearanceCookie}=${issuedClearance}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAgeSec}`;
+      appendSetCookie(res, cookieStr);
+    }
+
     // Attach verification telemetry to request
     req.barstile = {
       verified: true,
       difficulty: result.difficulty,
       hash: result.hash,
-      nonce: result.nonce
+      nonce: result.nonce,
+      clearance: issuedClearance
     };
 
     if (typeof next === 'function') {

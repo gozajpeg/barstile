@@ -75,7 +75,7 @@ export async function solve(challenge, options = {}) {
   }
 
   const targetPrefix = '0'.repeat(difficulty);
-  const chunkSize = options.chunkSize || 25_000;
+  const chunkSize = options.chunkSize || options.yieldInterval || 25_000;
   const maxAttempts = options.maxAttempts || 20_000_000;
   const signal = options.signal;
   const startTime = performance.now();

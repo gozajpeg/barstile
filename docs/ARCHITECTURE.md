@@ -30,7 +30,17 @@ Client                                                  Server
   |                                                       | 3. Check replay cache
   |                                                       | 4. Compute single SHA-256 hash
   |                                                       | 5. Add to replay cache
-  | 4. HTTP 200 OK (or original route response)           |
+  | 4. HTTP 200 OK                                        |
+  |    Header: X-Barstile-Clearance: issued.exp.sig       |
+  |    Header: Set-Cookie: barstile_clearance=...         |
+  |<------------------------------------------------------|
+  |                                                       |
+  | 5. Subsequent Requests (within clearance window)      |
+  |    Header: X-Barstile-Clearance (or Cookie)           |
+  |------------------------------------------------------>|
+  |                                                       | [Clearance Validated in <0.05ms]
+  |                                                       | Instant Pass (No PoW required)
+  | 6. HTTP 200 OK                                        |
   |<------------------------------------------------------|
 ```
 
@@ -109,7 +119,22 @@ To mitigate this, Barstile uses `ReplayCache`:
 Computing 65,000 SHA-256 hashes on the browser main thread would normally cause a frame drop or UI stutter.
 
 The client `solve()` function avoids this by chunking work:
-* Processes nonces in batches of 1,000.
+* Processes nonces in batches (default: 25,000 iterations, configurable via `chunkSize`).
 * Yields execution back to the browser event loop using `setTimeout(resolve, 0)` between batches.
 * Allows user clicks, animations, and DOM rendering to proceed while the calculation runs in the background.
 * Supports `AbortSignal` for instant cancellation if a request is aborted.
+
+---
+
+## 6. Persistent Clearance Architecture
+
+To prevent legitimate users from solving a Proof-of-Work challenge on every single click or API call, Barstile issues a signed clearance token upon verification.
+
+### Token Format
+```
+[issuedAt].[expiresAt].[signature]
+```
+* **HMAC Signature**: Signed over `issuedAt:expiresAt` using the server secret.
+* **Dual Delivery**: Returned via HTTP response header `X-Barstile-Clearance` and HTTP-only cookie `barstile_clearance`.
+* **Zero Database Overhead**: Validated statelessly on the server in < 0.05 ms using `crypto.timingSafeEqual`.
+* **Automatic Client Reuse**: `barstileFetch` preserves the token in memory, automatically attaching it to subsequent requests until expiration.

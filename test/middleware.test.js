@@ -178,4 +178,61 @@ describe('HTTP Middleware Integration', () => {
       await close();
     }
   });
+
+  test('issues clearance token upon valid solution and persists across subsequent requests', async () => {
+    const { url, close } = await createTestServer();
+
+    try {
+      // 1. Initial 449 challenge
+      const initialRes = await fetch(url);
+      const challenge = initialRes.headers.get('x-barstile-challenge');
+      const { solution } = solveSync(challenge);
+
+      // 2. Pass challenge and receive clearance token & cookie
+      const solveRes = await fetch(url, {
+        headers: { 'x-barstile-solution': solution }
+      });
+      assert.equal(solveRes.status, 200);
+
+      const clearance = solveRes.headers.get('x-barstile-clearance');
+      assert.ok(clearance, 'Expected x-barstile-clearance header');
+
+      const setCookie = solveRes.headers.get('set-cookie');
+      assert.ok(setCookie, 'Expected Set-Cookie header');
+      assert.match(setCookie, /barstile_clearance=/);
+
+      // 3. Subsequent request with clearance header passes immediately with 200 without PoW
+      const nextResHeader = await fetch(url, {
+        headers: { 'x-barstile-clearance': clearance }
+      });
+      assert.equal(nextResHeader.status, 200);
+      const body1 = await nextResHeader.json();
+      assert.equal(body1.telemetry.clearance, true);
+
+      // 4. Subsequent request with clearance cookie passes immediately with 200 without PoW
+      const nextResCookie = await fetch(url, {
+        headers: { cookie: `barstile_clearance=${clearance}` }
+      });
+      assert.equal(nextResCookie.status, 200);
+      const body2 = await nextResCookie.json();
+      assert.equal(body2.telemetry.clearance, true);
+    } finally {
+      await close();
+    }
+  });
+
+  test('rejects tampered clearance and issues fresh 449 challenge', async () => {
+    const { url, close } = await createTestServer();
+
+    try {
+      const tamperedClearance = '1000.999999999999.fake_sig_1234567890abcdef1234567890abcdef';
+      const res = await fetch(url, {
+        headers: { 'x-barstile-clearance': tamperedClearance }
+      });
+      assert.equal(res.status, 449);
+      assert.ok(res.headers.get('x-barstile-challenge'));
+    } finally {
+      await close();
+    }
+  });
 });

@@ -39,6 +39,10 @@ Creates an HTTP middleware compatible with Node.js `http.createServer`, Express,
 | `replayCache` | `ReplayCache` | `new ReplayCache()` | Custom replay cache instance. |
 | `barstile` | `Barstile` | `new Barstile(...)` | Pre-configured `Barstile` engine instance. |
 | `shouldChallenge` | `(req) => boolean` | `() => true` | Predicate function. Return `false` to bypass PoW verification for specific requests (e.g. static assets). |
+| `clearance` | `boolean` | `true` | Issue persistent clearance tokens to verified clients so subsequent requests pass without re-solving PoW. |
+| `clearanceTtlMs` | `number` | `900000` | Duration of persistent clearance in milliseconds (default: 15 minutes). |
+| `clearanceHeader` | `string` | `'x-barstile-clearance'` | Header name inspected and issued for clearance. |
+| `clearanceCookie` | `string` | `'barstile_clearance'` | Cookie name written and inspected for clearance. |
 | `headerName` | `string` | `'x-barstile-solution'` | Header name inspected for the client solution. |
 | `challengeHeader` | `string` | `'X-Barstile-Challenge'` | Header name written on `449 Retry With` responses. |
 
@@ -93,6 +97,15 @@ Generates a signed challenge token string.
 Verifies a submitted solution string (`challenge:nonce`) or object (`{ token, nonce }`).
 * Returns: `{ valid: boolean, reason?: string, hash?: string, difficulty?: number, nonce?: number }`
 
+##### `barstile.issueClearance(ttlMs?)`
+Generates an HMAC-signed clearance token.
+* `ttlMs` (`number`, default: `900000`): Duration in milliseconds (default: 15 minutes).
+* Returns: `string` (format: `issuedAt.expiresAt.signature`)
+
+##### `barstile.verifyClearance(token, now?)`
+Verifies an HMAC-signed clearance token.
+* Returns: `{ valid: boolean, reason?: string, expiresAt?: number, issuedAt?: number }`
+
 ---
 
 ### `verifySolution(params)`
@@ -122,7 +135,8 @@ Or on failure:
 ```javascript
 {
   valid: false,
-  reason: "invalid_token_signature" // or "challenge_expired", "token_replayed", "insufficient_difficulty_work"
+    reason: "invalid_signature" // or "challenge_expired", "replay_detected", "invalid_work", "malformed_solution", "malformed_challenge"
+  }
 }
 ```
 
@@ -187,6 +201,20 @@ Drop-in replacement for native `window.fetch` or Node.js `fetch`.
    * Runs `solve()` to calculate the nonce.
    * Clones request headers and adds `X-Barstile-Solution: <challenge>:<nonce>`.
    * Re-executes the request and returns the final response.
+4. If the response contains `X-Barstile-Clearance`, caches the clearance token in memory and automatically attaches it to subsequent `barstileFetch` requests.
+
+---
+
+### `clearClearance()`
+
+Clears the in-memory clearance token stored by `barstileFetch`.
+
+---
+
+### `getActiveClearance()`
+
+Returns the current active in-memory clearance token if non-expired, or `null`.
+* Returns: `string | null`
 
 ---
 
@@ -198,7 +226,7 @@ Asynchronous Proof-of-Work solver. Yields periodically to the event loop so brow
 
 * `challenge` (`string`): The challenge token received from server.
 * `options` (Object, optional):
-  * `yieldInterval` (`number`, default: `1000`): Number of hash iterations before yielding execution.
+  * `chunkSize` or `yieldInterval` (`number`, default: `25000`): Number of hash iterations before yielding execution back to the event loop.
   * `maxAttempts` (`number`, default: `20000000`): Maximum nonces to test before throwing an error.
   * `startNonce` (`number`, default: `0`): Starting nonce counter.
   * `signal` (`AbortSignal`, optional): Cancellation signal to stop calculation early.

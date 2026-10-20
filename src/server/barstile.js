@@ -1,5 +1,6 @@
 import { generateSecret } from '../core/crypto.js';
 import { createChallengeToken } from '../core/challenge.js';
+import { createClearanceToken, verifyClearanceToken } from '../core/clearance.js';
 import { ReplayCache } from '../core/cache.js';
 import { verifySolution } from '../core/verifier.js';
 
@@ -52,6 +53,30 @@ export class Barstile {
       secret: this._secret,
       replayCache: this.replayCache
     });
+  }
+
+  /**
+   * Generates an HMAC-signed clearance token.
+   *
+   * @param {number} [ttlMs=900000] - Duration in ms (default: 15 minutes)
+   * @returns {string} Signed clearance token
+   */
+  issueClearance(ttlMs = 900000) {
+    return createClearanceToken({
+      secret: this._secret,
+      ttlMs
+    });
+  }
+
+  /**
+   * Verifies an HMAC-signed clearance token.
+   *
+   * @param {string} token - Clearance token
+   * @param {number} [now=Date.now()]
+   * @returns {{ valid: boolean, reason?: string, expiresAt?: number, issuedAt?: number }}
+   */
+  verifyClearance(token, now = Date.now()) {
+    return verifyClearanceToken(token, this._secret, now);
   }
 
   /**
