@@ -1,8 +1,8 @@
 <div align="center">
   <img src="https://raw.githubusercontent.com/gozajpeg/barstile/main/assets/barstile.webp" alt="barstile logo" width="340" />
   <h1>barstile</h1>
-  <p><strong>Zero-dependency Proof-of-Work anti-bot shield for Node.js, browsers, and APIs.</strong></p>
-  <p>Applies asymmetric computational cost to automated scrapers without visual puzzles or third-party tracking cookies.</p>
+  <p><strong>Self-hosted, non-interactive bot protection for Node.js, browsers, and APIs.</strong></p>
+  <p>Protects endpoints and forms from automated bots without visual puzzles, third-party trackers, or human friction.</p>
 
   <p>
     <a href="https://nodejs.org"><img src="https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg?style=flat-square" alt="node version" /></a>
