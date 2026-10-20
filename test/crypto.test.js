@@ -7,7 +7,7 @@ import {
   randomSalt,
   generateSecret
 } from '../src/core/crypto.js';
-import { sha256Sync } from '../src/core/sha256-pure.js';
+import { sha256Sync } from '../src/core/sha256.js';
 
 describe('Crypto Primitives', () => {
   test('sha256 produces valid 64-character hex digest', () => {

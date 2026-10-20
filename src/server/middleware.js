@@ -1,4 +1,4 @@
-import { Barstile } from './engine.js';
+import { Barstile } from './barstile.js';
 
 /**
  * Appends a header to Access-Control-Expose-Headers without overwriting existing exposed headers.

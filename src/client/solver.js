@@ -1,5 +1,5 @@
 import { parseChallengeToken } from '../core/token.js';
-import { sha256Sync } from '../core/sha256-pure.js';
+import { sha256Sync } from '../core/sha256.js';
 
 /**
  * Solves a Barstile Proof-of-Work challenge synchronously.

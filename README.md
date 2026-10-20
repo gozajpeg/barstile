@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://raw.githubusercontent.com/gozajpeg/barstile/main/assets/barstileLogo.webp" alt="barstile logo" width="340" />
+  <img src="https://raw.githubusercontent.com/gozajpeg/barstile/main/assets/barstile.webp" alt="barstile logo" width="340" />
   <h1>barstile</h1>
   <p><strong>Zero-dependency Proof-of-Work anti-bot shield for Node.js, browsers, and APIs.</strong></p>
   <p>Applies asymmetric computational cost to automated scrapers without visual puzzles or third-party tracking cookies.</p>

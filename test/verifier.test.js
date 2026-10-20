@@ -2,7 +2,7 @@ import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { createChallengeToken } from '../src/core/challenge.js';
 import { verifySolution, parseSolution } from '../src/core/verifier.js';
-import { ReplayCache } from '../src/core/replay-cache.js';
+import { ReplayCache } from '../src/core/cache.js';
 import { sha256 } from '../src/core/crypto.js';
 
 describe('Solution Verifier', () => {

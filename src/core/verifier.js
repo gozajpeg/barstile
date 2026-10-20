@@ -36,7 +36,7 @@ export function parseSolution(solution) {
  * @param {Object} params
  * @param {string | Object} params.solution - The solution token from client
  * @param {string} params.secret - Server HMAC secret
- * @param {import('./replay-cache.js').ReplayCache} [params.replayCache] - Cache to guard against replay attacks
+ * @param {import('./cache.js').ReplayCache} [params.replayCache] - Cache to guard against replay attacks
  * @param {number} [params.now=Date.now()]
  * @returns {{ valid: boolean, reason?: string, hash?: string, difficulty?: number, nonce?: number }}
  */

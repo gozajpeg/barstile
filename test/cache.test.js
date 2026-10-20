@@ -1,6 +1,6 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { ReplayCache } from '../src/core/replay-cache.js';
+import { ReplayCache } from '../src/core/cache.js';
 
 describe('Replay Cache', () => {
   test('records and detects duplicate keys', () => {

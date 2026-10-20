@@ -1,6 +1,6 @@
 import { generateSecret } from '../core/crypto.js';
 import { createChallengeToken } from '../core/challenge.js';
-import { ReplayCache } from '../core/replay-cache.js';
+import { ReplayCache } from '../core/cache.js';
 import { verifySolution } from '../core/verifier.js';
 
 /**
