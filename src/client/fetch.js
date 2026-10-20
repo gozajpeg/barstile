@@ -29,8 +29,9 @@ export function getActiveClearance() {
 function recordClearance(token) {
   if (!token || typeof token !== 'string') return;
   const parts = token.split('.');
-  if (parts.length === 3) {
-    const exp = Number.parseInt(parts[1], 10);
+  if (parts.length === 4 || parts.length === 3) {
+    const expIdx = parts.length === 4 ? 2 : 1;
+    const exp = Number.parseInt(parts[expIdx], 10);
     if (!Number.isNaN(exp)) {
       storedClearance = token;
       storedClearanceExpiresAt = exp;

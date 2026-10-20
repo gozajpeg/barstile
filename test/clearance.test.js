@@ -5,13 +5,14 @@ import { createClearanceToken, verifyClearanceToken } from '../src/core/clearanc
 describe('Clearance Tokens', () => {
   const secret = 'test-secret-clearance-key-12345';
 
-  test('creates valid 3-part clearance token', () => {
+  test('creates valid 4-part clearance token with salt', () => {
     const token = createClearanceToken({ secret, ttlMs: 60000 });
     assert.equal(typeof token, 'string');
     const parts = token.split('.');
-    assert.equal(parts.length, 3);
+    assert.equal(parts.length, 4);
 
-    const [issuedAt, expiresAt, sig] = parts;
+    const [salt, issuedAt, expiresAt, sig] = parts;
+    assert.ok(salt.length > 0);
     assert.ok(Number(issuedAt) > 0);
     assert.ok(Number(expiresAt) > Number(issuedAt));
     assert.equal(sig.length, 64);
@@ -34,8 +35,8 @@ describe('Clearance Tokens', () => {
 
   test('rejects tampered clearance token expiration', () => {
     const token = createClearanceToken({ secret, ttlMs: 10000 });
-    const [issuedAt, expiresAt, sig] = token.split('.');
-    const tampered = `${issuedAt}.${Number(expiresAt) + 1000000}.${sig}`;
+    const [salt, issuedAt, expiresAt, sig] = token.split('.');
+    const tampered = `${salt}.${issuedAt}.${Number(expiresAt) + 1000000}.${sig}`;
 
     const result = verifyClearanceToken(tampered, secret);
     assert.equal(result.valid, false);
