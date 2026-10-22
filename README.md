@@ -1,7 +1,7 @@
 <div align="center">
   <img src="https://raw.githubusercontent.com/gozajpeg/barstile/main/assets/barstile.webp" alt="barstile logo" width="340" />
   <h1>barstile</h1>
-  <p><strong>Self-hosted, non-interactive bot protection for Node.js, browsers, and APIs.</strong></p>
+  <p><strong>Self-hosted, non-interactive bot protection.</strong></p>
   <p>Protects endpoints and forms from automated bots without visual puzzles, third-party trackers, or human friction.</p>
 
   <p>
@@ -16,6 +16,7 @@
 
 ## Documentation Guides
 
+* [Live Simulator & Interactive Showcase](https://gozajpeg.github.io/barstile/): Live in-browser Proof-of-Work playground and scrollytelling walkthrough.
 * [API Reference](docs/API.md): Complete parameter tables, options, and return types for server and client.
 * [Architecture & Protocol](docs/ARCHITECTURE.md): Token format, HTTP 449 handshake sequence, and replay cache lifecycle.
 * [Security Model](docs/SECURITY.md): Threat mitigation boundaries, timing attack defense, and cluster considerations.
@@ -24,15 +25,16 @@
 
 ## What Does Barstile Export?
 
-Barstile has **zero external dependencies** and provides two clean entry points:
+Barstile provides two clean entry points:
 
 ### 1. Server (`barstile/server`)
 * `barstileMiddleware()`: HTTP middleware for native Node.js `http`, Express, Connect, or Fastify.
 * `createBarstile()`: Engine to generate challenges and verify solutions programmatically.
 
 ### 2. Client (`barstile/client`)
-* `barstileFetch()`: Wrapper around `fetch()` that detects challenges, solves them in the background, and retries automatically.
-* `solve()`: Non-blocking asynchronous solver for browser interfaces and Web Workers.
+* `barstileFetch()`: Wrapper around `fetch()` that detects challenges, offloads solving to background Web Workers, and retries automatically.
+* `solveWorker()`: Inline Web Worker solver keeping the browser UI thread free and responsive.
+* `solve()`: Non-blocking asynchronous solver for browsers with automatic event-loop yielding.
 * `solveSync()`: Synchronous solver for background threads and scripts.
 
 ---
@@ -69,7 +71,7 @@ const server = http.createServer((req, res) => {
 server.listen(3000);
 ```
 
-*(Express usage is identical: `app.use('/api', barstileMiddleware({ difficulty: 3 }))`)*
+*(Express tip: mount `barstileMiddleware()` before body parsers like `express.json()` to intercept bot requests before memory is allocated for incoming payloads)*
 
 ---
 
@@ -80,7 +82,7 @@ Replace `fetch` with `barstileFetch`. It uses the standard `fetch()` signature, 
 ```javascript
 import { barstileFetch } from 'barstile/client';
 
-const response = await barstileFetch('http://localhost:3000/api/data', {
+const response = await barstileFetch('/api/data', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({ action: 'checkout' })
@@ -90,7 +92,55 @@ const data = await response.json();
 console.log(data); // { message: 'Access granted', ... }
 ```
 
-Legitimate users experience a brief background calculation (typically 2 to 50 ms depending on difficulty and device CPU). Automated scrapers attempting 1,000 requests per second must compute millions of SHA-256 operations per second.
+Legitimate users experience a brief background calculation (typically 2 to 50 ms depending on difficulty and device CPU). In browsers, `barstileFetch` offloads calculations to an inline Web Worker, offloading hashing from the main UI thread so animations, typing, and scrolling remain responsive. Automated scrapers attempting 1,000 requests per second must compute millions of SHA-256 operations per second.
+
+---
+
+### 3. Route & Method Adaptive Difficulty
+
+Barstile allows configuring route-specific difficulty and clearance rules with zero complex setup. Set higher difficulty on sensitive actions while keeping public browsing fast:
+
+```javascript
+import { barstileMiddleware } from 'barstile/server';
+
+app.use(barstileMiddleware({
+  difficulty: 3, // Global default (~5ms)
+  routes: {
+    '/public/*': 1,                              // Low friction for general browsing (~1ms)
+    'POST /api/login': 5,                        // High defense for authentication (~500ms)
+    'POST /checkout': { difficulty: 4, clearance: false } // Require a fresh solve on every checkout
+  }
+}));
+```
+
+Cross-route tampering is cryptographically blocked: a solution solved for a difficulty 1 route is rejected if submitted to a difficulty 5 route.
+
+---
+
+## Multi-Server & Cluster Deployments
+
+### 1. Zero-Config In-Memory (Default)
+By default, Barstile requires zero external configuration, environment variables, or databases:
+
+```javascript
+app.use(barstileMiddleware());
+```
+
+Even across multi-server deployments without Redis, Barstile automatically binds challenges and clearance tokens to the client IP subnet (`/24` for IPv4, `/64` for IPv6) and User-Agent signature. A challenge solved on one server cannot be submitted by another client or bot machine on another server.
+
+### 2. Distributed Clusters with Redis (Optional)
+If your application runs across multiple pods behind a round-robin load balancer and you already use Redis, pass your existing Redis client instance directly:
+
+```javascript
+import Redis from 'ioredis'; // or node-redis
+import { barstileMiddleware } from 'barstile/server';
+
+const redis = new Redis(process.env.REDIS_URL);
+
+app.use(barstileMiddleware({ redis }));
+```
+
+Barstile uses atomic `SET key 1 EX ttl NX` operations, eliminating race conditions across nodes. If Redis ever experiences network hiccups, Barstile automatically and gracefully falls back to local memory without throwing or crashing.
 
 ---
 
@@ -179,6 +229,8 @@ console.log(result.solution); // "salt.diff.exp.sig:nonce"
 2. **Replay Mitigation**: Solved nonces are cached in an in-memory sliding window until their challenge expires. Submitting an identical solution twice returns `403 Forbidden`.
 3. **Constant-Time Verification**: Signature validation uses `crypto.timingSafeEqual` to avoid timing side-channel leaks.
 4. **Stateless Operations**: The server does not store pending challenges in a database; memory is only used for spent nonces until expiration.
+5. **Clearance Request Allowance**: Clearance tokens carry a request quota (default: 100 requests). An attacker cannot solve 1 challenge and scrape 50,000 pages; once exhausted, a fresh challenge is required.
+6. **Pre-Challenge Body Guard**: Incoming requests without a valid solution or clearance token are challenged in microseconds before request body parsing occurs. Oversized pre-challenge payloads are rejected immediately, protecting server heap memory from buffer exhaustion.
 
 See [docs/SECURITY.md](docs/SECURITY.md) for full threat model details.
 

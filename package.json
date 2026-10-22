@@ -1,7 +1,7 @@
 {
   "name": "barstile",
   "version": "1.0.0",
-  "description": "Self-hosted, non-interactive bot protection for Node.js, browsers, and APIs",
+  "description": "Self-hosted, non-interactive bot protection",
   "main": "./src/index.js",
   "type": "module",
   "exports": {
@@ -19,7 +19,6 @@
   },
   "files": [
     "src",
-    "assets",
     "README.md",
     "LICENSE"
   ],
@@ -31,8 +30,8 @@
     "anti-bot",
     "bot-protection",
     "captcha",
-    "turnstile",
-    "cloudflare-turnstile",
+    "challenge-response",
+    "anti-scraping",
     "proof-of-work",
     "pow",
     "ddos-protection",

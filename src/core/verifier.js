@@ -37,10 +37,11 @@ export function parseSolution(solution) {
  * @param {string | Object} params.solution - The solution token from client
  * @param {string} params.secret - Server HMAC secret
  * @param {import('./cache.js').ReplayCache} [params.replayCache] - Cache to guard against replay attacks
- * @param {number} [params.now=Date.now()]
- * @returns {{ valid: boolean, reason?: string, hash?: string, difficulty?: number, nonce?: number }}
+ * @param {number | { now?: number, context?: string }} [params.now=Date.now()]
+ * @param {string} [params.context=''] - Optional cryptographic client context
+ * @returns {{ valid: boolean, reason?: string, hash?: string, difficulty?: number, nonce?: number } | Promise<{ valid: boolean, reason?: string, hash?: string, difficulty?: number, nonce?: number }>}
  */
-export function verifySolution({ solution, secret, replayCache, now = Date.now() }) {
+export function verifySolution({ solution, secret, replayCache, now = Date.now(), context = '', minDifficulty }) {
   const parsed = parseSolution(solution);
   if (!parsed) {
     return { valid: false, reason: 'malformed_solution' };
@@ -48,21 +49,23 @@ export function verifySolution({ solution, secret, replayCache, now = Date.now()
 
   const { token, nonce } = parsed;
 
-  // 1. Verify token HMAC signature and expiration
-  const tokenResult = verifyChallengeToken(token, secret, now);
+  const nowMs = typeof now === 'number' ? now : (now?.now || Date.now());
+  const ctxVal = typeof now === 'object' && now !== null ? (now.context || context) : context;
+  const minDiffVal = typeof now === 'object' && now !== null && typeof now.minDifficulty === 'number'
+    ? now.minDifficulty
+    : (typeof minDifficulty === 'number' ? minDifficulty : 0);
+
+  const tokenResult = verifyChallengeToken(token, secret, { now: nowMs, context: ctxVal });
   if (!tokenResult.valid) {
     return { valid: false, reason: tokenResult.reason };
   }
 
   const { salt, difficulty, expiresAt, signature } = tokenResult.data;
 
-  // 2. Check for replay attack
-  const replayKey = `${signature}:${nonce}`;
-  if (replayCache && replayCache.has(replayKey)) {
-    return { valid: false, reason: 'replay_detected' };
+  if (minDiffVal > 0 && difficulty < minDiffVal) {
+    return { valid: false, reason: 'insufficient_difficulty', difficulty, requiredDifficulty: minDiffVal };
   }
 
-  // 3. Verify Proof-of-Work (Single SHA-256 hash operation)
   const hash = sha256(`${salt}:${nonce}`);
   const targetPrefix = '0'.repeat(difficulty);
 
@@ -70,9 +73,29 @@ export function verifySolution({ solution, secret, replayCache, now = Date.now()
     return { valid: false, reason: 'invalid_work', hash };
   }
 
-  // 4. Record in replay cache
+  const replayKey = `${signature}:${nonce}`;
+  const ttlSeconds = Math.max(1, Math.ceil((expiresAt - nowMs) / 1000));
+
   if (replayCache) {
-    replayCache.add(replayKey, expiresAt);
+    if (typeof replayCache.checkAndAdd === 'function') {
+      const isNew = replayCache.checkAndAdd(replayKey, ttlSeconds, expiresAt);
+      if (isNew && typeof isNew.then === 'function') {
+        return isNew.then((accepted) => {
+          if (!accepted) return { valid: false, reason: 'replay_detected' };
+          return { valid: true, hash, difficulty, nonce };
+        });
+      }
+      if (!isNew) {
+        return { valid: false, reason: 'replay_detected' };
+      }
+    } else {
+      if (typeof replayCache.has === 'function' && replayCache.has(replayKey)) {
+        return { valid: false, reason: 'replay_detected' };
+      }
+      if (typeof replayCache.add === 'function') {
+        replayCache.add(replayKey, expiresAt);
+      }
+    }
   }
 
   return {

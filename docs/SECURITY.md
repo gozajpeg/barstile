@@ -30,12 +30,13 @@ Challenge tokens contain four parts: `salt.difficulty.expiresAt.signature`.
 ### Timing Attack Resistance
 Signature validation uses `crypto.timingSafeEqual` over fixed-length binary buffers:
 ```javascript
-export function hmacVerify(payload, signature, secret) {
-  const expected = hmacSign(payload, secret);
-  const sigBuf = Buffer.from(signature, 'hex');
-  const expBuf = Buffer.from(expected, 'hex');
-  if (sigBuf.length !== expBuf.length) return false;
-  return crypto.timingSafeEqual(sigBuf, expBuf);
+export function hmacVerify(data, secret, expectedSignature) {
+  if (typeof expectedSignature !== 'string' || !secret) return false;
+  const actualSignature = hmacSign(data, secret);
+  const actualBuf = Buffer.from(actualSignature, 'hex');
+  const expectedBuf = Buffer.from(expectedSignature, 'hex');
+  if (actualBuf.length !== expectedBuf.length) return false;
+  return crypto.timingSafeEqual(actualBuf, expectedBuf);
 }
 ```
 This prevents attackers from deducing the server secret character-by-character through response timing variations.
@@ -45,8 +46,18 @@ A valid Proof-of-Work solution consists of `challenge:nonce`. Without replay pre
 
 Barstile mitigates this using `ReplayCache`:
 1. When a solution passes verification, the key `signature:nonce` is stored in the cache with the token's expiration timestamp.
-2. If another request arrives with the same `signature:nonce`, the cache reports a match and returns `403 Forbidden` (`reason: token_replayed`).
+2. If another request arrives with the same `signature:nonce`, the cache reports a match and returns `403 Forbidden` (`reason: replay_detected`).
 3. Entries expire automatically when their parent challenge expires.
+
+### Request Allowance Budget & Clearance Velocity Mitigation
+Without a request quota, an attacker could solve 1 challenge once (taking ~20 ms of CPU) and use that clearance token to scrape 50,000 items during the 15-minute validity window.
+
+Barstile neutralizes this attack via `AllowanceCache` (or atomic Redis `INCR` in clusters):
+1. Each clearance token is allocated a request quota (default: 100 requests).
+2. The remaining quota is tracked per token signature and exposed via `X-Barstile-Remaining`.
+3. When the quota reaches zero, the clearance is revoked and a fresh HTTP 449 challenge is issued.
+4. Scraping 100,000 items forces the bot to solve 1,000 separate PoW challenges (65.5 million hashes), turning scraping into a high-cost compute bottleneck.
+5. Legitimate human users rarely exceed 100 requests per 15 minutes; when they do, `barstileFetch` solves the renewal in ~20 ms in the background with zero user disruption.
 
 ---
 
@@ -65,5 +76,6 @@ The server's memory usage depends on the replay cache size:
 * If memory is constrained, set `maxSize` to a lower threshold when initializing the middleware.
 
 ### Multi-Instance & Clustered Deployments
-* **Secret Synchronization**: If running multiple Node.js server instances behind a load balancer, you must provide the same `secret` string to all instances. Otherwise, a challenge issued by Instance A cannot be verified by Instance B.
-* **Replay Cache in Clusters**: The built-in `ReplayCache` is in-memory. For zero-replay tolerance across horizontal clusters, implement a shared Redis cache passing the custom cache interface to `options.replayCache`.
+* **Secret Synchronization**: If running multiple Node.js server instances behind a load balancer, provide the same `secret` string to all instances (for example, via an environment variable).
+* **Multi-Server Defense Without Redis**: By default, Barstile cryptographically binds both challenge tokens and clearance tokens to the client IP subnet (`/24` for IPv4, `/64` for IPv6) and User-Agent hash. A challenge solved on one server cannot be submitted by another client or bot machine on a different server, preventing cross-datacenter replay even with zero shared infrastructure.
+* **Clustered Replay Defense With Redis**: For large-scale distributed deployments where the same client might race requests across different pods, pass your existing Redis client directly (`barstileMiddleware({ redis })`). Barstile executes atomic `SET key 1 EX ttl NX` commands with zero race windows and automatically falls back to local memory if Redis disconnects.

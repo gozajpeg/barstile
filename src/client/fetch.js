@@ -1,4 +1,5 @@
 import { solve } from './solver.js';
+import { solveWorker } from './worker.js';
 
 let storedClearance = null;
 let storedClearanceExpiresAt = 0;
@@ -47,6 +48,7 @@ function recordClearance(token) {
  * @param {RequestInit} [init] - Fetch options (method, headers, body, etc.)
  * @param {Object} [options]
  * @param {boolean} [options.clearance=true] - Automatically attach and store clearance tokens
+ * @param {boolean} [options.worker=true] - Offload PoW solving to a Web Worker background thread
  * @param {number[]} [options.challengeStatuses=[449, 429]] - Status codes that trigger challenge solving
  * @param {string} [options.challengeHeader='x-barstile-challenge'] - Response header containing challenge
  * @param {string} [options.solutionHeader='x-barstile-solution'] - Request header to attach solution
@@ -61,13 +63,16 @@ export async function barstileFetch(input, init = {}, options = {}) {
     throw new TypeError('barstileFetch: fetch is not available in this environment');
   }
 
+  const isRequest =
+    typeof input === 'object' && input !== null && typeof input.clone === 'function';
+  const firstInput = isRequest && !input.bodyUsed ? input.clone() : input;
+
   const challengeStatuses = options.challengeStatuses || [449, 429];
   const challengeHeader = (options.challengeHeader || 'x-barstile-challenge').toLowerCase();
   const solutionHeader = options.solutionHeader || 'X-Barstile-Solution';
   const clearanceHeader = options.clearanceHeader || 'X-Barstile-Clearance';
   const useClearance = options.clearance !== false;
 
-  // Prepare initial request headers, attaching active clearance if available
   const initialInit = { ...init };
   const existingHeaders =
     init.headers || (typeof input === 'object' && input?.headers ? input.headers : {});
@@ -81,10 +86,8 @@ export async function barstileFetch(input, init = {}, options = {}) {
   }
   initialInit.headers = headers;
 
-  // 1. Send initial request
-  const initialResponse = await fetchFn(input, initialInit);
+  const initialResponse = await fetchFn(firstInput, initialInit);
 
-  // If response provided a new clearance token, record it
   if (useClearance) {
     const resClearance = initialResponse.headers.get(clearanceHeader.toLowerCase());
     if (resClearance) {
@@ -92,20 +95,15 @@ export async function barstileFetch(input, init = {}, options = {}) {
     }
   }
 
-  // If not a PoW challenge response, return immediately
   if (!challengeStatuses.includes(initialResponse.status)) {
     return initialResponse;
   }
 
-  // If 449 received while clearance was attached, invalidate stored clearance
   if (useClearance) {
     clearClearance();
   }
 
-  // Check for challenge in headers
   let challenge = initialResponse.headers.get(challengeHeader);
-
-  // If header was not exposed, attempt to check JSON body if readable
   if (!challenge) {
     try {
       const cloned = initialResponse.clone();
@@ -122,26 +120,25 @@ export async function barstileFetch(input, init = {}, options = {}) {
     return initialResponse;
   }
 
-  // Guard against unbuffered ReadableStream bodies that cannot be re-read
-  if (init?.body && typeof init.body.getReader === 'function' && init.body.locked) {
+  if (init?.body && typeof init.body.getReader === 'function' && (init.body.locked || init.body.disturbed)) {
     throw new Error(
       'barstileFetch: request body is an unbuffered ReadableStream that has already been consumed and cannot be replayed after a challenge. Buffer the body before passing to fetch.'
     );
   }
 
-  // 2. Solve the challenge in the background
-  const solutionResult = await solve(challenge, options.solverOptions);
+  const useWorker = options.worker !== false;
+  const solverOpts = options.solverOptions || {};
+  const solutionResult = useWorker
+    ? await solveWorker(challenge, solverOpts)
+    : await solve(challenge, solverOpts);
 
-  // 3. Clone request init and append solution header
   const retryInit = { ...init };
   const retryHeaders = new Headers(existingHeaders);
   retryHeaders.set(solutionHeader, solutionResult.solution);
   retryInit.headers = retryHeaders;
 
-  // 4. Transparently retry request with solved proof-of-work
   const retryResponse = await fetchFn(input, retryInit);
 
-  // Record newly granted clearance if present on retry response
   if (useClearance) {
     const freshClearance = retryResponse.headers.get(clearanceHeader.toLowerCase());
     if (freshClearance) {

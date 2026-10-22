@@ -85,7 +85,7 @@ describe('Challenge Tokens', () => {
     const tamperedExp = `${parts[0]}.${parts[1]}.${Number(parts[2]) + 999999}.${parts[3]}`;
     assert.equal(verifyChallengeToken(tamperedExp, secret).valid, false);
 
-    // Attacker alters salt (guaranteed different character)
+    // Attacker alters salt (strictly different character)
     const firstChar = parts[0][0];
     const newChar = firstChar === 'a' ? 'b' : 'a';
     const tamperedSalt = `${newChar}${parts[0].slice(1)}.${parts[1]}.${parts[2]}.${parts[3]}`;

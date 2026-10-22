@@ -125,7 +125,7 @@ describe('Barstile Comprehensive Stress & Load Testing', () => {
 
   // --- 3. Persistent Clearance Concurrency Blast ---
   test('stress: 300 parallel requests using a single clearance token pass instantly', async () => {
-    const { url, close } = await startServer();
+    const { url, close } = await startServer({ clearanceQuota: 500 });
 
     try {
       // Obtain clearance

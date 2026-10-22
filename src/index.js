@@ -15,13 +15,22 @@ export {
   sha256,
   hmacSign,
   hmacVerify,
-  randomSalt
+  randomSalt,
+  extractClientIp,
+  normalizeIpSubnet,
+  getClientFingerprint,
+  RedisReplayStore,
+  AllowanceCache,
+  resolveRouteConfig,
+  extractPathname
 } from './server/index.js';
 
 // Client exports
 export {
   solve,
   solveSync,
+  solveWorker,
+  isWebWorkerSupported,
   barstileFetch,
   clearClearance,
   getActiveClearance,

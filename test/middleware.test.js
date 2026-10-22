@@ -235,4 +235,112 @@ describe('HTTP Middleware Integration', () => {
       await close();
     }
   });
+
+  test('enforces cryptographic binding: rejects clearance token when shared across different IPs', async () => {
+    const { url, close } = await createTestServer({ trustProxy: true });
+
+    try {
+      // 1. Bot 1 on IP 198.51.100.42 receives challenge and solves it
+      const initRes = await fetch(url, {
+        headers: {
+          'x-forwarded-for': '198.51.100.42',
+          'user-agent': 'BrowserClient/1.0'
+        }
+      });
+      const challenge = initRes.headers.get('x-barstile-challenge');
+      const { solution } = solveSync(challenge);
+
+      // 2. Bot 1 submits solution and receives clearance token
+      const solveRes = await fetch(url, {
+        headers: {
+          'x-forwarded-for': '198.51.100.42',
+          'user-agent': 'BrowserClient/1.0',
+          'x-barstile-solution': solution
+        }
+      });
+      assert.equal(solveRes.status, 200);
+      const clearanceToken = solveRes.headers.get('x-barstile-clearance');
+      assert.ok(clearanceToken);
+
+      // 3. Legitimate client reuses clearance from same IP -> 200 OK
+      const legitRes = await fetch(url, {
+        headers: {
+          'x-forwarded-for': '198.51.100.42',
+          'user-agent': 'BrowserClient/1.0',
+          'x-barstile-clearance': clearanceToken
+        }
+      });
+      assert.equal(legitRes.status, 200);
+      const legitBody = await legitRes.json();
+      assert.equal(legitBody.telemetry.clearance, true);
+
+      // 4. Mobile user shifts within same /24 carrier subnet (198.51.100.88) -> 200 OK
+      const mobileSubnetRes = await fetch(url, {
+        headers: {
+          'x-forwarded-for': '198.51.100.88',
+          'user-agent': 'BrowserClient/1.0',
+          'x-barstile-clearance': clearanceToken
+        }
+      });
+      assert.equal(mobileSubnetRes.status, 200);
+
+      // 5. Bot 2 on different IP (203.0.113.50) attempts to use Bot 1's clearance -> REJECTED (449)
+      const bot2Res = await fetch(url, {
+        headers: {
+          'x-forwarded-for': '203.0.113.50',
+          'user-agent': 'BrowserClient/1.0',
+          'x-barstile-clearance': clearanceToken
+        }
+      });
+      assert.equal(bot2Res.status, 449, 'Token sharing across different IPs must be rejected');
+      assert.ok(bot2Res.headers.get('x-barstile-challenge'), 'Must issue fresh challenge');
+
+      // 6. Same IP but different User-Agent (curl / python) attempts to use clearance -> REJECTED (449)
+      const botDiffUaRes = await fetch(url, {
+        headers: {
+          'x-forwarded-for': '198.51.100.42',
+          'user-agent': 'python-requests/2.31.0',
+          'x-barstile-clearance': clearanceToken
+        }
+      });
+      assert.equal(botDiffUaRes.status, 449, 'Token sharing across different User-Agents must be rejected');
+    } finally {
+      await close();
+    }
+  });
+
+  test('allows CORS preflight OPTIONS requests to pass through untouched with Access-Control-Allow-Headers', async () => {
+    const { url, close } = await createTestServer();
+
+    try {
+      const res = await fetch(url, { method: 'OPTIONS' });
+      assert.equal(res.status, 200);
+      assert.equal(res.headers.get('x-barstile-challenge'), null);
+
+      const allowHeaders = res.headers.get('access-control-allow-headers');
+      assert.ok(allowHeaders, 'Expected access-control-allow-headers');
+      assert.ok(allowHeaders.toLowerCase().includes('x-barstile-solution'));
+      assert.ok(allowHeaders.toLowerCase().includes('x-barstile-clearance'));
+    } finally {
+      await close();
+    }
+  });
+
+  test('standalone OPTIONS request without next() callback terminates with 204 No Content', async () => {
+    const middleware = barstileMiddleware({ difficulty: 2 });
+    const req = { method: 'OPTIONS', headers: {} };
+    const res = {
+      headers: {},
+      statusCode: null,
+      ended: false,
+      setHeader(k, v) { this.headers[k.toLowerCase()] = v; },
+      getHeader(k) { return this.headers[k.toLowerCase()]; },
+      end() { this.ended = true; }
+    };
+
+    await middleware(req, res);
+    assert.equal(res.statusCode, 204);
+    assert.equal(res.ended, true);
+    assert.ok(res.headers['access-control-allow-headers'].includes('x-barstile-solution'));
+  });
 });

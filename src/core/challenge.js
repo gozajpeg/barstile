@@ -12,9 +12,10 @@ export { parseChallengeToken };
  * @param {number} [options.difficulty=4] - Number of leading hex zeros required (1-8)
  * @param {number} [options.ttlMs=60000] - Expiration window in milliseconds
  * @param {string} [options.salt] - Optional custom salt
+ * @param {string} [options.context] - Optional cryptographic client context (e.g. IP subnet/UA)
  * @returns {string} Signed challenge token
  */
-export function createChallengeToken({ secret, difficulty = 4, ttlMs = 60000, salt }) {
+export function createChallengeToken({ secret, difficulty = 4, ttlMs = 60000, salt, context = '' }) {
   if (!secret || typeof secret !== 'string') {
     throw new TypeError('barstile: secret must be a non-empty string');
   }
@@ -23,7 +24,9 @@ export function createChallengeToken({ secret, difficulty = 4, ttlMs = 60000, sa
   const expiresAt = Date.now() + Math.max(1000, Math.floor(ttlMs));
   const challengeSalt = salt || randomSalt(16);
 
-  const payload = `${challengeSalt}:${numericDifficulty}:${expiresAt}`;
+  const payload = context
+    ? `${challengeSalt}:${numericDifficulty}:${expiresAt}:${context}`
+    : `${challengeSalt}:${numericDifficulty}:${expiresAt}`;
   const signature = hmacSign(payload, secret);
 
   return `${challengeSalt}.${numericDifficulty}.${expiresAt}.${signature}`;
@@ -34,10 +37,15 @@ export function createChallengeToken({ secret, difficulty = 4, ttlMs = 60000, sa
  *
  * @param {string} token
  * @param {string} secret
- * @param {number} [now=Date.now()]
+ * @param {number | { now?: number, context?: string }} [options=Date.now()]
  * @returns {{ valid: boolean, reason?: string, data?: { salt: string, difficulty: number, expiresAt: number, signature: string } }}
  */
-export function verifyChallengeToken(token, secret, now = Date.now()) {
+export function verifyChallengeToken(token, secret, options = {}) {
+  const now = typeof options === 'number' ? options : (options?.now || Date.now());
+  const context = typeof options === 'object' && options !== null
+    ? (options.context || '')
+    : (typeof options === 'string' ? options : '');
+
   const parsed = parseChallengeToken(token);
   if (!parsed) {
     return { valid: false, reason: 'malformed_challenge' };
@@ -49,7 +57,9 @@ export function verifyChallengeToken(token, secret, now = Date.now()) {
     return { valid: false, reason: 'challenge_expired' };
   }
 
-  const payload = `${salt}:${difficulty}:${expiresAt}`;
+  const payload = context
+    ? `${salt}:${difficulty}:${expiresAt}:${context}`
+    : `${salt}:${difficulty}:${expiresAt}`;
   const isValidSig = hmacVerify(payload, secret, signature);
 
   if (!isValidSig) {

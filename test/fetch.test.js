@@ -85,4 +85,23 @@ describe('Transparent barstileFetch Interceptor', () => {
       await close();
     }
   });
+
+  test('handles Request instance with body without consuming body prematurely', async () => {
+    const { url, close } = await createTestServer();
+
+    try {
+      const request = new Request(`${url}/api/request-instance`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'checkout' })
+      });
+
+      const res = await barstileFetch(request);
+      assert.equal(res.status, 200);
+      const data = await res.json();
+      assert.equal(data.protected, true);
+    } finally {
+      await close();
+    }
+  });
 });
