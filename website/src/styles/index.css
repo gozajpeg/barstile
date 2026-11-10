@@ -38,6 +38,12 @@ body {
   height: 5px;
 }
 
+/* Off-screen rendering optimization for Lighthouse performance */
+.content-lazy {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 800px;
+}
+
 ::-webkit-scrollbar-track {
   background: #07080a;
 }

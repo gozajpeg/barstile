@@ -301,7 +301,7 @@ export function CapabilitiesCarousel({
     <section
       id="capabilities"
       ref={sectionRef}
-      className="min-h-screen w-full flex flex-col justify-center py-20 select-none relative overflow-hidden"
+      className="min-h-screen w-full flex flex-col justify-center py-20 select-none relative overflow-hidden content-lazy"
     >
       {/* Background Ambient Glow: Floor Lighting facing down from middle (top has no glow) */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden z-0 select-none">

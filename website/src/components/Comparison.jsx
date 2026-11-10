@@ -7,7 +7,7 @@ export function Comparison() {
   return (
     <section
       id="architecture"
-      className="min-h-screen w-full flex flex-col items-center justify-center px-6 sm:px-12 py-24 select-none"
+      className="min-h-screen w-full flex flex-col items-center justify-center px-6 sm:px-12 py-24 select-none content-lazy"
     >
       <div className="max-w-7xl w-full mx-auto">
         {/* Section Top Heading */}

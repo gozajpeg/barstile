@@ -39,7 +39,7 @@ export function FAQ() {
   return (
     <section
       id="faq"
-      className="w-full flex flex-col items-center justify-center px-6 py-24 select-none"
+      className="w-full flex flex-col items-center justify-center px-6 py-24 select-none content-lazy"
     >
       <div className="max-w-4xl w-full mx-auto">
         {/* Section Top Heading */}

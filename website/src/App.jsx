@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, lazy, Suspense } from 'react';
 import { Navbar } from './components/Navbar.jsx';
 import { Hero } from './components/Hero.jsx';
 import { Comparison } from './components/Comparison.jsx';
@@ -7,9 +7,10 @@ import { VersionDrop } from './components/VersionDrop.jsx';
 import { FAQ } from './components/FAQ.jsx';
 import { Action } from './components/Action.jsx';
 import { Footer } from './components/Footer.jsx';
-import { DocsPage } from './pages/DocsPage.jsx';
-import { ChangelogPage } from './pages/ChangelogPage.jsx';
-import { PrivacyPage } from './pages/PrivacyPage.jsx';
+
+const DocsPage = lazy(() => import('./pages/DocsPage.jsx').then(m => ({ default: m.DocsPage })));
+const ChangelogPage = lazy(() => import('./pages/ChangelogPage.jsx').then(m => ({ default: m.ChangelogPage })));
+const PrivacyPage = lazy(() => import('./pages/PrivacyPage.jsx').then(m => ({ default: m.PrivacyPage })));
 
 export default function App() {
   const [currentView, setCurrentView] = useState('landing'); // 'landing' | 'docs' | 'changelog' | 'privacy'
@@ -26,31 +27,33 @@ export default function App() {
 
       {/* Main Content Area */}
       <div className="flex-1">
-        {currentView === 'landing' ? (
-          <main>
-            <Hero onNavigate={handleNavigate} />
-            <Comparison />
-            <CapabilitiesCarousel onNavigate={handleNavigate} />
-            <VersionDrop onNavigate={handleNavigate} />
-            <FAQ />
-            <Action onNavigate={handleNavigate} />
-          </main>
-        ) : currentView === 'docs' ? (
-          <div className="pt-14 flex flex-col min-h-screen justify-between">
-            <DocsPage onNavigate={handleNavigate} />
-            <Footer onNavigate={handleNavigate} />
-          </div>
-        ) : currentView === 'changelog' ? (
-          <div className="pt-14 flex flex-col min-h-screen justify-between">
-            <ChangelogPage onNavigate={handleNavigate} />
-            <Footer onNavigate={handleNavigate} />
-          </div>
-        ) : (
-          <div className="pt-14 flex flex-col min-h-screen justify-between">
-            <PrivacyPage onNavigate={handleNavigate} />
-            <Footer onNavigate={handleNavigate} />
-          </div>
-        )}
+        <Suspense fallback={null}>
+          {currentView === 'landing' ? (
+            <main>
+              <Hero onNavigate={handleNavigate} />
+              <Comparison />
+              <CapabilitiesCarousel onNavigate={handleNavigate} />
+              <VersionDrop onNavigate={handleNavigate} />
+              <FAQ />
+              <Action onNavigate={handleNavigate} />
+            </main>
+          ) : currentView === 'docs' ? (
+            <div className="pt-14 flex flex-col min-h-screen justify-between">
+              <DocsPage onNavigate={handleNavigate} />
+              <Footer onNavigate={handleNavigate} />
+            </div>
+          ) : currentView === 'changelog' ? (
+            <div className="pt-14 flex flex-col min-h-screen justify-between">
+              <ChangelogPage onNavigate={handleNavigate} />
+              <Footer onNavigate={handleNavigate} />
+            </div>
+          ) : (
+            <div className="pt-14 flex flex-col min-h-screen justify-between">
+              <PrivacyPage onNavigate={handleNavigate} />
+              <Footer onNavigate={handleNavigate} />
+            </div>
+          )}
+        </Suspense>
       </div>
     </div>
   );
