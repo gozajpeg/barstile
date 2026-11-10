@@ -14,13 +14,14 @@ export function Navbar({ currentView, onNavigate }) {
         <button
           onClick={() => handleNav('landing')}
           className="flex items-center gap-2 text-left group focus:outline-none cursor-pointer"
+          aria-label="Barstile home"
         >
           <BarstileLogo className="w-3.5 h-3.5 text-white transition-transform group-hover:scale-110" />
           <span className="font-semibold text-white tracking-tight text-sm">Barstile</span>
         </button>
 
         {/* Dedicated Views */}
-        <nav className="flex items-center gap-5 sm:gap-6 text-xs font-normal">
+        <nav aria-label="Main Navigation" className="flex items-center gap-5 sm:gap-6 text-xs font-normal">
           <button
             onClick={() => handleNav('docs')}
             className={`transition-colors cursor-pointer ${

@@ -40,6 +40,7 @@ export function Action({ onNavigate }) {
             onClick={handleCopy}
             className="w-full sm:w-auto h-10 flex items-center justify-between gap-3 px-4 rounded-full bg-zinc-900/90 border border-white/[0.08] hover:border-white/[0.18] text-xs font-mono text-zinc-300 transition-all hover:bg-zinc-850 active:scale-95 shadow-sm group"
             title="Click to copy"
+            aria-label="Copy npm install barstile to clipboard"
           >
             <div className="flex items-center gap-2">
               <Terminal className="w-3.5 h-3.5 text-zinc-500" />

@@ -23,6 +23,7 @@ export function Hero({ onNavigate }) {
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
                 className="w-[76px] h-[61px] sm:w-[94px] sm:h-[75px] md:w-[108px] md:h-[86px] text-white"
+                role="img"
                 aria-label="Barstile Logo"
               >
                 {/* Left eye capsule */}

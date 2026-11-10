@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://barstile.pages.dev/sitemap.xml

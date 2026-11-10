@@ -60,6 +60,8 @@ export function FAQ() {
                   type="button"
                   onClick={() => toggle(idx)}
                   className="w-full py-5 flex items-center justify-between text-left group focus:outline-none"
+                  aria-expanded={isOpen}
+                  aria-controls={`faq-answer-${idx}`}
                 >
                   <span className="text-[15px] sm:text-[16px] font-medium text-zinc-200 group-hover:text-white transition-colors pr-6">
                     {item.question}
@@ -72,6 +74,9 @@ export function FAQ() {
                 </button>
 
                 <div
+                  id={`faq-answer-${idx}`}
+                  role="region"
+                  aria-labelledby={`faq-question-${idx}`}
                   className={`overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
                     isOpen ? 'max-h-72 opacity-100 pb-5' : 'max-h-0 opacity-0 pb-0'
                   }`}

@@ -49,6 +49,7 @@ export function Footer({ onNavigate }) {
             target="_blank"
             rel="noopener noreferrer"
             className="group flex items-center gap-1.5 hover:text-white font-medium transition-colors"
+            aria-label="Barstile on GitHub"
           >
             <span>GitHub</span>
             <ArrowUpRight className="w-3.5 h-3.5 text-zinc-400 group-hover:text-white group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
@@ -58,6 +59,7 @@ export function Footer({ onNavigate }) {
             target="_blank"
             rel="noopener noreferrer"
             className="group flex items-center gap-1.5 hover:text-white font-medium transition-colors"
+            aria-label="Barstile on npm"
           >
             <span>npm</span>
             <ArrowUpRight className="w-3.5 h-3.5 text-zinc-400 group-hover:text-white group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
