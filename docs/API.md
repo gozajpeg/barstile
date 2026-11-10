@@ -1,6 +1,6 @@
 # Barstile API Reference
 
-Complete reference for all methods, options, and types exported by `barstile/server` and `barstile/client`.
+Reference documentation for methods, options, and types exported by `barstile/server` and `barstile/client`.
 
 ---
 
@@ -36,6 +36,10 @@ Creates an HTTP middleware compatible with Node.js `http.createServer`, Express,
 | `difficulty` | `number` | `4` | Number of leading hexadecimal zeros required (range: 1 to 8). |
 | `ttlMs` | `number` | `60000` | Challenge validity window in milliseconds (default: 60 seconds). |
 | `secret` | `string` | Auto-generated | HMAC secret key. If omitted, a random 256-bit key is generated at startup. |
+| `adaptiveRisk` | `boolean` | `false` | Enables multi-factor risk assessment. Adjusts PoW difficulty based on client risk. |
+| `allowSilentPass` | `boolean` | `false` | Grants instant clearance to verified low-risk human clients without requiring PoW calculations. |
+| `blockBots` | `boolean` | `false` | Immediately rejects automated browsers (Puppeteer, Selenium, Playwright) with HTTP 403. |
+| `telemetryHeader` | `string` | `'x-barstile-telemetry'` | Request header inspected for browser probe telemetry. |
 | `replayCache` | `ReplayCache` | `new ReplayCache()` | Custom replay cache instance. |
 | `replayStore` | `any` | `undefined` | Pluggable replay store or cache instance. |
 | `redis` | `any` | `undefined` | Redis client instance (e.g. ioredis, @redis/client) for multi-server replay defense. |
@@ -51,6 +55,7 @@ Creates an HTTP middleware compatible with Node.js `http.createServer`, Express,
 | `headerName` | `string` | `'x-barstile-solution'` | Header name inspected for the client solution. |
 | `challengeHeader` | `string` | `'X-Barstile-Challenge'` | Header name written on `449 Retry With` responses. |
 | `routes` | `Record<string, number \| Object>` | `undefined` | Route-specific rules and method overrides for adaptive difficulty and clearance settings. |
+| `tarpit` | `boolean \| Object \| TarpitTracker` | `undefined` | Memory-bounded IP sliding-window rate limiter and connection tarpitting engine for abusive clients. |
 | `maxPreChallengeBodyBytes` | `number` | `65536` | Maximum payload size (bytes) permitted for unverified requests before solving PoW (default: 64KB). Set to `0` to disable. |
 
 #### Route-Specific Adaptive Difficulty (`options.routes`)
@@ -82,9 +87,36 @@ app.use(barstileMiddleware({
 }));
 ```
 
+#### Adaptive Tarpit & IP Rate Limiting (`options.tarpit`)
+
+To throttle unverified request floods and penalize repeated invalid solutions, enable the tarpit engine:
+
+```javascript
+app.use(barstileMiddleware({
+  tarpit: {
+    maxRequests: 60,                   // 60 requests allowed per sliding window
+    windowMs: 60000,                   // 60-second sliding window
+    consecutiveFailureThreshold: 5,    // 5 failed verifications put client in penalty state
+    tarpitDelayMs: 3000,               // Penalty quarantine duration in ms
+    delayMs: 2000,                     // Non-blocking response delay in ms for violators
+    dropSocket: true                   // Reset TCP socket immediately for abusive floods
+  }
+}));
+```
+
+| Sub-Option | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `maxRequests` | `number` | `60` | Maximum unverified requests permitted per sliding window. |
+| `windowMs` | `number` | `60000` | Sliding rate limit window in milliseconds. |
+| `consecutiveFailureThreshold` | `number` | `5` | Number of failed verification attempts before penalty triggers. |
+| `tarpitDelayMs` | `number` | `3000` | Penalty quarantine duration in milliseconds. |
+| `delayMs` | `number` | `0` | Artificial non-blocking delay in milliseconds before returning error. |
+| `dropSocket` | `boolean` | `false` | Immediately terminates TCP socket on limit violation. |
+| `maxTrackedIps` | `number` | `10000` | Hard cap on tracked IP buckets. Enforces LRU eviction to bound memory under 5MB. |
+
 #### Recommended Middleware Placement (Memory and DoS Protection)
 
-To prevent bots from forcing Node.js to buffer large request payloads into RAM before PoW verification, always mount `barstileMiddleware()` **before** body parsing middleware:
+To prevent bots from forcing Node.js to buffer large request payloads into RAM before PoW verification, mount `barstileMiddleware()` **before** body parsing middleware:
 
 ```javascript
 // Recommended: Barstile intercepts unverified requests in microseconds before body allocation
@@ -94,6 +126,22 @@ app.use(express.urlencoded({ extended: true }));
 ```
 
 If an unverified client attempts to send an oversized payload exceeding `maxPreChallengeBodyBytes` (default: 64KB), Barstile closes the connection immediately, aborts the stream, and returns HTTP 449 with a challenge without allocating heap memory for the body.
+
+#### Built-in Dedicated Endpoints
+
+When `barstileMiddleware()` is mounted, it automatically handles two dedicated verification routes:
+
+1. **`GET /api/barstile/challenge`**:
+   Issues a fresh challenge token for frontend widgets or asynchronous solvers.
+   * Status: `200 OK`
+   * Response: `{ challenge: string, header: string }`
+
+2. **`POST /api/barstile/verify`**:
+   Receives the client PoW solution and telemetry probe envelope.
+   * If automated tools (Puppeteer, Playwright, Selenium) are detected and `blockBots: true`, returns HTTP 403 `automation_detected`.
+   * If telemetry is omitted when `blockBots: true`, returns HTTP 403 `telemetry_required`.
+   * If challenge salt does not match probe salt, returns HTTP 403 `telemetry_replay_detected`.
+   * If mathematical solution is valid, returns HTTP 200 `{ verified: true, clearance: string, remaining: number }` and sets the `Set-Cookie` clearance header.
 
 #### Behavior
 
@@ -298,12 +346,71 @@ Memory-bounded request budget tracker used by Barstile to cap the number of requ
 
 ---
 
+### `TarpitTracker(options)`
+
+Memory-bounded sliding-window rate limiter and quarantine penalty tracker. Caps memory usage by enforcing an LRU eviction policy across tracked client IP records.
+
+#### Parameters
+
+`options` (Object, optional):
+
+| Parameter | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `maxTrackedIps` | `number` | `10000` | Maximum number of IP records retained in memory before oldest is evicted. |
+| `windowMs` | `number` | `60000` | Sliding rate limit window duration in milliseconds. |
+| `maxRequests` | `number` | `60` | Maximum unverified requests permitted per window. |
+| `consecutiveFailureThreshold` | `number` | `5` | Failed verification attempts before triggering penalty quarantine. |
+| `tarpitDelayMs` | `number` | `3000` | Duration of penalty quarantine state in milliseconds. |
+| `pruneIntervalMs` | `number` | `30000` | Periodic cleanup interval in milliseconds for expired IP records. |
+
+#### Methods
+
+* `tracker.recordRequest(ip, now = Date.now())`: Evaluates and records an incoming request. Returns `{ allowed: boolean, count: number, remaining: number, penalized: boolean }`.
+* `tracker.recordFailure(ip, now = Date.now())`: Increments consecutive failure counter for the IP. Quarantines IP if threshold is reached. Returns `{ penalized: boolean, failureCount: number }`.
+* `tracker.recordSuccess(ip, now = Date.now())`: Clears consecutive failure counter and lifts penalty state.
+* `tracker.isPenalized(ip, now = Date.now())`: Returns `true` if the IP is currently in penalty quarantine.
+* `tracker.prune(now = Date.now())`: Sweeps and deletes inactive or expired IP records.
+* `tracker.destroy()`: Cleans up background interval timers and clears the in-memory map.
+
+---
+
+### `calculateRiskScore(params)`
+
+Computes multi-factor risk assessment combining HTTP headers, browser environment probe telemetry, and user interaction signals.
+
+#### Parameters
+
+`params` (Object, optional):
+
+| Parameter | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `params.headers` | `Object` | `{}` | Incoming HTTP request headers. |
+| `params.probe` | `Object` | `null` | Decoded browser probe telemetry object from `decodeProbeTelemetry()`. |
+| `params.behavior` | `Object` | `null` | Passive behavioral metrics from `createBehaviorTracker()`. |
+
+#### Return Value
+
+```javascript
+{
+  score: 0.15,                            // Risk score from 0.0 (clean human) to 1.0 (bot)
+  action: 'pass',                         // Recommended action: 'pass' | 'challenge' | 'block'
+  recommendedDifficulty: 0,              // Target PoW difficulty if challenged (0 for pass)
+  factors: ['organic_pointer_curvature']  // List of triggering security heuristics
+}
+```
+
+---
+
 ## Client Module (`barstile/client`)
 
 Import path:
 ```javascript
 import {
   barstileFetch,
+  renderWidget,
+  autoInitializeWidgets,
+  collectBrowserProbe,
+  createBehaviorTracker,
   solve,
   solveSync,
   solveWorker,
@@ -445,3 +552,167 @@ Pure JavaScript SHA-256 implementation using 32-bit typed arrays. Zero dependenc
 #### Return Value
 
 * `string`: 64-character lowercase hexadecimal hash.
+
+---
+
+### `renderWidget(target, options)`
+
+Mounts a Turnstile-style verification box inside a container element or CSS selector. Automatically injects a hidden `<input name="barstile-token">` and binds to parent form submit events.
+
+#### Parameters
+
+* `target` (`HTMLElement | string`): Container DOM element or CSS selector string.
+* `options` (Object, optional):
+  * `mode` (`'interactive' | 'invisible'`, default: `'interactive'`): Display mode. Interactive renders a checkbox UI. Invisible solves in the background without UI.
+  * `challengeUrl` (`string`, default: `'/api/barstile/challenge'`): Endpoint to fetch the challenge token.
+  * `verifyUrl` (`string`, default: `'/api/barstile/verify'`): Endpoint to verify solution and telemetry.
+  * `onSuccess` (`(token: string) => void`, optional): Callback invoked when verification completes.
+  * `onError` (`(err: Error) => void`, optional): Callback invoked on network or verification error.
+
+#### Return Value
+
+Returns a widget controller instance:
+
+```javascript
+{
+  getToken: () => string | null,                       // Current clearance token or null
+  getStatus: () => 'idle' | 'solving' | 'verified' | 'error', // Current widget lifecycle state
+  verify: () => Promise<string>,                      // Triggers or awaits verification
+  destroy: () => void                                 // Removes form listeners and clears container
+}
+```
+
+---
+
+### `autoInitializeWidgets()`
+
+Scans the active document for elements matching `.barstile-widget` or `[data-barstile]` and initializes them.
+
+Reads the following data attributes:
+* `data-mode`: `'interactive'` (default) or `'invisible'`.
+* `data-challenge-url`: Challenge endpoint URL (default: `'/api/barstile/challenge'`).
+* `data-verify-url`: Verification endpoint URL (default: `'/api/barstile/verify'`).
+
+* Returns: `Array<WidgetController>`
+
+---
+
+### `collectBrowserProbe(win)`
+
+Gathers client runtime integrity markers and automation indicators without collecting private user information.
+
+#### Parameters
+
+* `win` (`Window`, optional): Target window object (defaults to global window).
+
+#### Return Value
+
+```javascript
+{
+  isBrowser: true,
+  automation: {
+    isAutomated: false,
+    markers: [] // e.g. ['webdriver_active']
+  },
+  anomalies: [], // e.g. ['zero_outer_dimensions']
+  renderer: {
+    renderer: "ANGLE (NVIDIA...)",
+    vendor: "Google Inc.",
+    isSoftwareRasterizer: false
+  },
+  tampered: [], // e.g. ['Function.prototype.toString']
+  hardware: {
+    concurrency: 8,
+    deviceMemory: 8,
+    platform: "Win32",
+    languagesCount: 2
+  }
+}
+```
+
+---
+
+### `createBehaviorTracker(win)`
+
+Tracks passive pointer movement curvature and key intervals to differentiate natural human movement from automated linear scripts.
+
+#### Parameters
+
+* `win` (`Window`, optional): Target window object.
+
+#### Return Value
+
+```javascript
+{
+  getTelemetry: () => ({
+    active: true,
+    hasInteracted: true,
+    moves: 42,
+    curvedTransitions: 28,
+    linearTransitions: 2,
+    curvatureRatio: 0.93,
+    keyCount: 5
+  }),
+  stop: () => void // Detaches event listeners
+}
+```
+
+---
+
+## Frameworks Module (`barstile/react`)
+
+Import path:
+```javascript
+import { BarstileWidget } from 'barstile/react';
+```
+
+### `BarstileWidget(props)`
+
+Drop-in verification widget component for React and Next.js applications. SSR-safe and built using native `React.createElement` with zero JSX build dependencies.
+
+#### Props
+
+| Prop | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `mode` | `'interactive' \| 'invisible'` | `'interactive'` | Widget interaction mode. |
+| `challengeUrl` | `string` | `'/api/barstile/challenge'` | Dedicated challenge endpoint URL. |
+| `verifyUrl` | `string` | `'/api/barstile/verify'` | Dedicated verification endpoint URL. |
+| `onSuccess` | `(token: string) => void` | `undefined` | Callback invoked upon successful solve with issued token. |
+| `onError` | `(error: Error) => void` | `undefined` | Callback invoked upon verification failure. |
+| `className` | `string` | `undefined` | Optional CSS class name applied to wrapper container. |
+| `style` | `Object` | `undefined` | Optional inline styles applied to wrapper container. |
+
+---
+
+## Web Component Module (`barstile/web-component`)
+
+Import path:
+```javascript
+import 'barstile/web-component';
+// Or import the class directly:
+import { BarstileWidgetElement } from 'barstile/web-component';
+```
+
+### `<barstile-widget>` / `BarstileWidgetElement`
+
+Standard HTML5 Custom Element compatible with any modern web framework (Vue, Svelte, Angular, Solid) or vanilla HTML forms.
+
+#### Attributes
+
+| Attribute | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `data-mode` | `'interactive' \| 'invisible'` | `'interactive'` | Verification mode. |
+| `data-challenge-url` | `string` | `'/api/barstile/challenge'` | Challenge endpoint URL. |
+| `data-verify-url` | `string` | `'/api/barstile/verify'` | Verification endpoint URL. |
+
+#### Custom Events
+
+* `barstile-success`: Dispatched on successful verification. Access token via `event.detail.token`.
+* `barstile-error`: Dispatched on verification failure. Access error via `event.detail.error`.
+
+#### Methods
+
+* `element.verify()`: Programmatically triggers the verification flow. Returns a Promise resolving to the token string.
+* `element.getToken()`: Returns the active clearance token, or `null`.
+* `element.getStatus()`: Returns current widget status (`'idle'`, `'verifying'`, `'success'`, `'error'`).
+* `element.destroy()`: Disconnects listeners and cleans up internal references.

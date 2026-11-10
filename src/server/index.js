@@ -8,3 +8,11 @@ export { generateSecret, sha256, hmacSign, hmacVerify, randomSalt } from '../cor
 export { extractClientIp, normalizeIpSubnet, getClientFingerprint } from '../core/fingerprint.js';
 export { resolveRouteConfig, extractPathname } from '../core/route.js';
 export { RedisReplayStore } from './redis.js';
+export { TarpitTracker } from '../core/tarpit.js';
+export {
+  calculateRiskScore,
+  evaluateHeaderHeuristics,
+  evaluateProbeTelemetry,
+  evaluateBehaviorTelemetry
+} from '../core/risk.js';
+export { decodeProbeTelemetry, encodeProbeTelemetry } from '../client/probe.js';

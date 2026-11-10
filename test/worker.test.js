@@ -28,7 +28,7 @@ describe('Web Worker Solver Mode (Flaw 6)', () => {
   });
 
   test('solveWorker honors AbortSignal during solve', async () => {
-    const challenge = createChallengeToken({ secret, difficulty: 5 });
+    const challenge = createChallengeToken({ secret, difficulty: 7 });
     const controller = new AbortController();
 
     // Abort after 5ms
@@ -36,7 +36,7 @@ describe('Web Worker Solver Mode (Flaw 6)', () => {
 
     await assert.rejects(
       async () => {
-        await solveWorker(challenge, { signal: controller.signal });
+        await solveWorker(challenge, { signal: controller.signal, chunkSize: 100 });
       },
       (err) => err.name === 'AbortError'
     );

@@ -1,8 +1,8 @@
 <div align="center">
-  <img src="https://raw.githubusercontent.com/gozajpeg/barstile/main/assets/barstile.webp" alt="barstile logo" width="340" />
+  <img src="https://raw.githubusercontent.com/gozajpeg/barstile/main/assets/barstile.svg" alt="barstile logo" width="120" />
   <h1>barstile</h1>
   <p><strong>Self-hosted, non-interactive bot protection.</strong></p>
-  <p>Protects endpoints and forms from automated bots without visual puzzles, third-party trackers, or human friction.</p>
+  <p>Protects endpoints and forms from automated bots without visual puzzles or third-party trackers.</p>
 
   <p>
     <a href="https://nodejs.org"><img src="https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg?style=flat-square" alt="node version" /></a>
@@ -16,26 +16,50 @@
 
 ## Documentation Guides
 
-* [Live Simulator & Interactive Showcase](https://gozajpeg.github.io/barstile/): Live in-browser Proof-of-Work playground and scrollytelling walkthrough.
-* [API Reference](docs/API.md): Complete parameter tables, options, and return types for server and client.
+* [API Reference](docs/API.md): Parameter tables, options, and return types for server and client.
 * [Architecture & Protocol](docs/ARCHITECTURE.md): Token format, HTTP 449 handshake sequence, and replay cache lifecycle.
 * [Security Model](docs/SECURITY.md): Threat mitigation boundaries, timing attack defense, and cluster considerations.
 
 ---
 
+<a href="https://barstile.pages.dev">
+  <img src="https://raw.githubusercontent.com/gozajpeg/barstile/main/assets/barstile.svg" alt="Barstile Website" width="120" />
+</a>
+
+---
+
 ## What Does Barstile Export?
 
-Barstile provides two clean entry points:
+Barstile provides four entry points:
 
 ### 1. Server (`barstile/server`)
-* `barstileMiddleware()`: HTTP middleware for native Node.js `http`, Express, Connect, or Fastify.
-* `createBarstile()`: Engine to generate challenges and verify solutions programmatically.
+* `barstileMiddleware()`: HTTP middleware for native Node.js `http`, Express, Connect, and Fastify.
+* `createBarstile()`: Engine to create challenges and verify solutions directly in code.
+* `TarpitTracker`: Memory-bounded sliding-window rate limiter and quarantine penalty tracker.
+* `calculateRiskScore()`: Multi-factor risk scorer analyzing headers, probe telemetry, and behavior.
+* `decodeProbeTelemetry()`: Decodes and inspects client environment probe payloads.
+* `verifySolution()`: Verifies a single Proof-of-Work solution string or object.
+* `createChallengeToken()` / `verifyChallengeToken()`: Generates and validates signed challenge tokens.
+* `createClearanceToken()` / `verifyClearanceToken()`: Issues and checks time-limited clearance tokens.
+* `ReplayCache` / `RedisReplayStore`: In-memory or Redis-backed replay protection stores.
+* `AllowanceCache`: Tracks per-token request budgets and limits request bursts.
 
 ### 2. Client (`barstile/client`)
-* `barstileFetch()`: Wrapper around `fetch()` that detects challenges, offloads solving to background Web Workers, and retries automatically.
-* `solveWorker()`: Inline Web Worker solver keeping the browser UI thread free and responsive.
-* `solve()`: Non-blocking asynchronous solver for browsers with automatic event-loop yielding.
-* `solveSync()`: Synchronous solver for background threads and scripts.
+* `barstileFetch()`: Drop-in wrapper around `fetch()` that detects challenges, solves them in background workers, and retries automatically.
+* `renderWidget()`: Turnstile-style verification widget for HTML forms with accessible checkbox UI.
+* `autoInitializeWidgets()`: Finds all `.barstile-widget` elements on the page and mounts widgets.
+* `collectBrowserProbe()`: Collects browser runtime signals and automation markers.
+* `createBehaviorTracker()`: Tracks passive pointer and key movement patterns.
+* `solveWorker()`: Solves Proof-of-Work challenges inside an inline Web Worker without blocking the main UI thread.
+* `solve()`: Asynchronous solver that yields to the browser event loop during calculation.
+* `solveSync()`: Synchronous solver for background worker scripts.
+* `getActiveClearance()` / `clearClearance()`: Reads or clears the active in-memory clearance token.
+
+### 3. React (`barstile/react`)
+* `BarstileWidget`: SSR-safe React component for Next.js and React. Wraps the widget without JSX build steps or runtime dependencies.
+
+### 4. Web Component (`barstile/web-component`)
+* `<barstile-widget>` (`BarstileWidgetElement`): Standard HTML5 custom element for Vue, Svelte, Angular, Solid, or vanilla HTML.
 
 ---
 
@@ -96,9 +120,90 @@ Legitimate users experience a brief background calculation (typically 2 to 50 ms
 
 ---
 
-### 3. Route & Method Adaptive Difficulty
+### 3. Turnstile-Style HTML Form Widget
 
-Barstile allows configuring route-specific difficulty and clearance rules with zero complex setup. Set higher difficulty on sensitive actions while keeping public browsing fast:
+Protect HTML forms with a self-hosted verification box. Zero third-party trackers, zero external CSS files, and zero visual puzzle captchas:
+
+```html
+<form action="/login" method="POST">
+  <input type="text" name="username" placeholder="Username" required />
+  <input type="password" name="password" placeholder="Password" required />
+
+  <!-- The widget injects a hidden <input name="barstile-token"> automatically -->
+  <div class="barstile-widget"></div>
+
+  <button type="submit">Log in</button>
+</form>
+
+<script type="module">
+  import { autoInitializeWidgets } from 'barstile/client';
+  autoInitializeWidgets();
+</script>
+```
+
+You can also mount a widget programmatically on any DOM element:
+
+```javascript
+import { renderWidget } from 'barstile/client';
+
+const widget = renderWidget('#captcha-container', {
+  challengeUrl: '/api/barstile/challenge',
+  verifyUrl: '/api/barstile/verify',
+  onSuccess: (token) => console.log('Clearance token ready:', token),
+  onError: (err) => console.error('Verification failed:', err)
+});
+```
+
+#### React & Next.js (`barstile/react`)
+
+```jsx
+import { BarstileWidget } from 'barstile/react';
+
+export default function LoginForm() {
+  return (
+    <form action="/login" method="POST">
+      <input type="text" name="username" required />
+      <input type="password" name="password" required />
+      <BarstileWidget mode="interactive" />
+      <button type="submit">Log in</button>
+    </form>
+  );
+}
+```
+
+#### Native Web Component (`barstile/web-component`)
+
+```html
+<script type="module" src="node_modules/barstile/src/client/web-component.js"></script>
+
+<form action="/login" method="POST">
+  <barstile-widget data-mode="interactive"></barstile-widget>
+  <button type="submit">Log in</button>
+</form>
+```
+
+---
+
+### 4. Anti-Bot and Adaptive Risk Protection
+
+Barstile includes multi-factor risk scoring to adjust difficulty automatically and block automated scrapers:
+
+```javascript
+import { barstileMiddleware } from 'barstile/server';
+
+app.use(barstileMiddleware({
+  difficulty: 3,         // Base difficulty
+  adaptiveRisk: true,    // Increases difficulty for suspicious clients
+  allowSilentPass: true, // Trusted humans skip Proof-of-Work calculations
+  blockBots: true        // Rejects headless browsers (Puppeteer, Selenium, Playwright)
+}));
+```
+
+---
+
+### 5. Route & Method Adaptive Difficulty
+
+Barstile supports route-specific difficulty and clearance rules. Set higher difficulty on sensitive actions while keeping public browsing fast:
 
 ```javascript
 import { barstileMiddleware } from 'barstile/server';
@@ -126,7 +231,7 @@ By default, Barstile requires zero external configuration, environment variables
 app.use(barstileMiddleware());
 ```
 
-Even across multi-server deployments without Redis, Barstile automatically binds challenges and clearance tokens to the client IP subnet (`/24` for IPv4, `/64` for IPv6) and User-Agent signature. A challenge solved on one server cannot be submitted by another client or bot machine on another server.
+Across multi-server deployments without Redis, Barstile binds challenges and clearance tokens to the client IP subnet (`/24` for IPv4, `/64` for IPv6) and User-Agent signature. A challenge solved by one client cannot be reused by another client machine on a different IP subnet. For synchronized cross-node replay prevention in clusters, configure Redis.
 
 ### 2. Distributed Clusters with Redis (Optional)
 If your application runs across multiple pods behind a round-robin load balancer and you already use Redis, pass your existing Redis client instance directly:
@@ -140,7 +245,7 @@ const redis = new Redis(process.env.REDIS_URL);
 app.use(barstileMiddleware({ redis }));
 ```
 
-Barstile uses atomic `SET key 1 EX ttl NX` operations, eliminating race conditions across nodes. If Redis ever experiences network hiccups, Barstile automatically and gracefully falls back to local memory without throwing or crashing.
+Barstile uses atomic `SET key 1 EX ttl NX` operations, mitigating race windows across nodes. If Redis experiences network interruptions, Barstile falls back to local memory.
 
 ---
 
@@ -232,7 +337,7 @@ console.log(result.solution); // "salt.diff.exp.sig:nonce"
 5. **Clearance Request Allowance**: Clearance tokens carry a request quota (default: 100 requests). An attacker cannot solve 1 challenge and scrape 50,000 pages; once exhausted, a fresh challenge is required.
 6. **Pre-Challenge Body Guard**: Incoming requests without a valid solution or clearance token are challenged in microseconds before request body parsing occurs. Oversized pre-challenge payloads are rejected immediately, protecting server heap memory from buffer exhaustion.
 
-See [docs/SECURITY.md](docs/SECURITY.md) for full threat model details.
+See [docs/SECURITY.md](docs/SECURITY.md) for threat model details and operational trade-offs.
 
 ---
 

@@ -1,5 +1,6 @@
 import { solve } from './solver.js';
 import { solveWorker } from './worker.js';
+import { collectBrowserProbe, encodeProbeTelemetry } from './probe.js';
 
 let storedClearance = null;
 let storedClearanceExpiresAt = 0;
@@ -135,6 +136,18 @@ export async function barstileFetch(input, init = {}, options = {}) {
   const retryInit = { ...init };
   const retryHeaders = new Headers(existingHeaders);
   retryHeaders.set(solutionHeader, solutionResult.solution);
+
+  if (options.telemetry !== false) {
+    try {
+      const [salt] = challenge.split('.');
+      const probe = collectBrowserProbe(typeof window !== 'undefined' ? window : null);
+      const telemetryEnvelope = encodeProbeTelemetry(probe, salt);
+      retryHeaders.set(options.telemetryHeader || 'X-Barstile-Telemetry', telemetryEnvelope);
+    } catch {
+      // Telemetry collection should not block legitimate retry
+    }
+  }
+
   retryInit.headers = retryHeaders;
 
   const retryResponse = await fetchFn(input, retryInit);

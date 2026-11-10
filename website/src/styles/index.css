@@ -1,0 +1,298 @@
+/* -------------------------------------------------------------------------- */
+/* Local Self-Hosted Fonts (Zero third-party requests)                        */
+/* -------------------------------------------------------------------------- */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/inter-variable.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 100 800;
+  font-display: swap;
+  src: url('/fonts/jetbrains-mono-variable.woff2') format('woff2');
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  background-color: #07080a;
+  color: #eceff4;
+  overflow-x: hidden;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+}
+
+/* Subtle dark scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: #07080a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1e2028;
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #2e323e;
+}
+
+/* Specular glass surface with border illumination */
+.hud-card {
+  position: relative;
+  background: rgba(14, 15, 19, 0.7);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.hud-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: radial-gradient(
+    400px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+    rgba(255, 255, 255, 0.15),
+    transparent 60%
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* Large display typography with vertical fade matching user reference */
+.header-fade {
+  background: linear-gradient(180deg, #FFFFFF 15%, rgba(255, 255, 255, 0.45) 60%, rgba(255, 255, 255, 0) 98%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Subtle circuit grid line animation */
+@keyframes circuitPulse {
+  0% { transform: translateX(-100%); opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { transform: translateX(200%); opacity: 0; }
+}
+
+.animate-circuit-pulse {
+  animation: circuitPulse 2.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* Linear Blueprint Isometric Wireframe Keyframes */
+@keyframes serverFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes ledPulse {
+  0%, 100% {
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 0.55;
+    filter: drop-shadow(0 0 1.5px rgba(255, 255, 255, 0.2));
+  }
+}
+
+@keyframes busPulse {
+  0% {
+    stroke-dashoffset: 40;
+    opacity: 0.1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0.1;
+  }
+}
+
+/* Staggered slide-in while blurred, then unified snap into crystal focus */
+@keyframes wordSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes snapFocus {
+  from {
+    filter: blur(8px);
+  }
+  to {
+    filter: blur(0);
+  }
+}
+
+.animate-word-blurred {
+  opacity: 0;
+  filter: blur(8px);
+  animation:
+    wordSlideIn 350ms cubic-bezier(0.16, 1, 0.3, 1) var(--slide-delay, 100ms) forwards,
+    snapFocus 450ms cubic-bezier(0.16, 1, 0.3, 1) 750ms forwards;
+  will-change: transform, opacity, filter;
+}
+
+/* Crisp ease-in fade & slide for action buttons (no blur) */
+@keyframes easeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-ease-in-up {
+  animation: easeInUp 1000ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: opacity, transform;
+}
+
+/* Animated moving line at button outline */
+@keyframes borderBeam {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-border-beam {
+  animation: borderBeam 4s linear infinite;
+}
+
+/* 1. Fluid left-to-right drawing animation with continuous cubic-bezier */
+@keyframes drawArcLine {
+  from {
+    stroke-dashoffset: 100;
+    opacity: 0;
+  }
+  to {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+}
+
+/* 2. Natural, silky ease-out dissolve */
+@keyframes dissolveArcLine {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.animate-draw-arc {
+  opacity: 0;
+  stroke-dashoffset: 100;
+  filter: drop-shadow(0 0 2.5px rgba(255, 255, 255, 0.4));
+  animation:
+    drawArcLine 1800ms cubic-bezier(0.16, 1, 0.3, 1) 400ms both,
+    dissolveArcLine 1200ms cubic-bezier(0.25, 0.1, 0.25, 1) 2100ms forwards;
+  will-change: stroke-dashoffset, opacity;
+}
+
+/* Smooth fade-in for the arc inner glow */
+@keyframes innerGlowFade {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.animate-inner-glow {
+  animation: innerGlowFade 1500ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: 1400ms;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Barstile Eyes Logo: Wake / Open & Fluid Continuous Blinking                */
+/* -------------------------------------------------------------------------- */
+@keyframes eyeWake {
+  0% {
+    opacity: 0;
+    transform: scaleY(0.04);
+    filter: drop-shadow(0 0 0px rgba(255, 255, 255, 0));
+  }
+  25% {
+    opacity: 1;
+    transform: scaleY(0.08);
+    filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.45));
+  }
+  75% {
+    opacity: 1;
+    transform: scaleY(1.08);
+  }
+  100% {
+    opacity: 1;
+    transform: scaleY(1);
+    filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.25));
+  }
+}
+
+.animate-eye-wake {
+  opacity: 0;
+  transform: scaleY(0.04);
+  animation: eyeWake 650ms cubic-bezier(0.16, 1, 0.3, 1) 1350ms forwards;
+  will-change: transform, opacity, filter;
+}
+
+@keyframes eyeBlink {
+  0%, 84%, 100% {
+    transform: scaleY(1);
+  }
+  86% {
+    transform: scaleY(0.06);
+  }
+  88% {
+    transform: scaleY(1);
+  }
+  90% {
+    transform: scaleY(0.3);
+  }
+  92% {
+    transform: scaleY(1);
+  }
+}
+
+.animate-eye-blink {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: eyeBlink 5.2s cubic-bezier(0.25, 0.1, 0.25, 1) 2000ms infinite;
+  will-change: transform;
+}

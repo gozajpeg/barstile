@@ -7,7 +7,9 @@
   "exports": {
     ".": "./src/index.js",
     "./server": "./src/server/index.js",
-    "./client": "./src/client/index.js"
+    "./client": "./src/client/index.js",
+    "./react": "./src/frameworks/react.js",
+    "./web-component": "./src/client/web-component.js"
   },
   "repository": {
     "type": "git",
@@ -20,7 +22,8 @@
   "files": [
     "src",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "assets"
   ],
   "scripts": {
     "test": "node --test test/**/*.test.js",
@@ -44,6 +47,14 @@
   "license": "MIT",
   "engines": {
     "node": ">=18.0.0"
+  },
+  "peerDependencies": {
+    "react": ">=16.8.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
   },
   "dependencies": {},
   "devDependencies": {}

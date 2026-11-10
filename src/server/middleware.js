@@ -1,6 +1,9 @@
 import { Barstile } from './barstile.js';
-import { getClientFingerprint } from '../core/fingerprint.js';
-import { resolveRouteConfig } from '../core/route.js';
+import { getClientFingerprint, extractClientIp } from '../core/fingerprint.js';
+import { resolveRouteConfig, extractPathname } from '../core/route.js';
+import { calculateRiskScore } from '../core/risk.js';
+import { decodeProbeTelemetry } from '../client/probe.js';
+import { TarpitTracker } from '../core/tarpit.js';
 
 /**
  * Appends a header to Access-Control-Expose-Headers without overwriting existing exposed headers.
@@ -141,6 +144,10 @@ function discardStream(req, maxBytes = 65536) {
  * @returns {(req: any, res: any, next: (err?: any) => void) => void}
  */
 export function barstileMiddleware(options = {}) {
+  if (!options.secret && process.env.NODE_ENV === 'production') {
+    console.warn('[barstile] Warning: No secret provided in options. Multi-instance setups will reject cross-server tokens.');
+  }
+
   const customEngine = options.barstile || options.engine;
   const engine = customEngine instanceof Barstile
     ? customEngine
@@ -169,6 +176,18 @@ export function barstileMiddleware(options = {}) {
   const quotaHeader = (options.quotaHeader || 'x-barstile-remaining').toLowerCase();
   const statusCode = options.statusCode || 449;
 
+  const tarpitOpt = options.tarpit;
+  const enableTarpit = Boolean(tarpitOpt);
+  const tarpitTracker = enableTarpit
+    ? (tarpitOpt instanceof TarpitTracker
+        ? tarpitOpt
+        : new TarpitTracker(typeof tarpitOpt === 'object' && tarpitOpt !== null ? tarpitOpt : {}))
+    : null;
+  const tarpitDropSocket = typeof tarpitOpt === 'object' && tarpitOpt !== null ? Boolean(tarpitOpt.dropSocket) : false;
+  const tarpitDelayMs = typeof tarpitOpt === 'object' && tarpitOpt !== null && Number.isFinite(tarpitOpt.delayMs)
+    ? Math.max(0, Math.floor(tarpitOpt.delayMs))
+    : (tarpitTracker ? tarpitTracker.tarpitDelayMs : 3000);
+
   return async function middleware(req, res, next) {
     if (res.headersSent) {
       return next ? next() : undefined;
@@ -186,8 +205,51 @@ export function barstileMiddleware(options = {}) {
         return res.end();
       }
 
-      if (typeof options.shouldChallenge === 'function' && !options.shouldChallenge(req)) {
-        return next ? next() : undefined;
+      const clientIp = extractClientIp(req, { trustProxy: Boolean(options.trustProxy) });
+
+      // Adaptive tarpit & IP flood rate limit check
+      if (enableTarpit && tarpitTracker) {
+        const reqCheck = tarpitTracker.recordRequest(clientIp);
+        if (!reqCheck.allowed || reqCheck.penalized) {
+          if (tarpitDropSocket) {
+            if (req.socket && typeof req.socket.destroy === 'function') {
+              req.socket.destroy();
+            } else if (typeof req.destroy === 'function') {
+              req.destroy();
+            }
+            return;
+          }
+
+          if (tarpitDelayMs > 0) {
+            await new Promise((resolve) => {
+              let timer = setTimeout(resolve, tarpitDelayMs);
+              const onReqClose = () => {
+                if (timer) {
+                  clearTimeout(timer);
+                  timer = null;
+                }
+                resolve();
+              };
+              if (typeof req.once === 'function') {
+                req.once('close', onReqClose);
+              }
+            });
+          }
+
+          if (res.destroyed || res.writableEnded) return;
+
+          discardStream(req, 0);
+          res.statusCode = 429;
+          res.setHeader('Content-Type', 'application/json');
+          res.setHeader('Connection', 'close');
+          return res.end(
+            JSON.stringify({
+              error: 'tarpit_limit_exceeded',
+              message: 'Too many requests. Please slow down.',
+              penalized: Boolean(reqCheck.penalized)
+            })
+          );
+        }
       }
 
       // Compute cryptographic client fingerprint to bind clearance tokens and challenges
@@ -210,10 +272,157 @@ export function barstileMiddleware(options = {}) {
       const effectiveClearance = enableClearance && routeConfig.clearance;
       const effectiveQuota = routeConfig.clearanceQuota;
 
+      const pathname = extractPathname(req);
+      const telemetryHeader = (options.telemetryHeader || 'x-barstile-telemetry').toLowerCase();
+
+      const rawTelemetry =
+        req.headers?.[telemetryHeader] ||
+        req.query?.barstile_telemetry ||
+        (typeof req.body === 'object' && req.body !== null
+          ? req.body.telemetry || req.body.barstile_telemetry
+          : null);
+
+      const probe = rawTelemetry ? decodeProbeTelemetry(rawTelemetry) : null;
+      const behavior = typeof req.body === 'object' && req.body !== null ? req.body.behavior : null;
+
+      const solution =
+        req.headers?.[solutionHeader] ||
+        req.query?.barstile_solution ||
+        (typeof req.body === 'object' && req.body !== null
+          ? req.body.solution || req.body.barstile_solution || req.body.barstile_token || req.body['barstile-token']
+          : null);
+
+      const enableAdaptiveRisk = options.adaptiveRisk === true || routeConfig.adaptiveRisk === true;
+
+      // Dedicated Challenge Endpoint (GET /api/barstile/challenge)
+      if (req.method?.toUpperCase() === 'GET' && pathname === '/api/barstile/challenge') {
+        discardStream(req, 0);
+        const challenge = engine.issueChallenge({ difficulty: effectiveDifficulty, context: clientFingerprint });
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader(challengeHeader, challenge);
+        appendExposeHeader(res, challengeHeader);
+        return res.end(JSON.stringify({ challenge, header: challengeHeader }));
+      }
+
+      // Dedicated Verify Endpoint (POST /api/barstile/verify)
+      if (req.method?.toUpperCase() === 'POST' && pathname === '/api/barstile/verify') {
+        // Flaw 1 Fix: Guard against automation scrapers & telemetry omission
+        const shouldBlockBots = options.blockBots === true || (enableAdaptiveRisk && options.blockBots !== false);
+        if (shouldBlockBots) {
+          if (!probe) {
+            discardStream(req, 0);
+            res.setHeader('Connection', 'close');
+            res.statusCode = 403;
+            res.setHeader('Content-Type', 'application/json');
+            return res.end(
+              JSON.stringify({
+                error: 'barstile_failed',
+                reason: 'telemetry_required'
+              })
+            );
+          }
+
+          if (probe.isAutomated || (probe.tampered && probe.tampered.length > 0)) {
+            discardStream(req, 0);
+            res.setHeader('Connection', 'close');
+            res.statusCode = 403;
+            res.setHeader('Content-Type', 'application/json');
+            return res.end(
+              JSON.stringify({
+                error: 'barstile_failed',
+                reason: 'automation_detected',
+                markers: probe.markers?.length ? probe.markers : probe.tampered
+              })
+            );
+          }
+        }
+
+        // Flaw 2 Fix: Validate solution existence
+        if (!solution) {
+          discardStream(req, 0);
+          res.statusCode = 400;
+          res.setHeader('Content-Type', 'application/json');
+          return res.end(JSON.stringify({ error: 'solution_required', message: 'Missing solution token' }));
+        }
+
+        // Flaw 6 Fix: Validate challenge salt on telemetry envelope against replay attack
+        const solutionTokenStr = typeof solution === 'string'
+          ? solution
+          : (solution?.solution || solution?.challenge || '');
+        const [chalToken] = solutionTokenStr.split(':');
+        const [expectedSalt] = chalToken ? chalToken.split('.') : [''];
+
+        if (probe && expectedSalt && probe.salt && !expectedSalt.startsWith(probe.salt)) {
+          discardStream(req, 0);
+          res.setHeader('Connection', 'close');
+          res.statusCode = 403;
+          res.setHeader('Content-Type', 'application/json');
+          return res.end(
+            JSON.stringify({
+              error: 'barstile_failed',
+              reason: 'telemetry_replay_detected'
+            })
+          );
+        }
+
+        const verifyRes = await engine.verify(solution, {
+          now: Date.now(),
+          context: clientFingerprint,
+          minDifficulty: effectiveDifficulty
+        });
+
+        if (!verifyRes.valid) {
+          if (enableTarpit && tarpitTracker) {
+            tarpitTracker.recordFailure(clientIp);
+          }
+          discardStream(req, 0);
+          res.statusCode = 403;
+          res.setHeader('Content-Type', 'application/json');
+          return res.end(JSON.stringify({ error: 'verification_failed', reason: verifyRes.reason }));
+        }
+
+        if (enableTarpit && tarpitTracker) {
+          tarpitTracker.recordSuccess(clientIp);
+        }
+
+        // Flaw 4 Fix: Set-Cookie, Expose-Headers, clearance token, and remaining quota
+        discardStream(req, maxPreChallengeBodyBytes);
+        const clearance = engine.issueClearance(clearanceTtlMs, clientFingerprint);
+        res.setHeader(clearanceHeader, clearance);
+        appendExposeHeader(res, clearanceHeader);
+
+        if (effectiveQuota > 0) {
+          res.setHeader(quotaHeader, String(effectiveQuota));
+          appendExposeHeader(res, quotaHeader);
+        }
+
+        const maxAgeSec = Math.floor(clearanceTtlMs / 1000);
+        const cookieStr = `${clearanceCookie}=${clearance}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAgeSec}`;
+        appendSetCookie(res, cookieStr);
+
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
+        return res.end(
+          JSON.stringify({
+            verified: true,
+            clearance,
+            remaining: effectiveQuota > 0 ? effectiveQuota : Infinity
+          })
+        );
+      }
+
+      if (typeof options.shouldChallenge === 'function' && !options.shouldChallenge(req)) {
+        return next ? next() : undefined;
+      }
+
       if (effectiveClearance) {
         const clearanceToken =
           req.headers?.[clearanceHeader] ||
-          extractCookie(req, clearanceCookie);
+          extractCookie(req, clearanceCookie) ||
+          (typeof req.body === 'object' && req.body !== null
+            ? req.body[clearanceHeader] || req.body.barstile_token || req.body['barstile-token']
+            : null);
 
         if (clearanceToken) {
           const clearanceRes = engine.verifyClearance(clearanceToken, {
@@ -249,7 +458,11 @@ export function barstileMiddleware(options = {}) {
               res.setHeader(quotaHeader, String(allowanceRes.remaining));
               appendExposeHeader(res, quotaHeader);
 
-              req.barstile = {
+              if (enableTarpit && tarpitTracker) {
+        tarpitTracker.recordSuccess(clientIp);
+      }
+
+      req.barstile = {
                 verified: true,
                 clearance: true,
                 expiresAt: clearanceRes.expiresAt,
@@ -258,7 +471,11 @@ export function barstileMiddleware(options = {}) {
               return next ? next() : undefined;
             }
 
-            req.barstile = {
+            if (enableTarpit && tarpitTracker) {
+        tarpitTracker.recordSuccess(clientIp);
+      }
+
+      req.barstile = {
               verified: true,
               clearance: true,
               expiresAt: clearanceRes.expiresAt,
@@ -269,10 +486,67 @@ export function barstileMiddleware(options = {}) {
         }
       }
 
-      const solution =
-        req.headers?.[solutionHeader] ||
-        req.query?.barstile_solution ||
-        req.body?.barstile_solution;
+      // Multi-factor risk calculation
+      const risk = calculateRiskScore({
+        headers: req.headers,
+        probe,
+        behavior
+      });
+
+      // Adaptive difficulty calculation based on risk score (opt-in via adaptiveRisk: true)
+      const resolvedDifficulty = enableAdaptiveRisk
+        ? Math.max(effectiveDifficulty, risk.recommendedDifficulty)
+        : effectiveDifficulty;
+
+      // Silent Pass for trusted human users
+      const allowSilentPass = options.allowSilentPass === true || routeConfig.silentPass === true;
+      if (allowSilentPass && !solution && risk.action === 'pass') {
+        let silentClearance = null;
+        if (effectiveClearance) {
+          silentClearance = engine.issueClearance(clearanceTtlMs, clientFingerprint);
+          res.setHeader(clearanceHeader, silentClearance);
+          appendExposeHeader(res, clearanceHeader);
+
+          if (effectiveQuota > 0) {
+            res.setHeader(quotaHeader, String(effectiveQuota));
+            appendExposeHeader(res, quotaHeader);
+          }
+
+          const maxAgeSec = Math.floor(clearanceTtlMs / 1000);
+          const cookieStr = `${clearanceCookie}=${silentClearance}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAgeSec}`;
+          appendSetCookie(res, cookieStr);
+        }
+
+        if (enableTarpit && tarpitTracker) {
+        tarpitTracker.recordSuccess(clientIp);
+      }
+
+      req.barstile = {
+          verified: true,
+          silentPass: true,
+          riskScore: risk.score,
+          riskFactors: risk.factors,
+          clearance: silentClearance,
+          remaining: effectiveQuota > 0 ? effectiveQuota : Infinity
+        };
+        return next ? next() : undefined;
+      }
+
+      // Hard block for detected automation frameworks (Puppeteer, Playwright, Selenium)
+      const shouldBlockBots = options.blockBots === true || (enableAdaptiveRisk && options.blockBots !== false);
+      if (shouldBlockBots && (probe?.isAutomated || (probe?.tampered && probe.tampered.length > 0))) {
+        discardStream(req, 0);
+        res.setHeader('Connection', 'close');
+        res.statusCode = 403;
+        res.setHeader('Content-Type', 'application/json');
+        return res.end(
+          JSON.stringify({
+            error: 'barstile_failed',
+            reason: 'automation_detected',
+            markers: probe.markers?.length ? probe.markers : probe.tampered
+          })
+        );
+      }
 
       if (!solution) {
         const rawContentLength = req.headers?.['content-length'];
@@ -286,7 +560,7 @@ export function barstileMiddleware(options = {}) {
           discardStream(req, maxPreChallengeBodyBytes);
         }
 
-        const challenge = engine.issueChallenge({ difficulty: effectiveDifficulty, context: clientFingerprint });
+        const challenge = engine.issueChallenge({ difficulty: resolvedDifficulty, context: clientFingerprint });
         res.setHeader(challengeHeader, challenge);
         appendExposeHeader(res, challengeHeader);
         res.statusCode = statusCode;
@@ -311,10 +585,13 @@ export function barstileMiddleware(options = {}) {
       });
 
       if (!result.valid) {
+        if (enableTarpit && tarpitTracker) {
+          tarpitTracker.recordFailure(clientIp);
+        }
         discardStream(req, 0);
         res.setHeader('Connection', 'close');
 
-        const freshChallenge = engine.issueChallenge({ difficulty: effectiveDifficulty, context: clientFingerprint });
+        const freshChallenge = engine.issueChallenge({ difficulty: resolvedDifficulty, context: clientFingerprint });
         res.setHeader(challengeHeader, freshChallenge);
         appendExposeHeader(res, challengeHeader);
 
@@ -349,13 +626,20 @@ export function barstileMiddleware(options = {}) {
         appendSetCookie(res, cookieStr);
       }
 
+      if (enableTarpit && tarpitTracker) {
+        tarpitTracker.recordSuccess(clientIp);
+      }
+
       req.barstile = {
         verified: true,
         difficulty: result.difficulty,
         hash: result.hash,
         nonce: result.nonce,
         clearance: issuedClearance,
-        remaining: effectiveQuota > 0 ? effectiveQuota : Infinity
+        remaining: effectiveQuota > 0 ? effectiveQuota : Infinity,
+        riskScore: risk.score,
+        riskFactors: risk.factors,
+        telemetry: probe
       };
 
       if (typeof next === 'function') {

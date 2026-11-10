@@ -129,7 +129,7 @@ Barstile provides two complementary solving strategies:
 
 ## 6. Persistent Clearance & Request Budgets
 
-To prevent legitimate users from solving a Proof-of-Work challenge on every single click or API call, Barstile issues a signed clearance token upon verification.
+To avoid requiring legitimate users to solve a Proof-of-Work challenge on every single click or API call, Barstile issues a signed clearance token upon verification.
 
 ### Token Format
 ```
@@ -140,3 +140,75 @@ To prevent legitimate users from solving a Proof-of-Work challenge on every sing
 * **Zero Database Overhead**: Validated statelessly on the server in < 0.05 ms using `crypto.timingSafeEqual`.
 * **Request Quotas**: Tracked via `AllowanceCache` (default: 100 requests per token) to prevent attackers from scraping infinite pages after a single solve.
 * **Automatic Client Reuse**: `barstileFetch` preserves the token in memory, automatically attaching it to subsequent requests until expiration or quota renewal.
+
+---
+
+## 7. Form Widget Handshake Sequence
+
+Barstile widgets protect HTML forms without third-party tracking scripts. The widget runs a four-step lifecycle:
+
+```
+Browser (Widget)                                         Server
+       |                                                    |
+       | 1. User clicks or form submits                     |
+       |    GET /api/barstile/challenge                     |
+       |--------------------------------------------------->|
+       |                                                    | Issues signed challenge
+       | 2. HTTP 200 OK                                     |
+       |    { challenge: "salt.diff.exp.sig" }              |
+       |<---------------------------------------------------|
+       |                                                    |
+       | [Client Actions]                                   |
+       | - Solves PoW via background Web Worker             |
+       | - Gathers browser probe & behavior signals         |
+       | - Binds challenge salt into telemetry envelope     |
+       |                                                    |
+       | 3. POST /api/barstile/verify                       |
+       |    Headers: X-Barstile-Solution, Telemetry         |
+       |    Body: { solution, telemetry, behavior }         |
+       |--------------------------------------------------->|
+       |                                                    | 1. Verify challenge salt matches probe
+       |                                                    | 2. Check for automation tools
+       |                                                    | 3. Verify mathematical PoW solution
+       |                                                    | 4. Issue signed clearance token
+       | 4. HTTP 200 OK                                     |
+       |    { verified: true, clearance: "..." }            |
+       |    Set-Cookie: barstile_clearance=...              |
+       |<---------------------------------------------------|
+       |                                                    |
+       | [Form Submission]                                  |
+       | Populates <input name="barstile-token">            |
+       | Submits form natively to server                    |
+       |--------------------------------------------------->|
+```
+
+---
+
+## 8. Telemetry Envelope Format & Challenge Salt Binding
+
+To mitigate pre-recorded browser telemetry replay across different challenges, Barstile binds the ephemeral challenge salt directly into the telemetry payload.
+
+### Envelope Structure
+
+The client packages telemetry into a compact JSON object and base64-encodes it:
+
+```javascript
+{
+  t: 1774008120000,      // Timestamp in milliseconds
+  s: "a3f18e9d021c4b77",  // Challenge salt prefix (16 characters)
+  dur: 4,                // Probe evaluation duration in ms
+  bot: 0,                // Automation flag (1 if automated, 0 if clean)
+  m: [],                 // Detected automation markers (e.g. 'webdriver_active')
+  anom: [],              // Detected environment anomalies
+  soft: 0,               // Software rasterizer flag (1 if WebGL is SwiftShader/llvmpipe)
+  tamp: [],              // Tampered prototypes (e.g. 'Function.prototype.toString')
+  hw: [8, 8, 2]          // Hardware: [concurrency, deviceMemory, languagesCount]
+}
+```
+
+### Salt Replay Validation
+
+When the server receives a solution at `POST /api/barstile/verify`:
+1. It extracts the `salt` from the challenge token in the solution.
+2. It decodes the telemetry envelope and checks that `expectedSalt.startsWith(probe.salt)`.
+3. If an attacker reuses a captured telemetry payload with a different challenge, the salt check fails immediately and returns HTTP 403 `telemetry_replay_detected`.

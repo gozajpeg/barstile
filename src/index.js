@@ -22,7 +22,14 @@ export {
   RedisReplayStore,
   AllowanceCache,
   resolveRouteConfig,
-  extractPathname
+  extractPathname,
+  calculateRiskScore,
+  evaluateHeaderHeuristics,
+  evaluateProbeTelemetry,
+  evaluateBehaviorTelemetry,
+  decodeProbeTelemetry,
+  encodeProbeTelemetry,
+  TarpitTracker
 } from './server/index.js';
 
 // Client exports
@@ -34,5 +41,14 @@ export {
   barstileFetch,
   clearClearance,
   getActiveClearance,
-  sha256Sync
+  sha256Sync,
+  collectBrowserProbe,
+  detectAutomation,
+  detectEnvironmentAnomalies,
+  detectHardwareRenderer,
+  detectPrototypeTampering,
+  createBehaviorTracker,
+  renderWidget,
+  autoInitializeWidgets,
+  BarstileWidgetElement
 } from './client/index.js';

@@ -52,12 +52,39 @@ Barstile mitigates this using `ReplayCache`:
 ### Request Allowance Budget & Clearance Velocity Mitigation
 Without a request quota, an attacker could solve 1 challenge once (taking ~20 ms of CPU) and use that clearance token to scrape 50,000 items during the 15-minute validity window.
 
-Barstile neutralizes this attack via `AllowanceCache` (or atomic Redis `INCR` in clusters):
+Barstile mitigates this attack via `AllowanceCache` (or atomic Redis `INCR` in clusters):
 1. Each clearance token is allocated a request quota (default: 100 requests).
 2. The remaining quota is tracked per token signature and exposed via `X-Barstile-Remaining`.
 3. When the quota reaches zero, the clearance is revoked and a fresh HTTP 449 challenge is issued.
 4. Scraping 100,000 items forces the bot to solve 1,000 separate PoW challenges (65.5 million hashes), turning scraping into a high-cost compute bottleneck.
-5. Legitimate human users rarely exceed 100 requests per 15 minutes; when they do, `barstileFetch` solves the renewal in ~20 ms in the background with zero user disruption.
+5. Legitimate human users rarely exceed 100 requests per 15 minutes; when they do, `barstileFetch` solves the renewal in ~20 ms in the background with minimal user friction.
+
+### Multi-Factor Risk Assessment & Probe Markers
+
+When `adaptiveRisk: true` or `blockBots: true` is enabled, Barstile evaluates three distinct layers of signals:
+
+1. **Automation Markers**:
+   Inspects `navigator.webdriver`, missing window attributes, and property descriptors. Common tools like Puppeteer, Playwright, and Selenium leave identifiable environment markers.
+2. **Environment Anomalies**:
+   Detects zero screen dimensions, missing browser plugins, or software rasterizers (such as SwiftShader or llvmpipe) commonly used in headless cloud scraping containers.
+3. **Behavioral Trajectory Variance**:
+   Evaluates pointer movement curvature. Human input follows natural curved trajectories. Synthetic bot scripts often move in exact straight lines or exhibit zero curvature variance between points.
+
+### Telemetry Salt Replay Resistance
+
+To mitigate attackers capturing legitimate browser telemetry and attaching it to automated requests, Barstile binds the ephemeral challenge salt to the telemetry envelope.
+* The client passes the first 16 characters of the challenge salt inside the signed probe envelope.
+* On verification at `POST /api/barstile/verify`, the server checks that the salt in the solution token starts with the probe salt.
+* Replayed telemetry envelopes from prior challenges fail this check immediately with HTTP 403 `telemetry_replay_detected`.
+
+### Form Token Extraction Priority
+
+Barstile inspects incoming credentials in a strict hierarchy to prevent request body spoofing:
+1. **HTTP Headers**: `x-barstile-clearance` or `x-barstile-solution` takes first priority.
+2. **HTTP Cookies**: Cookie `barstile_clearance` takes second priority.
+3. **Request Body Fields**: Body fields (`barstile-token`, `barstile_token`, or `solution`) are inspected only if headers and cookies are absent.
+
+This ordering ensures proxy-level or client-level security headers cannot be overridden by untrusted form body payloads.
 
 ---
 
@@ -77,5 +104,5 @@ The server's memory usage depends on the replay cache size:
 
 ### Multi-Instance & Clustered Deployments
 * **Secret Synchronization**: If running multiple Node.js server instances behind a load balancer, provide the same `secret` string to all instances (for example, via an environment variable).
-* **Multi-Server Defense Without Redis**: By default, Barstile cryptographically binds both challenge tokens and clearance tokens to the client IP subnet (`/24` for IPv4, `/64` for IPv6) and User-Agent hash. A challenge solved on one server cannot be submitted by another client or bot machine on a different server, preventing cross-datacenter replay even with zero shared infrastructure.
-* **Clustered Replay Defense With Redis**: For large-scale distributed deployments where the same client might race requests across different pods, pass your existing Redis client directly (`barstileMiddleware({ redis })`). Barstile executes atomic `SET key 1 EX ttl NX` commands with zero race windows and automatically falls back to local memory if Redis disconnects.
+* **Multi-Server Defense Without Redis**: By default, Barstile cryptographically binds both challenge tokens and clearance tokens to the client IP subnet (`/24` for IPv4, `/64` for IPv6) and User-Agent hash. This prevents solutions solved by one client from being submitted by another client or bot machine on a different IP subnet. For synchronized cross-node replay prevention, use Redis.
+* **Clustered Replay Defense With Redis**: For large-scale distributed deployments where the same client might race requests across different pods, pass your existing Redis client directly (`barstileMiddleware({ redis })`). Barstile executes atomic `SET key 1 EX ttl NX` commands to mitigate distributed race windows, and falls back to local memory if Redis disconnects.
