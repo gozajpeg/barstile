@@ -100,6 +100,7 @@ describe('Documentation and Export Synchronization', () => {
     const fs = await import('node:fs');
     const docFiles = [
       '../README.md',
+      '../CHANGELOG.md',
       '../docs/API.md',
       '../docs/ARCHITECTURE.md',
       '../docs/SECURITY.md'

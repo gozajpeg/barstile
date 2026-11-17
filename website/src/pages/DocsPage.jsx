@@ -102,8 +102,8 @@ app.use(express.json());
 
 // 3. Protected endpoint - req.barstile contains verified solve metadata
 app.post('/api/login', (req, res) => {
-  const { verified, riskScore } = req.barstile;
-  res.json({ success: true, verified, riskScore });
+  const { verified } = req.barstile;
+  res.json({ success: true, verified });
 });
 
 app.listen(3000, () => {
@@ -311,9 +311,13 @@ app.use(barstileMiddleware({
       rows: [
         ['difficulty', 'number', '4', 'Number of leading hex zeros required (range 1 to 8). Set 3 for web forms.'],
         ['ttlMs', 'number', '60000', 'Challenge validity window in milliseconds.'],
-        ['clearance', 'boolean', 'true', 'Issue persistent clearance token on successful solve.'],
-        ['clearanceQuota', 'number', '100', 'Maximum requests allowed per clearance token before re-solve.'],
-        ['tarpit', 'object', 'undefined', 'Rate-limiting and delay quarantine configuration for abusive IPs.']
+        ['secret', 'string', 'auto-generated', 'HMAC signing key. Mandatory in multi-instance setups so servers share tokens.'],
+        ['clearance', 'boolean', 'true', 'Issue persistent clearance token on successful solve so subsequent requests pass instantly.'],
+        ['clearanceQuota', 'number', '100', 'Maximum requests allowed per clearance token before requiring a fresh solve.'],
+        ['routes', 'object', 'undefined', 'Per-route difficulty overrides and clearance rules (e.g. { "POST /api/login": 5 }).'],
+        ['redis', 'any', 'undefined', 'Redis client instance (ioredis or @redis/client) for distributed replay defense in clusters.'],
+        ['tarpit', 'object', 'undefined', 'Memory-bounded rate-limiting and delay quarantine configuration for abusive IPs.'],
+        ['maxPreChallengeBodyBytes', 'number', '65536', 'Maximum pre-challenge payload size (64KB). Drops connections before heap memory is allocated.']
       ]
     }
   }

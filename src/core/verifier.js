@@ -22,7 +22,7 @@ export function parseSolution(solution) {
   }
 
   if (typeof solution === 'object') {
-    const token = solution.challenge;
+    const token = solution.challenge || solution.token;
     const nonce = Number(solution.nonce);
     return typeof token !== 'string' || Number.isNaN(nonce) || nonce < 0 ? null : { token, nonce };
   }

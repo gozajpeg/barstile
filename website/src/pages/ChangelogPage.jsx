@@ -6,6 +6,32 @@ import { ArrowLeft, ArrowUpRight } from 'lucide-react';
 /* -------------------------------------------------------------------------- */
 const RELEASES = [
   {
+    id: 'release-v1-0-1',
+    version: 'v1.0.1',
+    date: 'Patch Release',
+    title: 'v1.0.1 Patch Release',
+    summary:
+      'Contract alignments, solution parsing resilience, and parameter polymorphism across the core engine and middleware.',
+    highlights: [
+      {
+        title: 'Polymorphic Solution Parsing',
+        desc: 'parseSolution accepts both { challenge, nonce } and { token, nonce } object formats alongside standard colon-separated strings.'
+      },
+      {
+        title: 'Header Name Alias Support',
+        desc: 'barstileMiddleware resolves either solutionHeader or headerName, defaulting cleanly to x-barstile-solution.'
+      },
+      {
+        title: 'issueChallenge Parameter Polymorphism',
+        desc: 'issueChallenge accepts a direct difficulty number override (e.g. barstile.issueChallenge(5)) or a full options object.'
+      },
+      {
+        title: 'API & Contract Alignment',
+        desc: 'Aligned Barstile cluster options (redis, allowanceStore), documented consumeClearance, and corrected widget lifecycle states.'
+      }
+    ]
+  },
+  {
     id: 'release-v1-0-0',
     version: 'v1.0.0',
     date: 'Release',

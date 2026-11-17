@@ -13,11 +13,11 @@ export function FooterWave() {
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden z-0 select-none">
       {/* ============================================================== */}
-      {/* 1. DESKTOP SVG (Single sweeping fluid wave line, glow from below)*/}
+      {/* 1. DESKTOP SVG (True un-squished fluid wave line, overlaps edges)*/}
       {/* ============================================================== */}
       <svg
         viewBox="0 0 1920 1080"
-        preserveAspectRatio="none"
+        preserveAspectRatio="xMidYMid slice"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         className="hidden md:block w-full h-full overflow-visible"

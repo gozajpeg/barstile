@@ -11,6 +11,7 @@
   <meta name="keywords"
     content="captcha, anti-bot, proof-of-work, security, ddos-protection, zero-dependency, express, nextjs, turnstile-alternative" />
   <meta name="author" content="gozajpeg" />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
   <meta name="theme-color" content="#0B0C0E" />
   <link rel="canonical" href="https://barstile.pages.dev/" />
   <link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml" />
@@ -21,15 +22,18 @@
   <meta property="og:title" content="Barstile | Self-hosted, non-interactive bot protection" />
   <meta property="og:description"
     content="Self-hosted, non-interactive bot protection with zero dependencies. Stop automated scrapers without user friction." />
-  <meta property="og:image" content="https://raw.githubusercontent.com/gozajpeg/barstile/main/assets/barstile.svg" />
+  <meta property="og:image" content="https://barstile.pages.dev/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:type" content="image/png" />
 
   <!-- Twitter -->
-  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:url" content="https://barstile.pages.dev" />
   <meta name="twitter:title" content="Barstile | Self-hosted, non-interactive bot protection" />
   <meta name="twitter:description"
     content="Self-hosted, non-interactive bot protection with zero dependencies. Stop automated scrapers without user friction." />
-  <meta name="twitter:image" content="https://raw.githubusercontent.com/gozajpeg/barstile/main/assets/barstile.svg" />
+  <meta name="twitter:image" content="https://barstile.pages.dev/og-image.png" />
 
   <!-- Structured Data (JSON-LD) -->
   <script type="application/ld+json">
@@ -37,6 +41,8 @@
         "@context": "https://schema.org",
         "@type": "SoftwareApplication",
         "name": "Barstile",
+        "url": "https://barstile.pages.dev",
+        "image": "https://barstile.pages.dev/og-image.png",
         "operatingSystem": "Node.js 18+",
         "applicationCategory": "SecurityApplication",
         "license": "https://opensource.org/licenses/MIT",
@@ -54,6 +60,12 @@
 </head>
 
 <body class="bg-[#0B0C0E] text-[#ECEFF4] font-sans antialiased selection:bg-indigo-500/30 selection:text-white">
+  <noscript>
+    <div style="padding: 2rem; text-align: center; color: #eceff4; font-family: sans-serif; background: #07080a;">
+      <h1>Barstile</h1>
+      <p>Self-hosted, non-interactive bot protection for Node.js, Express, and Next.js. Stop scrapers with zero visual puzzles, zero third-party tracking, and zero dependencies.</p>
+    </div>
+  </noscript>
   <div id="root"></div>
   <script type="module" src="/src/main.jsx"></script>
 </body>

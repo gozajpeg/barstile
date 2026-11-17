@@ -164,7 +164,7 @@ export function barstileMiddleware(options = {}) {
       });
 
   const challengeHeader = (options.challengeHeader || 'x-barstile-challenge').toLowerCase();
-  const solutionHeader = (options.solutionHeader || 'x-barstile-solution').toLowerCase();
+  const solutionHeader = (options.solutionHeader || options.headerName || 'x-barstile-solution').toLowerCase();
   const clearanceHeader = (options.clearanceHeader || 'x-barstile-clearance').toLowerCase();
   const clearanceCookie = options.clearanceCookie || 'barstile_clearance';
   const enableClearance = options.clearance !== false;

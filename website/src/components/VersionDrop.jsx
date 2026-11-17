@@ -2,26 +2,13 @@ import React from 'react';
 import { ArrowRight } from 'lucide-react';
 
 /**
- * Trims redundant trailing zeros from semver strings with uppercase prefix:
- * - v1.0.0 -> V1
- * - v1.1.0 -> V1.1
- * - v1.0.1 -> V1.0.1
- * - 1.0.0  -> 1
+ * Formats the major generation mark (e.g. v1.0.1 -> B1, v2.0.0 -> B2)
  */
 export function formatVersionDisplay(versionStr) {
-  if (!versionStr) return '';
-  const hasPrefix = /^v/i.test(versionStr);
+  if (!versionStr) return 'B1';
   const clean = versionStr.replace(/^v/i, '');
-  const [major = '0', minor = '0', patch = '0'] = clean.split('.');
-  const prefix = hasPrefix ? 'V' : '';
-
-  if (patch === '0' && minor === '0') {
-    return `${prefix}${major}`;
-  }
-  if (patch === '0') {
-    return `${prefix}${major}.${minor}`;
-  }
-  return `${prefix}${major}.${minor}.${patch}`;
+  const [major = '1'] = clean.split('.');
+  return `B${major}`;
 }
 
 export function getSideHeading(versionStr) {
@@ -37,7 +24,7 @@ export function getSideHeading(versionStr) {
   return `Barstile ${major}`;
 }
 
-const CURRENT_VERSION = 'v1.0.0';
+const CURRENT_VERSION = 'v1.0.1';
 
 export function VersionDrop({ onNavigate }) {
   const displayVersion = formatVersionDisplay(CURRENT_VERSION);

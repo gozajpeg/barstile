@@ -12,28 +12,28 @@ export function Comparison() {
       <div className="max-w-7xl w-full mx-auto">
         {/* Section Top Heading */}
         <div className="mb-16 text-center">
-          <h2 className="text-[24px] font-semibold tracking-tight text-white leading-none">
-            Engineered for humans.
+          <h2 className="text-[20px] sm:text-[24px] font-semibold tracking-tight text-white leading-none">
+            Defense should include your APIs and endpoints.
           </h2>
-          <p className="text-[24px] text-zinc-500 font-normal tracking-tight leading-none mt-0.5">
-            Harsh on automated bots.
+          <p className="text-[20px] sm:text-[24px] text-zinc-500 font-normal tracking-tight leading-none mt-1 sm:mt-0.5">
+            Not just about your frontend.
           </p>
         </div>
 
         {/* 3-Column Horizontal Feature Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-white/[0.08] border-t border-b border-white/[0.08]">
-          {/* Card 1: Self-hosted Server */}
+          {/* Card 1: Self-hosted Server & APIs */}
           <div className="flex flex-col p-6 sm:p-8 lg:p-10 h-full">
             <div className="h-[240px] sm:h-[260px] flex items-center justify-center w-full shrink-0">
               <IsometricServer className="w-full max-w-[280px] h-[220px]" />
             </div>
 
             <div className="text-left w-full mt-4">
-              <h3 className="text-[18px] sm:text-[20px] font-semibold tracking-tight text-white mb-1 leading-snug">
-                Self-hosted. Privacy first.
+              <h3 className="text-[20px] sm:text-[24px] font-semibold tracking-tight text-white mb-1.5 leading-snug">
+                REST APIs & Endpoints
               </h3>
-              <p className="text-[14px] text-zinc-400 font-normal leading-relaxed">
-                No third parties, no tracking puzzles. Just you and your users' sanity.
+              <p className="text-[20px] sm:text-[24px] text-zinc-400 font-normal leading-normal">
+                Protects API routes and server load on your own server, no tracking, no third parties, completely private.
               </p>
             </div>
           </div>
@@ -45,11 +45,11 @@ export function Comparison() {
             </div>
 
             <div className="text-left w-full mt-4">
-              <h3 className="text-[18px] sm:text-[20px] font-semibold tracking-tight text-white mb-1 leading-snug">
-                Friction to bots, not on users.
+              <h3 className="text-[20px] sm:text-[24px] font-semibold tracking-tight text-white mb-1.5 leading-snug">
+                Frictionless Filters
               </h3>
-              <p className="text-[14px] text-zinc-400 font-normal leading-relaxed">
-                Zero captchas for humans. Progressive computational delay for scrapers.
+              <p className="text-[20px] sm:text-[24px] text-zinc-400 font-normal leading-normal">
+                Stops credential stuffing and form spam in the background with no visual puzzles.
               </p>
             </div>
           </div>
@@ -61,11 +61,11 @@ export function Comparison() {
             </div>
 
             <div className="text-left w-full mt-4">
-              <h3 className="text-[18px] sm:text-[20px] font-semibold tracking-tight text-white mb-1 leading-snug">
-                Simple math. Real friction.
+              <h3 className="text-[20px] sm:text-[24px] font-semibold tracking-tight text-white mb-1.5 leading-snug">
+                Transparent Scaling
               </h3>
-              <p className="text-[14px] text-zinc-400 font-normal leading-relaxed">
-                Transparent proof-of-work. Deterministic cost scaling.
+              <p className="text-[20px] sm:text-[24px] text-zinc-400 font-normal leading-normal">
+                Client-side math-based PoW that resolves without user interruption, keeping your server CPU and memory flat as traffic scales.
               </p>
             </div>
           </div>

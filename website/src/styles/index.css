@@ -302,3 +302,35 @@ body {
   animation: eyeBlink 5.2s cubic-bezier(0.25, 0.1, 0.25, 1) 2000ms infinite;
   will-change: transform;
 }
+
+/* -------------------------------------------------------------------------- */
+/* Ko-fi Widget: Playful Gentle Ring / Bell Jingle Animation                 */
+/* -------------------------------------------------------------------------- */
+@keyframes widgetRing {
+  0%, 78%, 100% {
+    transform: rotate(0deg);
+  }
+  80% {
+    transform: rotate(16deg);
+  }
+  83% {
+    transform: rotate(-14deg);
+  }
+  86% {
+    transform: rotate(12deg);
+  }
+  89% {
+    transform: rotate(-8deg);
+  }
+  92% {
+    transform: rotate(4deg);
+  }
+  95% {
+    transform: rotate(0deg);
+  }
+}
+
+.animate-ring-subtle {
+  transform-origin: 50% 15%;
+  animation: widgetRing 4s ease-in-out infinite;
+}

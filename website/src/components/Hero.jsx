@@ -120,7 +120,7 @@ export function Hero({ onNavigate }) {
       >
         {/* Subheading */}
         <div className="text-center mb-6 sm:mb-7 pointer-events-none max-w-2xl mx-auto">
-          <p className="text-[18px] sm:text-[22px] text-zinc-400 font-normal tracking-tight leading-snug">
+          <p className="text-[20px] sm:text-[24px] text-zinc-400 font-normal tracking-tight leading-snug">
             Protects endpoints and forms from automated bots{' '}
             <br className="hidden sm:inline" />
             without visual puzzles, third-party trackers, or user interruptions.

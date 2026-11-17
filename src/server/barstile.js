@@ -48,18 +48,19 @@ export class Barstile {
   /**
    * Generates an HMAC-signed challenge token.
    *
-   * @param {Object} [overrides]
+   * @param {Object | number} [overrides] - Override options or number for difficulty
    * @param {number} [overrides.difficulty] - Override default difficulty
    * @param {number} [overrides.ttlMs] - Override default TTL
    * @param {string} [overrides.context] - Optional cryptographic client context (e.g. client fingerprint)
    * @returns {string} Signed challenge token string
    */
   issueChallenge(overrides = {}) {
+    const opts = typeof overrides === 'number' ? { difficulty: overrides } : (overrides || {});
     return createChallengeToken({
       secret: this._secret,
-      difficulty: overrides.difficulty !== undefined ? overrides.difficulty : this.difficulty,
-      ttlMs: overrides.ttlMs !== undefined ? overrides.ttlMs : this.ttlMs,
-      context: overrides.context || ''
+      difficulty: opts.difficulty !== undefined ? opts.difficulty : this.difficulty,
+      ttlMs: opts.ttlMs !== undefined ? opts.ttlMs : this.ttlMs,
+      context: opts.context || ''
     });
   }
 

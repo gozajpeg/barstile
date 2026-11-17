@@ -52,8 +52,9 @@ Creates an HTTP middleware compatible with Node.js `http.createServer`, Express,
 | `quotaHeader` | `string` | `'x-barstile-remaining'` | Response header exposing remaining request allowance. |
 | `clearanceHeader` | `string` | `'x-barstile-clearance'` | Header name inspected and issued for clearance. |
 | `clearanceCookie` | `string` | `'barstile_clearance'` | Cookie name written and inspected for clearance. |
-| `headerName` | `string` | `'x-barstile-solution'` | Header name inspected for the client solution. |
+| `solutionHeader` | `string` | `'x-barstile-solution'` | Header name inspected for the client solution (alias: `headerName`). |
 | `challengeHeader` | `string` | `'X-Barstile-Challenge'` | Header name written on `449 Retry With` responses. |
+| `statusCode` | `number` | `449` | HTTP status code returned when challenge is required (e.g. 449 or 429). |
 | `routes` | `Record<string, number \| Object>` | `undefined` | Route-specific rules and method overrides for adaptive difficulty and clearance settings. |
 | `tarpit` | `boolean \| Object \| TarpitTracker` | `undefined` | Memory-bounded IP sliding-window rate limiter and connection tarpitting engine for abusive clients. |
 | `maxPreChallengeBodyBytes` | `number` | `65536` | Maximum payload size (bytes) permitted for unverified requests before solving PoW (default: 64KB). Set to `0` to disable. |
@@ -223,27 +224,43 @@ Factory function and class for programmatic challenge generation and verificatio
 | `difficulty` | `number` | `4` | Number of leading hex zeros required (1 to 8). |
 | `ttlMs` | `number` | `60000` | Validity window in milliseconds. |
 | `secret` | `string` | Auto-generated | HMAC secret key. |
+| `clearanceQuota` | `number` | `100` | Maximum requests allowed per clearance token (0 for unlimited). |
 | `maxCached` | `number` | `50000` | Maximum capacity of the default replay cache. |
-| `replayCache` | `Object` | Default cache | Custom cache providing `has(key)` and `add(key, expiresAt)`. |
+| `replayCache` | `Object` | Default cache | Custom cache providing `has(key)` and `add(key, expiresAt)` (alias: `replayStore`). |
+| `redis` | `any` | `undefined` | Optional Redis client instance for multi-server cluster replay defense. |
+| `redisOptions` | `Object` | `{}` | Configuration options for Redis store (`prefix`, `fallbackToMemory`). |
+| `allowanceStore` | `any` | `undefined` | Pluggable store instance for tracking clearance request allowances. |
 
 #### Methods
 
-##### `barstile.issueChallenge(customDifficulty?)`
+##### `barstile.issueChallenge(options?)`
 Generates a signed challenge token string.
+* `options` (`Object | number`, optional): Options object (`{ difficulty?: number, ttlMs?: number, context?: string }`) or direct number difficulty override.
 * Returns: `string` (format: `salt.difficulty.expiresAt.signature`)
 
-##### `barstile.verify(solution)`
-Verifies a submitted solution string (`challenge:nonce`) or object (`{ token, nonce }`).
+##### `barstile.verify(solution, options?)`
+Verifies a submitted solution string (`challenge:nonce`) or object (`{ challenge, nonce }` or `{ token, nonce }`).
+* `options` (`Object | number`, optional): Verification options (`{ now?: number, context?: string, minDifficulty?: number }`) or timestamp.
 * Returns: `{ valid: boolean, reason?: string, hash?: string, difficulty?: number, nonce?: number }`
 
-##### `barstile.issueClearance(ttlMs?)`
+##### `barstile.issueClearance(ttlMs?, context?)`
 Generates an HMAC-signed clearance token.
 * `ttlMs` (`number`, default: `900000`): Duration in milliseconds (default: 15 minutes).
+* `context` (`string`, optional): Cryptographic client context (e.g. client fingerprint).
 * Returns: `string` (format: `salt.issuedAt.expiresAt.signature`)
 
-##### `barstile.verifyClearance(token, now?)`
+##### `barstile.verifyClearance(token, options?, context?)`
 Verifies an HMAC-signed clearance token.
+* `options` (`number | string | { now?: number, context?: string }`, optional): Expiration timestamp (default: `Date.now()`), context string, or options object.
+* `context` (`string`, optional): Fallback cryptographic context if `options` is a timestamp number.
 * Returns: `{ valid: boolean, reason?: string, expiresAt?: number, issuedAt?: number }`
+
+##### `barstile.consumeClearance(signature, maxQuota?, expiresAt?)`
+Consumes one request from a clearance token's allowance budget.
+* `signature` (`string`): Unique clearance signature.
+* `maxQuota` (`number`, optional): Custom quota limit (defaults to engine `clearanceQuota`).
+* `expiresAt` (`number`, optional): Expiration timestamp in milliseconds.
+* Returns: `{ allowed: boolean, remaining: number, count: number }`
 
 ---
 
@@ -255,7 +272,7 @@ Standalone solution verification function.
 
 | Parameter | Type | Description |
 | :--- | :--- | :--- |
-| `params.solution` | `string \| Object` | Solution submitted by client (`"token:nonce"` or `{ token, nonce }`). |
+| `params.solution` | `string \| Object` | Solution submitted by client (`"token:nonce"`, `{ challenge, nonce }`, or `{ token, nonce }`). |
 | `params.secret` | `string` | Server HMAC secret used to sign the token. |
 | `params.replayCache` | `ReplayCache` (optional) | Cache used to detect and reject replay attempts. |
 | `params.now` | `number` (optional) | Timestamp in ms for testing expiration (default: `Date.now()`). |
@@ -714,5 +731,5 @@ Standard HTML5 Custom Element compatible with any modern web framework (Vue, Sve
 
 * `element.verify()`: Programmatically triggers the verification flow. Returns a Promise resolving to the token string.
 * `element.getToken()`: Returns the active clearance token, or `null`.
-* `element.getStatus()`: Returns current widget status (`'idle'`, `'verifying'`, `'success'`, `'error'`).
+* `element.getStatus()`: Returns current widget status (`'idle'`, `'solving'`, `'verified'`, `'error'`).
 * `element.destroy()`: Disconnects listeners and cleans up internal references.

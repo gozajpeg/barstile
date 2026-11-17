@@ -1,6 +1,6 @@
 {
   "name": "barstile",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Self-hosted, non-interactive bot protection",
   "main": "./src/index.js",
   "type": "module",
@@ -27,7 +27,9 @@
   ],
   "scripts": {
     "test": "node --test test/**/*.test.js",
-    "test:watch": "node --test --watch test/**/*.test.js"
+    "test:watch": "node --test --watch test/**/*.test.js",
+    "dev": "npm --prefix website run dev",
+    "build:website": "npm --prefix website run build"
   },
   "keywords": [
     "anti-bot",
@@ -44,6 +46,10 @@
     "sha256"
   ],
   "author": "gozajpeg",
+  "funding": {
+    "type": "ko-fi",
+    "url": "https://ko-fi.com/gozajpeg"
+  },
   "license": "MIT",
   "engines": {
     "node": ">=18.0.0"
