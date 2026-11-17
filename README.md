@@ -12,21 +12,17 @@
   </p>
 </div>
 
----
-
 ## Documentation Guides
 
 * [API Reference](docs/API.md): Parameter tables, options, and return types for server and client.
 * [Architecture & Protocol](docs/ARCHITECTURE.md): Token format, HTTP 449 handshake sequence, and replay cache lifecycle.
 * [Security Model](docs/SECURITY.md): Threat mitigation boundaries, timing attack defense, and cluster considerations.
 
----
+## Official Website
 
 <a href="https://barstile.pages.dev">
   <img src="https://raw.githubusercontent.com/gozajpeg/barstile/main/assets/barstile.svg" alt="Barstile Website" width="120" />
 </a>
-
----
 
 ## What Does Barstile Export?
 
@@ -60,8 +56,6 @@ Barstile provides four entry points:
 
 ### 4. Web Component (`barstile/web-component`)
 * `<barstile-widget>` (`BarstileWidgetElement`): Standard HTML5 custom element for Vue, Svelte, Angular, Solid, or vanilla HTML.
-
----
 
 ## Installation
 
@@ -117,8 +111,6 @@ console.log(data); // { message: 'Access granted', ... }
 ```
 
 Legitimate users experience a brief background calculation (typically 2 to 50 ms depending on difficulty and device CPU). In browsers, `barstileFetch` offloads calculations to an inline Web Worker, offloading hashing from the main UI thread so animations, typing, and scrolling remain responsive. Automated scrapers attempting 1,000 requests per second must compute millions of SHA-256 operations per second.
-
----
 
 ### 3. Turnstile-Style HTML Form Widget
 
@@ -182,8 +174,6 @@ export default function LoginForm() {
 </form>
 ```
 
----
-
 ### 4. Anti-Bot and Adaptive Risk Protection
 
 Barstile includes multi-factor risk scoring to adjust difficulty automatically and block automated scrapers:
@@ -198,8 +188,6 @@ app.use(barstileMiddleware({
   blockBots: true        // Rejects headless browsers (Puppeteer, Selenium, Playwright)
 }));
 ```
-
----
 
 ### 5. Route & Method Adaptive Difficulty
 
@@ -220,7 +208,6 @@ app.use(barstileMiddleware({
 
 Cross-route tampering is cryptographically blocked: a solution solved for a difficulty 1 route is rejected if submitted to a difficulty 5 route.
 
----
 
 ## Multi-Server & Cluster Deployments
 
@@ -247,7 +234,6 @@ app.use(barstileMiddleware({ redis }));
 
 Barstile uses atomic `SET key 1 EX ttl NX` operations, mitigating race windows across nodes. If Redis experiences network interruptions, Barstile falls back to local memory.
 
----
 
 ## How It Works
 
@@ -272,7 +258,6 @@ Barstile uses atomic `SET key 1 EX ttl NX` operations, mitigating race windows a
         |<-------------------------------------------------------|
 ```
 
----
 
 ## Standalone / Programmatic API
 
@@ -312,8 +297,6 @@ const result = await solve(challengeToken, {
 console.log(result.solution); // "salt.diff.exp.sig:nonce"
 ```
 
----
-
 ## Difficulty Scaling
 
 | Difficulty | Required Hex Zeros | Expected Hashes ($16^d$) | Est. Client Time (JS)* | Expected Hashes at 1,000 req/s |
@@ -326,8 +309,6 @@ console.log(result.solution); // "salt.diff.exp.sig:nonce"
 
 *\*Estimated on modern desktop hardware running single-threaded JavaScript. Mobile or low-power devices take longer. Statistical expectation is exactly $16^d$.*
 
----
-
 ## Security Model Overview
 
 1. **HMAC Challenge Integrity**: Challenges are signed with HMAC-SHA256 (`salt:difficulty:expiresAt`). If an attacker alters the difficulty or expiry parameter, the signature check fails immediately before any hashing occurs.
@@ -338,8 +319,6 @@ console.log(result.solution); // "salt.diff.exp.sig:nonce"
 6. **Pre-Challenge Body Guard**: Incoming requests without a valid solution or clearance token are challenged in microseconds before request body parsing occurs. Oversized pre-challenge payloads are rejected immediately, protecting server heap memory from buffer exhaustion.
 
 See [docs/SECURITY.md](docs/SECURITY.md) for threat model details and operational trade-offs.
-
----
 
 ## License
 
