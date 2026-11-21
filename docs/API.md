@@ -39,6 +39,7 @@ Creates an HTTP middleware compatible with Node.js `http.createServer`, Express,
 | `adaptiveRisk` | `boolean` | `false` | Enables multi-factor risk assessment. Adjusts PoW difficulty based on client risk. |
 | `allowSilentPass` | `boolean` | `false` | Grants instant clearance to verified low-risk human clients without requiring PoW calculations. |
 | `blockBots` | `boolean | 'escalate'` | `false` | Rejects automated browsers with HTTP 403 when `true`. When `'escalate'` or under `adaptiveRisk: true`, escalates PoW difficulty to challenge clients instead of hard-blocking. |
+| `maxDifficulty` | `number` | `5` | Maximum difficulty ceiling for automatic escalation (keeps mobile solves under ~1 second). |
 | `telemetryHeader` | `string` | `'x-barstile-telemetry'` | Request header inspected for browser probe telemetry. |
 | `replayCache` | `ReplayCache` | `new ReplayCache()` | Custom replay cache instance. |
 | `replayStore` | `any` | `undefined` | Pluggable replay store or cache instance. |
@@ -434,7 +435,14 @@ import {
   solveWorker,
   isWebWorkerSupported,
   sha256Sync,
-  parseChallengeToken
+  parseChallengeToken,
+  clearClearance,
+  getActiveClearance,
+  clearSharedClearance,
+  syncServerTime,
+  getServerTime,
+  getClockOffset,
+  resetClockOffset
 } from 'barstile/client';
 ```
 
@@ -482,6 +490,42 @@ Clears the in-memory clearance token stored by `barstileFetch`.
 
 Returns the current active in-memory clearance token if non-expired, or `null`.
 * Returns: `string | null`
+
+---
+
+### `clearSharedClearance()`
+
+Clears the module-level shared clearance token and in-flight solve cache across widgets on the page.
+
+---
+
+### `syncServerTime(serverSource)`
+
+Synchronizes client clock offset against a server timestamp, Date string, or HTTP Response / Headers.
+Calculates `clockOffset = serverTime - localTime`. Automatically ignores responses with positive `Age` headers to prevent cache skew.
+
+* `serverSource` (`number | string | Date | Response | Headers | { headers?: any }`, optional)
+* Returns: `number` (The updated clock offset in milliseconds)
+
+---
+
+### `getServerTime()`
+
+Returns estimated server time in milliseconds, adjusted for client/server clock skew (`Date.now() + clockOffset`).
+* Returns: `number`
+
+---
+
+### `getClockOffset()`
+
+Returns current clock offset in milliseconds (`serverTime - localTime`).
+* Returns: `number`
+
+---
+
+### `resetClockOffset()`
+
+Resets the client clock offset to 0.
 
 ---
 
@@ -596,6 +640,7 @@ Returns a widget controller instance:
   getToken: () => string | null,                       // Current clearance token or null
   getStatus: () => 'idle' | 'solving' | 'verified' | 'error', // Current widget lifecycle state
   verify: () => Promise<string>,                      // Triggers or awaits verification
+  reset: () => void,                                  // Clears cached token, resets status to idle, and empties input
   destroy: () => void                                 // Removes form listeners and clears container
 }
 ```

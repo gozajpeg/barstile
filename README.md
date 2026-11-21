@@ -114,7 +114,8 @@ Legitimate users experience a brief background calculation (typically 2 to 50 ms
 
 ### 3. Turnstile-Style HTML Form Widget
 
-Protect HTML forms with a self-hosted verification box. Zero third-party trackers, zero external CSS files, and zero visual puzzle captchas:
+Protect HTML forms with self-hosted verification. Zero third-party trackers, zero external CSS files, and zero visual puzzle captchas.
+By default, widgets run in invisible zero-click mode. For a visible checkbox box, pass `mode: 'interactive'` (or `data-mode="interactive"`).
 
 ```html
 <form action="/login" method="POST">
@@ -122,6 +123,7 @@ Protect HTML forms with a self-hosted verification box. Zero third-party tracker
   <input type="password" name="password" placeholder="Password" required />
 
   <!-- The widget injects a hidden <input name="barstile-token"> automatically -->
+  <!-- Invisible by default (zero clicks). For a visible checkbox, add data-mode="interactive" -->
   <div class="barstile-widget"></div>
 
   <button type="submit">Log in</button>
@@ -156,7 +158,8 @@ export default function LoginForm() {
     <form action="/login" method="POST">
       <input type="text" name="username" required />
       <input type="password" name="password" required />
-      <BarstileWidget mode="interactive" />
+      {/* Invisible by default. Pass mode="interactive" for a visible checkbox */}
+      <BarstileWidget />
       <button type="submit">Log in</button>
     </form>
   );
@@ -169,7 +172,8 @@ export default function LoginForm() {
 <script type="module" src="node_modules/barstile/src/client/web-component.js"></script>
 
 <form action="/login" method="POST">
-  <barstile-widget data-mode="interactive"></barstile-widget>
+  <!-- Invisible by default. Pass data-mode="interactive" for a visible checkbox -->
+  <barstile-widget></barstile-widget>
   <button type="submit">Log in</button>
 </form>
 ```
@@ -185,7 +189,7 @@ app.use(barstileMiddleware({
   difficulty: 3,         // Base difficulty
   adaptiveRisk: true,    // Increases difficulty for suspicious clients
   allowSilentPass: true, // Trusted humans skip Proof-of-Work calculations
-  blockBots: true        // Rejects headless browsers (Puppeteer, Selenium, Playwright)
+  blockBots: 'escalate'  // Escalates PoW difficulty for headless browsers instead of hard lockouts (or true to block)
 }));
 ```
 
