@@ -38,7 +38,7 @@ Creates an HTTP middleware compatible with Node.js `http.createServer`, Express,
 | `secret` | `string` | Auto-generated | HMAC secret key. If omitted, a random 256-bit key is generated at startup. |
 | `adaptiveRisk` | `boolean` | `false` | Enables multi-factor risk assessment. Adjusts PoW difficulty based on client risk. |
 | `allowSilentPass` | `boolean` | `false` | Grants instant clearance to verified low-risk human clients without requiring PoW calculations. |
-| `blockBots` | `boolean` | `false` | Immediately rejects automated browsers (Puppeteer, Selenium, Playwright) with HTTP 403. |
+| `blockBots` | `boolean | 'escalate'` | `false` | Rejects automated browsers with HTTP 403 when `true`. When `'escalate'` or under `adaptiveRisk: true`, escalates PoW difficulty to challenge clients instead of hard-blocking. |
 | `telemetryHeader` | `string` | `'x-barstile-telemetry'` | Request header inspected for browser probe telemetry. |
 | `replayCache` | `ReplayCache` | `new ReplayCache()` | Custom replay cache instance. |
 | `replayStore` | `any` | `undefined` | Pluggable replay store or cache instance. |
@@ -52,6 +52,7 @@ Creates an HTTP middleware compatible with Node.js `http.createServer`, Express,
 | `quotaHeader` | `string` | `'x-barstile-remaining'` | Response header exposing remaining request allowance. |
 | `clearanceHeader` | `string` | `'x-barstile-clearance'` | Header name inspected and issued for clearance. |
 | `clearanceCookie` | `string` | `'barstile_clearance'` | Cookie name written and inspected for clearance. |
+| `secure` | `boolean` | `auto` | Append `Secure` flag to clearance cookies (auto-detects HTTPS or `x-forwarded-proto`). |
 | `solutionHeader` | `string` | `'x-barstile-solution'` | Header name inspected for the client solution (alias: `headerName`). |
 | `challengeHeader` | `string` | `'X-Barstile-Challenge'` | Header name written on `449 Retry With` responses. |
 | `statusCode` | `number` | `449` | HTTP status code returned when challenge is required (e.g. 449 or 429). |
@@ -580,7 +581,7 @@ Mounts a Turnstile-style verification box inside a container element or CSS sele
 
 * `target` (`HTMLElement | string`): Container DOM element or CSS selector string.
 * `options` (Object, optional):
-  * `mode` (`'interactive' | 'invisible'`, default: `'interactive'`): Display mode. Interactive renders a checkbox UI. Invisible solves in the background without UI.
+  * `mode` (`'invisible' | 'interactive'`, default: `'invisible'`): Display mode. Invisible solves in the background without UI. Interactive renders an optional checkbox UI.
   * `challengeUrl` (`string`, default: `'/api/barstile/challenge'`): Endpoint to fetch the challenge token.
   * `verifyUrl` (`string`, default: `'/api/barstile/verify'`): Endpoint to verify solution and telemetry.
   * `onSuccess` (`(token: string) => void`, optional): Callback invoked when verification completes.
@@ -606,7 +607,7 @@ Returns a widget controller instance:
 Scans the active document for elements matching `.barstile-widget` or `[data-barstile]` and initializes them.
 
 Reads the following data attributes:
-* `data-mode`: `'interactive'` (default) or `'invisible'`.
+* `data-mode`: `'invisible'` (default) or `'interactive'`.
 * `data-challenge-url`: Challenge endpoint URL (default: `'/api/barstile/challenge'`).
 * `data-verify-url`: Verification endpoint URL (default: `'/api/barstile/verify'`).
 
@@ -691,7 +692,7 @@ Drop-in verification widget component for React and Next.js applications. SSR-sa
 
 | Prop | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
-| `mode` | `'interactive' \| 'invisible'` | `'interactive'` | Widget interaction mode. |
+| `mode` | `'invisible' \| 'interactive'` | `'invisible'` | Widget interaction mode. |
 | `challengeUrl` | `string` | `'/api/barstile/challenge'` | Dedicated challenge endpoint URL. |
 | `verifyUrl` | `string` | `'/api/barstile/verify'` | Dedicated verification endpoint URL. |
 | `onSuccess` | `(token: string) => void` | `undefined` | Callback invoked upon successful solve with issued token. |
@@ -718,7 +719,7 @@ Standard HTML5 Custom Element compatible with any modern web framework (Vue, Sve
 
 | Attribute | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
-| `data-mode` | `'interactive' \| 'invisible'` | `'interactive'` | Verification mode. |
+| `data-mode` | `'invisible' \| 'interactive'` | `'invisible'` | Verification mode. |
 | `data-challenge-url` | `string` | `'/api/barstile/challenge'` | Challenge endpoint URL. |
 | `data-verify-url` | `string` | `'/api/barstile/verify'` | Verification endpoint URL. |
 

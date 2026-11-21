@@ -143,4 +143,84 @@ describe('Enterprise Anti-Bot & Adaptive Risk Middleware Integration', () => {
     // Baseline was 2, but risk escalation pushed it to >= 4
     assert.ok(difficultyIssued >= 4, `Expected difficulty >= 4, got ${difficultyIssued}`);
   });
+
+  test('escalates difficulty instead of 403 when adaptiveRisk is on and blockBots is not true', async () => {
+    const middleware = barstileMiddleware({
+      secret,
+      difficulty: 2,
+      adaptiveRisk: true
+    });
+
+    const tamperedProbe = {
+      timestamp: Date.now(),
+      evalDurationMs: 2,
+      automation: { isAutomated: true, markers: ['webdriver_active'] },
+      anomalies: [],
+      renderer: { isSoftwareRasterizer: false },
+      tampered: ['canvas_noise']
+    };
+    const telemetryHeader = encodeProbeTelemetry(tamperedProbe, 'test_salt');
+
+    const req = {
+      method: 'GET',
+      url: '/api/data',
+      headers: {
+        'x-barstile-telemetry': telemetryHeader
+      }
+    };
+
+    let statusCode = 200;
+    let challengeHeader = null;
+    const res = {
+      headers: {},
+      set statusCode(val) { statusCode = val; },
+      get statusCode() { return statusCode; },
+      setHeader(k, v) {
+        this.headers[k.toLowerCase()] = v;
+        if (k.toLowerCase() === 'x-barstile-challenge') challengeHeader = v;
+      },
+      getHeader(k) { return this.headers[k.toLowerCase()]; },
+      end() {}
+    };
+
+    await middleware(req, res, () => {});
+
+    // Does NOT return 403; returns 449 with mobile-safe escalated challenge (difficulty 5)
+    assert.equal(statusCode, 449);
+    assert.ok(challengeHeader);
+    const difficultyIssued = Number.parseInt(challengeHeader.split('.')[1], 10);
+    assert.equal(difficultyIssued, 5);
+  });
+
+  test('preserves explicit developer baseline difficulty when higher than maxDifficulty default', async () => {
+    const middleware = barstileMiddleware({
+      secret,
+      difficulty: 6, // explicitly configured baseline 6
+      adaptiveRisk: true
+    });
+
+    const req = {
+      method: 'GET',
+      url: '/api/data',
+      headers: {}
+    };
+
+    let challengeHeader = null;
+    const res = {
+      headers: {},
+      statusCode: 200,
+      setHeader(k, v) {
+        this.headers[k.toLowerCase()] = v;
+        if (k.toLowerCase() === 'x-barstile-challenge') challengeHeader = v;
+      },
+      getHeader(k) { return this.headers[k.toLowerCase()]; },
+      end() {}
+    };
+
+    await middleware(req, res, () => {});
+
+    assert.ok(challengeHeader);
+    const difficultyIssued = Number.parseInt(challengeHeader.split('.')[1], 10);
+    assert.equal(difficultyIssued, 6, 'Baseline difficulty 6 should not be clamped down to 5');
+  });
 });

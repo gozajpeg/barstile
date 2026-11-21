@@ -1,5 +1,6 @@
 import { parseChallengeToken } from '../core/token.js';
 import { sha256Sync } from '../core/sha256.js';
+import { getServerTime } from './clock.js';
 
 /**
  * Solves a Barstile Proof-of-Work challenge synchronously.
@@ -18,7 +19,7 @@ export function solveSync(challenge, options = {}) {
   }
 
   const { salt, difficulty, expiresAt } = parsed;
-  if (Date.now() > expiresAt) {
+  if (getServerTime() > expiresAt) {
     throw new Error('barstile: challenge token has already expired');
   }
 
@@ -70,7 +71,7 @@ export async function solve(challenge, options = {}) {
   }
 
   const { salt, difficulty, expiresAt } = parsed;
-  if (Date.now() > expiresAt) {
+  if (getServerTime() > expiresAt) {
     throw new Error('barstile: challenge token has already expired');
   }
 
@@ -89,7 +90,7 @@ export async function solve(challenge, options = {}) {
         return reject(new DOMException('Aborted', 'AbortError'));
       }
 
-      if (Date.now() > expiresAt) {
+      if (getServerTime() > expiresAt) {
         return reject(new Error('barstile: challenge token expired during solving'));
       }
 

@@ -2,24 +2,24 @@ import React, { useState } from 'react';
 import { ArrowLeft, ArrowUpRight, Copy, Check, ChevronRight, ChevronLeft, ChevronDown, BookOpen } from 'lucide-react';
 
 /* -------------------------------------------------------------------------- */
-/* Documentation Hierarchy & Categories                                       */
+/* Documentation Hierarchy and Categories                                     */
 /* -------------------------------------------------------------------------- */
 const CATEGORIES = [
   {
     name: 'Getting Started',
-    items: ['quickstart']
+    items: ['quickstart', 'concepts']
   },
   {
     name: 'Integration',
-    items: ['server', 'client', 'react']
+    items: ['server', 'client', 'react', 'webcomponent']
   },
   {
     name: 'Core Guides',
     items: ['difficulty', 'cluster']
   },
   {
-    name: 'Reference & Security',
-    items: ['security', 'api']
+    name: 'Reference and Security',
+    items: ['api', 'security']
   }
 ];
 
@@ -28,46 +28,86 @@ const DOC_SECTIONS = [
     id: 'quickstart',
     category: 'Getting Started',
     title: 'Quickstart Guide',
-    summary: 'Protect endpoints and forms from automated scrapers in under five minutes.',
+    summary: 'Protect your website and API from bots in less than five minutes.',
     steps: [
       {
         num: '1',
-        title: 'Installation',
-        desc: 'Install the core package from the npm registry.',
+        title: 'Install the package',
+        desc: 'Add Barstile to your project using npm or your favorite package manager.',
         code: 'npm install barstile'
       },
       {
         num: '2',
-        title: 'Mount Middleware (Node.js / Express)',
-        desc: 'Intercepts incoming requests and validates proof-of-work before handler execution.',
-        code: `import http from 'node:http';
+        title: 'Add server middleware (Express or Node.js)',
+        desc: 'Mount Barstile before your route handlers. It asks unknown visitors to solve a fast math puzzle and lets verified users through.',
+        code: `import express from 'express';
 import { barstileMiddleware } from 'barstile/server';
 
-const guard = barstileMiddleware({ difficulty: 3 });
+const app = express();
 
-const server = http.createServer((req, res) => {
-  guard(req, res, () => {
-    // Reached only after client solves the challenge
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ message: 'Access granted' }));
-  });
+// Protect your routes with difficulty 3 (fast for humans, expensive for bots)
+app.use(barstileMiddleware({ difficulty: 3 }));
+
+// Normal route handlers run only after the proof is verified
+app.post('/api/contact', express.json(), (req, res) => {
+  res.json({ message: 'Message received safely' });
 });
 
-server.listen(3000);`
+app.listen(3000);`
       },
       {
         num: '3',
-        title: 'Swap Native Fetch with barstileFetch',
-        desc: 'Automatically intercepts HTTP 449 challenges and solves nonces off the main thread in a Web Worker.',
-        code: `import { barstileFetch } from 'barstile/client';
+        title: 'Protect your frontend (Forms or Fetch API)',
+        desc: 'For HTML forms, drop in the widget. For API calls, replace native fetch with barstileFetch.',
+        code: `// Option A: For REST API calls (React, Vue, SPA)
+import { barstileFetch } from 'barstile/client';
 
-const response = await barstileFetch('/api/checkout', {
+const res = await barstileFetch('/api/contact', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ item: 'Widget', qty: 1 })
+  body: JSON.stringify({ message: 'Hello' })
 });
 
-const data = await response.json();`
+// Option B: For HTML forms, add this container:
+// <div class="barstile-widget"></div>
+// And call autoInitializeWidgets() in your script.`
+      }
+    ]
+  },
+  {
+    id: 'concepts',
+    category: 'Getting Started',
+    title: 'How Barstile Works',
+    summary: 'A simple look at background Proof-of-Work defense.',
+    desc: 'Instead of making users click pictures of traffic lights, Barstile uses computer math in the background. Real people never notice it, but bots trying to spam thousands of requests quickly run out of processing power.',
+    steps: [
+      {
+        num: '1',
+        title: 'The visitor sends a request',
+        desc: 'A user opens your web page or submits an API call.',
+        code: `// 1. Client calls protected route
+fetch('/api/submit', { method: 'POST' });`
+      },
+      {
+        num: '2',
+        title: 'Server issues a fast challenge',
+        desc: 'If the visitor does not have a valid clearance pass, the server sends back an HTTP 449 status with a tiny math puzzle (SHA-256).',
+        code: `// HTTP/1.1 449 Retry With
+// x-barstile-challenge: "salt.3.1700000000.signature"`
+      },
+      {
+        num: '3',
+        title: 'Browser solves in the background',
+        desc: 'The browser runs the math search inside a background Web Worker. Your screen does not freeze, and animations stay smooth.',
+        code: `// Solved in background thread in 10 to 30 milliseconds
+// Nonce found: 4218`
+      },
+      {
+        num: '4',
+        title: 'Server grants a 15-minute VIP pass',
+        desc: 'The server verifies the answer in 0.05 milliseconds. It hands the browser a 15-minute clearance cookie so the user can browse without solving again.',
+        code: `// Subsequent requests pass instantly with 200 OK
+// req.barstile = { verified: true, clearance: true };`
       }
     ]
   },
@@ -75,8 +115,8 @@ const data = await response.json();`
     id: 'server',
     category: 'Integration',
     title: 'Server Middleware',
-    summary: 'Framework-agnostic request verification before body parsers allocate memory.',
-    desc: 'barstileMiddleware runs natively with Express, Fastify, Connect, and standard node:http servers.',
+    summary: 'Simple request protection for Express, Fastify, and Node.js.',
+    desc: 'barstileMiddleware runs before your route handlers. It checks proof before your server spends memory reading large request bodies.',
     frameworks: [
       {
         id: 'express',
@@ -86,29 +126,29 @@ import { barstileMiddleware } from 'barstile/server';
 
 const app = express();
 
-// 1. Mount Barstile BEFORE body parsers to reject bots before allocating memory
+// 1. Mount Barstile before body parsers to save server memory
 app.use(barstileMiddleware({
   difficulty: 3,
   ttlMs: 60000,
   routes: {
-    '/public/*': 1,                                       // Fast browsing
-    'POST /api/login': 5,                                 // High defense
-    'POST /checkout': { difficulty: 4, clearance: false } // Fresh solve per order
-  }
+    '/public/*': 1,                                       // Fast browsing (1 to 2 ms)
+    'POST /api/login': 5,                                 // High security for login
+    'POST /checkout': { difficulty: 4, clearance: false } // Fresh solve per purchase
+  },
+  // Optional rate limiting for abusive IP addresses
+  tarpit: { maxRequests: 60, windowMs: 60000 }
 }));
 
-// 2. Body parsers run ONLY after client solves challenge
+// 2. Body parsers run only for verified human visitors
 app.use(express.json());
 
-// 3. Protected endpoint - req.barstile contains verified solve metadata
 app.post('/api/login', (req, res) => {
-  const { verified } = req.barstile;
+  // Access solve details
+  const { verified, difficulty } = req.barstile;
   res.json({ success: true, verified });
 });
 
-app.listen(3000, () => {
-  console.log('Express server running on http://localhost:3000');
-});`
+app.listen(3000);`
       },
       {
         id: 'fastify',
@@ -119,19 +159,18 @@ import { barstileMiddleware } from 'barstile/server';
 const fastify = Fastify({ logger: true });
 const guard = barstileMiddleware({ difficulty: 3 });
 
-// 1. Intercept requests in onRequest hook before body parsing
+// 1. Run Barstile in the onRequest hook before body parsing
 fastify.addHook('onRequest', (request, reply, done) => {
   guard(request.raw, reply.raw, done);
 });
 
-// 2. Protected endpoint handler
+// 2. Protected route
 fastify.post('/api/login', async (request, reply) => {
   const barstile = request.raw.barstile || {};
   return { success: true, verified: barstile.verified };
 });
 
-await fastify.listen({ port: 3000 });
-console.log('Fastify server running on http://localhost:3000');`
+await fastify.listen({ port: 3000 });`
       },
       {
         id: 'node',
@@ -158,37 +197,40 @@ const server = http.createServer((req, res) => {
   });
 });
 
-server.listen(3000, () => {
-  console.log('Node.js server listening on http://localhost:3000');
-});`
+server.listen(3000);`
       }
     ],
     capabilities: [
       {
-        title: 'Zero Heap Waste',
-        desc: 'Rejects invalid or missing proofs before body parsers buffer request payloads into Node.js memory.'
+        title: 'Saves server memory',
+        desc: 'Rejects fake requests and bots before body parsers read payload bytes into RAM.'
       },
       {
-        title: 'Route-Specific Scaling',
-        desc: 'Configure lightweight difficulty (1–2) for read routes and higher difficulty (4–5) for write or auth endpoints.'
+        title: 'Custom route difficulty',
+        desc: 'Set light difficulty (1 or 2) for read pages, and higher difficulty (4 or 5) for logins.'
       },
       {
-        title: 'Stateless or Clustered',
-        desc: 'Runs zero-dependency in RAM by default, or with RedisReplayStore for clustered multi-container fleets.'
+        title: 'Built-in rate limiter',
+        desc: 'The tarpit option automatically slows down and temporarily blocks IP addresses that flood failed requests.'
+      },
+      {
+        title: 'Automatic secure cookies',
+        desc: 'Clearance cookies automatically get the Secure attribute when your site runs on HTTPS.'
       }
     ]
   },
   {
     id: 'client',
     category: 'Integration',
-    title: 'Client Fetch & HTML Widget',
-    summary: 'Zero-cookie browser verification for fetch requests and HTML forms.',
-    desc: 'Protect HTML forms without third-party tracking cookies or visual CAPTCHA puzzles.',
-    code: `<form action="/login" method="POST">
+    title: 'Client Fetch and HTML Forms',
+    summary: 'Protect API calls and forms without tracking cookies or puzzles.',
+    desc: 'You can protect web forms using a simple HTML container or protect API calls using barstileFetch.',
+    code: `<!-- 1. HTML Form with invisible verification -->
+<form action="/login" method="POST">
   <input type="text" name="username" required />
   <input type="password" name="password" required />
 
-  <!-- Automatically mounts self-hosted verification box -->
+  <!-- Mounts the self-hosted verification box -->
   <div class="barstile-widget"></div>
 
   <button type="submit">Sign in</button>
@@ -196,25 +238,35 @@ server.listen(3000, () => {
 
 <script type="module">
   import { autoInitializeWidgets } from 'barstile/client';
+  
+  // Initializes all widgets on the page
   autoInitializeWidgets();
 </script>`,
     capabilities: [
       {
-        title: 'Off-Thread Web Worker',
-        desc: 'Cryptographic SHA-256 nonces are computed in a background worker without dropping UI animation frames.'
+        title: 'Invisible by default',
+        desc: 'Requires zero clicks from users. It stays idle on page load and solves in the background when the user submits.'
       },
       {
-        title: 'Automatic Retry',
-        desc: 'barstileFetch catches 449 challenge responses, computes the nonce token, and retries original requests transparently.'
+        title: 'Web Worker background solve',
+        desc: 'Math calculations run in a background thread so the user interface never stutters.'
+      },
+      {
+        title: 'Automatic retry with barstileFetch',
+        desc: 'Catches HTTP 449 challenge responses, solves the puzzle, and retries the request automatically.'
+      },
+      {
+        title: 'Multiple forms share clearance',
+        desc: 'If you have multiple forms on the same page, solving one form unlocks the other forms instantly.'
       }
     ]
   },
   {
     id: 'react',
     category: 'Integration',
-    title: 'React & Web Component',
-    summary: 'SSR-safe component for Next.js, Remix, and standard React applications.',
-    desc: 'Drop-in interactive widget component designed for React 18+ and server-rendered frameworks.',
+    title: 'React Component',
+    summary: 'Ready to use component for React, Next.js, and Remix.',
+    desc: 'The BarstileWidget component is safe for server-side rendering and works in Next.js App Router, Pages Router, and standard React apps.',
     code: `import React, { useState } from 'react';
 import { BarstileWidget } from 'barstile/react';
 
@@ -227,7 +279,7 @@ export default function LoginForm() {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-barstile-solution': token // Attached solution token
+        'x-barstile-solution': token
       },
       body: JSON.stringify({ email: e.target.email.value })
     });
@@ -237,89 +289,189 @@ export default function LoginForm() {
   return (
     <form onSubmit={handleSubmit}>
       <input type="email" name="email" required />
-      
-      {/* Interactive Turnstile-style PoW Widget */}
+
+      {/* Invisible mode is default. Use mode="interactive" for a visible box */}
       <BarstileWidget
-        mode="interactive"
+        mode="invisible"
         onSuccess={(solvedToken) => setToken(solvedToken)}
       />
 
-      <button type="submit" disabled={!token}>
+      <button type="submit">
         Log in
       </button>
     </form>
   );
-}`
+}`,
+    capabilities: [
+      {
+        title: 'Zero clicks needed',
+        desc: 'Invisible mode runs silently in the background when the form is submitted.'
+      },
+      {
+        title: 'Optional interactive mode',
+        desc: 'Set mode="interactive" if you want a visible checkbox like Cloudflare Turnstile.'
+      },
+      {
+        title: 'Server-side rendering safe',
+        desc: 'Does not throw errors during SSR or static site generation in Next.js or Remix.'
+      }
+    ]
+  },
+  {
+    id: 'webcomponent',
+    category: 'Integration',
+    title: 'Web Component',
+    summary: 'Works with Vue, Svelte, Angular, Astro, or plain HTML.',
+    desc: 'If you are not using React, import the custom element. It works anywhere in any web framework or CMS.',
+    code: `<!-- 1. In your HTML or framework template -->
+<form id="contact-form" action="/contact" method="POST">
+  <input type="text" name="name" required />
+
+  <!-- Barstile Custom Element -->
+  <barstile-widget data-mode="invisible"></barstile-widget>
+
+  <button type="submit">Send</button>
+</form>
+
+<!-- 2. Import the Web Component registration script -->
+<script type="module">
+  import 'barstile/web-component';
+</script>`,
+    capabilities: [
+      {
+        title: 'Framework agnostic',
+        desc: 'Works natively in Vue, Svelte, Angular, Astro, Solid, or plain static HTML pages.'
+      },
+      {
+        title: 'Lightweight',
+        desc: 'Uses native browser Custom Elements with zero runtime dependencies.'
+      }
+    ]
   },
   {
     id: 'difficulty',
     category: 'Core Guides',
     title: 'Difficulty Tuning',
-    summary: 'Exponential cost scaling for scrapers without noticeable latency for human visitors.',
-    desc: 'SHA-256 target search scales exponentially with difficulty bits (16ᵈ). Choose the right level for your traffic profile.',
+    summary: 'Make attacks expensive for bots while keeping human visits fast.',
+    desc: 'Barstile uses SHA-256 target search. Each step in difficulty requires roughly 16 times more math work. Choose the right level for your needs.',
     table: {
-      headers: ['Difficulty', 'Hex Prefix', 'Expected Hashes (16ᵈ)', 'Typical Solve Time'],
+      headers: ['Difficulty', 'Hex Prefix', 'Average Hashes', 'Typical Human Solve Time'],
       rows: [
-        ['1', '0...', '16', '< 2 ms'],
-        ['2', '00...', '256', '< 5 ms'],
+        ['1', '0...', '16', 'Less than 2 ms'],
+        ['2', '00...', '256', 'Less than 5 ms'],
         ['3 (Recommended for Web)', '000...', '4,096', '5 to 25 ms'],
-        ['4 (Engine Default)', '0000...', '65,536', '50 to 300 ms'],
-        ['5', '00000...', '1,048,576', '1 to 10 s']
+        ['4 (Default)', '0000...', '65,536', '50 to 250 ms'],
+        ['5 (Heavy Defense)', '00000...', '1,048,576', '1 to 3 seconds']
       ]
-    }
+    },
+    capabilities: [
+      {
+        title: 'Adaptive bot escalation',
+        desc: 'If Barstile detects that a visitor is running headless tools like Puppeteer, it automatically raises difficulty so scrapers burn CPU, while human visitors stay on fast mode.'
+      },
+      {
+        title: 'Mobile safe limit',
+        desc: 'Automatic escalation is capped at difficulty 5 so budget mobile phones never freeze.'
+      }
+    ]
   },
   {
     id: 'cluster',
     category: 'Core Guides',
-    title: 'Distributed Clusters & Redis',
-    summary: 'Atomic nonce verification across multi-pod Kubernetes fleets and container clusters.',
-    desc: 'Single-server instances work out-of-the-box in RAM. For multi-node Kubernetes or clustered fleets, provide an existing Redis instance.',
-    code: `import Redis from 'ioredis';
+    title: 'Multi-Server Clusters and Redis',
+    summary: 'Share solved tokens across Kubernetes fleets and server clusters.',
+    desc: 'A single server works out of the box in memory with zero setup. If you run multiple servers behind a load balancer, connect Redis so all servers recognize the same solved tokens and rate limits.',
+    code: `import express from 'express';
+import Redis from 'ioredis';
 import { barstileMiddleware } from 'barstile/server';
 
+const app = express();
 const redis = new Redis(process.env.REDIS_URL);
 
 app.use(barstileMiddleware({
-  secret: process.env.BARSTILE_SECRET, // Shared secret across pods
-  redis                                 // Atomic distributed replay store
-}));`
-  },
-  {
-    id: 'security',
-    category: 'Reference & Security',
-    title: 'Threat Model & Boundaries',
-    summary: 'Technical boundaries defining what Barstile mitigates and what requires cloud WAF.',
-    mitigates: [
-      'High-volume scrapers making hundreds of automated requests per minute.',
-      'Credential stuffing and repetitive form submission bots.',
-      'Pre-challenge payload memory exhaustion by rejecting unverified connections early.',
-      'Distributed replay attacks across clustered servers when paired with Redis.'
-    ],
-    requiresWaf: [
-      'Layer 3/4 network volumetric DDoS floods (requires cloud CDN or edge DDoS scrubbing).',
-      'Slow, low-frequency scrapers requesting 1 item every 10 seconds.',
-      'Targeted human solve farms.'
+  // Mandatory: shared secret key so all pods verify the same tokens
+  secret: process.env.BARSTILE_SECRET,
+  // Connect Redis for atomic distributed replay protection
+  redis
+}));`,
+    capabilities: [
+      {
+        title: 'Atomic Redis checks',
+        desc: 'Uses atomic Redis commands so bots cannot replay the same solved token across different servers.'
+      },
+      {
+        title: 'Graceful fallback',
+        desc: 'If Redis is temporarily unreachable, Barstile safely falls back to local memory so your site stays up.'
+      }
     ]
   },
   {
     id: 'api',
-    category: 'Reference & Security',
+    category: 'Reference and Security',
     title: 'API Options Reference',
-    summary: 'Supported configuration parameters for barstileMiddleware().',
+    summary: 'Full list of settings for barstileMiddleware().',
+    desc: 'All configuration options can be passed to barstileMiddleware({ ... }) when setting up your server.',
     table: {
       headers: ['Option', 'Type', 'Default', 'Description'],
       rows: [
-        ['difficulty', 'number', '4', 'Number of leading hex zeros required (range 1 to 8). Set 3 for web forms.'],
-        ['ttlMs', 'number', '60000', 'Challenge validity window in milliseconds.'],
-        ['secret', 'string', 'auto-generated', 'HMAC signing key. Mandatory in multi-instance setups so servers share tokens.'],
-        ['clearance', 'boolean', 'true', 'Issue persistent clearance token on successful solve so subsequent requests pass instantly.'],
-        ['clearanceQuota', 'number', '100', 'Maximum requests allowed per clearance token before requiring a fresh solve.'],
-        ['routes', 'object', 'undefined', 'Per-route difficulty overrides and clearance rules (e.g. { "POST /api/login": 5 }).'],
-        ['redis', 'any', 'undefined', 'Redis client instance (ioredis or @redis/client) for distributed replay defense in clusters.'],
-        ['tarpit', 'object', 'undefined', 'Memory-bounded rate-limiting and delay quarantine configuration for abusive IPs.'],
-        ['maxPreChallengeBodyBytes', 'number', '65536', 'Maximum pre-challenge payload size (64KB). Drops connections before heap memory is allocated.']
+        ['difficulty', 'number', '4', 'Math difficulty level (1 to 5). We recommend 3 for web forms.'],
+        ['ttlMs', 'number', '60000', 'How long a puzzle stays valid in milliseconds (60 seconds).'],
+        ['secret', 'string', 'auto-generated', 'HMAC secret key. Set this in multi-server setups so all pods share tokens.'],
+        ['clearance', 'boolean', 'true', 'Gives verified users a VIP pass so they do not have to solve on every click.'],
+        ['clearanceTtlMs', 'number', '900000', 'How long the VIP pass lasts in milliseconds (15 minutes).'],
+        ['clearanceQuota', 'number', '100', 'Maximum requests allowed per VIP pass before asking for a fresh solve.'],
+        ['routes', 'object', 'undefined', 'Custom difficulty and clearance rules for specific routes.'],
+        ['secure', 'boolean', 'auto', 'Adds the Secure flag to cookies (auto-detects HTTPS by default).'],
+        ['tarpit', 'object', 'undefined', 'Rate limiter that slows down and temporarily blocks abusive IP addresses.'],
+        ['maxPreChallengeBodyBytes', 'number', '65536', 'Drops unverified requests over 64KB before reading into memory.'],
+        ['blockBots', "boolean | 'escalate'", 'false', "Rejects automated tools when true, or escalates difficulty when 'escalate'."],
+        ['adaptiveRisk', 'boolean', 'false', 'Automatically escalates puzzle difficulty when probe anomalies are detected.'],
+        ['redis', 'any', 'undefined', 'Redis client instance for sharing solved tokens across multiple servers.']
       ]
     }
+  },
+  {
+    id: 'security',
+    category: 'Reference and Security',
+    title: 'What Barstile Stops',
+    summary: 'Clear boundaries of what Barstile defends against and what requires a cloud WAF.',
+    desc: 'Barstile is an application-layer defense system. It stops automated bot traffic and resource abuse on your Node.js servers. Review the separated guides below to see what Barstile handles and when you still need edge network protection.',
+    mitigates: [
+      {
+        title: 'High-speed scrapers and automated crawlers',
+        desc: 'Stops automated scraping tools from downloading your data or scraping hundreds of pages per minute. Because every challenge requires real computational proof, mass scraping quickly burns out an attacker CPU power and cloud budget.'
+      },
+      {
+        title: 'Credential stuffing and brute-force login bots',
+        desc: 'Protects user accounts from automated password guessing attacks. By requiring proof on POST /api/login, botnets trying thousands of leaked username and password combinations are drastically slowed down to a crawl.'
+      },
+      {
+        title: 'Form spam and fake signups',
+        desc: 'Blocks automated bots from submitting contact forms, fake registrations, and newsletter spam. Real human visitors submit without interruption, while automated scripts fail the background verification.'
+      },
+      {
+        title: 'Memory exhaustion and Slowloris uploads',
+        desc: 'Defends your Node.js server against large unverified request bodies. If an unverified client tries to upload more than 64KB before solving proof-of-work, Barstile terminates the TCP socket immediately before memory is allocated.'
+      },
+      {
+        title: 'Replay attacks and token theft',
+        desc: 'Guarantees that each solved puzzle can only be used once. Solved nonces are recorded in memory or synchronized across Redis clusters, blocking attackers from capturing and replaying valid tokens.'
+      }
+    ],
+    requiresWaf: [
+      {
+        title: 'Gigantic volumetric network floods (Layer 3 and 4)',
+        desc: 'Bandwidth attacks (like multi-gigabit UDP or SYN floods) saturate your host network interface before traffic even reaches your Node.js process. You still need an edge CDN or cloud scrubbing provider (such as Cloudflare, AWS Shield, or Fastly) to protect the network pipe.'
+      },
+      {
+        title: 'Manual human click farms',
+        desc: 'Proof-of-work verifies that computational effort was spent. It does not stop real humans who are paid to sit in front of screens and manually fill out and submit forms by hand.'
+      },
+      {
+        title: 'Slow, low-frequency scrapers',
+        desc: 'A custom bot that makes only one request every two minutes behaves identically to a real human casually reading a website. For low-frequency access, rely on application authorization, API keys, or database rate limits.'
+      }
+    ]
   }
 ];
 
@@ -428,7 +580,7 @@ export function DocsPage({ onNavigate }) {
         </div>
       </div>
 
-      {/* Mobile Navigation Dropdown Menu (Standard Mobile Docs UX) */}
+      {/* Mobile Navigation Dropdown Menu */}
       <div className="md:hidden mt-6 mb-8">
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -526,7 +678,7 @@ export function DocsPage({ onNavigate }) {
 
         {/* Right Column: Active Documentation Section */}
         <main className="md:col-span-8 space-y-6 sm:space-y-8 min-w-0">
-          {/* Section Header: Matching 24px Headline + 24px Subtitle */}
+          {/* Section Header */}
           <div>
             <div className="text-xs font-mono uppercase tracking-wider text-zinc-500 font-medium mb-1.5">
               {activeDoc.category}
@@ -539,7 +691,7 @@ export function DocsPage({ onNavigate }) {
             </p>
           </div>
 
-          {/* Quickstart Step-by-Step Flow */}
+          {/* Quickstart and Concepts Step-by-Step Flow */}
           {activeDoc.steps && (
             <div className="space-y-6 sm:space-y-8 pt-1 sm:pt-2">
               {activeDoc.steps.map((st) => (
@@ -603,7 +755,7 @@ export function DocsPage({ onNavigate }) {
                   <ul className="space-y-3 text-xs sm:text-sm text-zinc-400 leading-relaxed font-normal">
                     {activeDoc.capabilities.map((cap, cIdx) => (
                       <li key={cIdx} className="flex items-start gap-2.5">
-                        <span className="text-zinc-600 select-none mt-0.5 sm:mt-1">—</span>
+                        <span className="text-zinc-500 select-none mt-0.5 sm:mt-1 text-xs">•</span>
                         <div>
                           <strong className="text-zinc-200 font-medium">{cap.title}:</strong>{' '}
                           {cap.desc}
@@ -634,7 +786,7 @@ export function DocsPage({ onNavigate }) {
                   <ul className="space-y-3 text-xs sm:text-sm text-zinc-400 leading-relaxed font-normal">
                     {activeDoc.capabilities.map((cap, cIdx) => (
                       <li key={cIdx} className="flex items-start gap-2.5">
-                        <span className="text-zinc-600 select-none mt-0.5 sm:mt-1">—</span>
+                        <span className="text-zinc-500 select-none mt-0.5 sm:mt-1 text-xs">•</span>
                         <div>
                           <strong className="text-zinc-200 font-medium">{cap.title}:</strong>{' '}
                           {cap.desc}
@@ -647,7 +799,7 @@ export function DocsPage({ onNavigate }) {
             </div>
           )}
 
-          {/* Tables: Difficulty & API Reference */}
+          {/* Tables: Difficulty and API Reference */}
           {activeDoc.table && (
             <div className="space-y-4 pt-1 sm:pt-2">
               {activeDoc.desc && (
@@ -677,9 +829,7 @@ export function DocsPage({ onNavigate }) {
                               cIdx === 0
                                 ? 'font-medium text-white'
                                 : cIdx === 3 && cell.includes('ms')
-                                ? cell.includes('1,200')
-                                  ? 'text-amber-400'
-                                  : 'text-emerald-400'
+                                ? 'text-emerald-400'
                                 : 'text-zinc-400'
                             }`}
                           >
@@ -691,42 +841,77 @@ export function DocsPage({ onNavigate }) {
                   </tbody>
                 </table>
               </div>
+
+              {activeDoc.capabilities && (
+                <div className="pt-3 sm:pt-4 space-y-3">
+                  <h3 className="text-xs font-mono uppercase tracking-wider text-zinc-400 font-medium">
+                    Key Features
+                  </h3>
+                  <ul className="space-y-3 text-xs sm:text-sm text-zinc-400 leading-relaxed font-normal">
+                    {activeDoc.capabilities.map((cap, cIdx) => (
+                      <li key={cIdx} className="flex items-start gap-2.5">
+                        <span className="text-zinc-500 select-none mt-0.5 sm:mt-1 text-xs">•</span>
+                        <div>
+                          <strong className="text-zinc-200 font-medium">{cap.title}:</strong>{' '}
+                          {cap.desc}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           )}
 
-          {/* Threat Model Two-Column Comparison */}
+          {/* Threat Model Single-Column Separated Panels */}
           {activeDoc.mitigates && (
-            <div className="space-y-4 pt-1 sm:pt-2">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
-                <div className="space-y-2.5 sm:space-y-3">
-                  <h3 className="text-xs font-mono uppercase tracking-wider text-zinc-300 font-medium flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0"></span>
-                    What Barstile Mitigates
-                  </h3>
-                  <ul className="space-y-2.5 text-xs sm:text-sm text-zinc-400 leading-relaxed font-normal">
-                    {activeDoc.mitigates.map((item, mIdx) => (
-                      <li key={mIdx} className="flex items-start gap-2.5">
-                        <span className="text-zinc-600 select-none mt-0.5 sm:mt-1">—</span>
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+            <div className="space-y-6 sm:space-y-8 pt-1 sm:pt-2">
+              {activeDoc.desc && (
+                <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed font-normal">
+                  {activeDoc.desc}
+                </p>
+              )}
 
-                <div className="space-y-2.5 sm:space-y-3">
-                  <h3 className="text-xs font-mono uppercase tracking-wider text-zinc-400 font-medium flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-zinc-500 shrink-0"></span>
-                    What Requires Cloud WAF
+              {/* Panel 1: What Barstile Stops */}
+              <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-4 sm:p-6 space-y-4">
+                <div className="flex items-center gap-2 border-b border-white/[0.08] pb-3">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0"></span>
+                  <h3 className="text-xs font-mono uppercase tracking-wider text-emerald-400 font-semibold">
+                    What Barstile Stops
                   </h3>
-                  <ul className="space-y-2.5 text-xs sm:text-sm text-zinc-400 leading-relaxed font-normal">
-                    {activeDoc.requiresWaf.map((item, wIdx) => (
-                      <li key={wIdx} className="flex items-start gap-2.5">
-                        <span className="text-zinc-600 select-none mt-0.5 sm:mt-1">—</span>
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
                 </div>
+                <ul className="space-y-4 text-xs sm:text-sm text-zinc-400 leading-relaxed font-normal">
+                  {activeDoc.mitigates.map((item, mIdx) => (
+                    <li key={mIdx} className="flex items-start gap-3">
+                      <span className="text-zinc-500 select-none mt-0.5 sm:mt-1 text-xs">•</span>
+                      <div>
+                        <strong className="text-zinc-200 font-medium">{item.title}:</strong>{' '}
+                        {item.desc}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Panel 2: What Still Needs Cloud WAF */}
+              <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-4 sm:p-6 space-y-4">
+                <div className="flex items-center gap-2 border-b border-white/[0.08] pb-3">
+                  <span className="w-2 h-2 rounded-full bg-zinc-500 shrink-0"></span>
+                  <h3 className="text-xs font-mono uppercase tracking-wider text-zinc-400 font-semibold">
+                    What Still Needs Cloud WAF
+                  </h3>
+                </div>
+                <ul className="space-y-4 text-xs sm:text-sm text-zinc-400 leading-relaxed font-normal">
+                  {activeDoc.requiresWaf.map((item, wIdx) => (
+                    <li key={wIdx} className="flex items-start gap-3">
+                      <span className="text-zinc-500 select-none mt-0.5 sm:mt-1 text-xs">•</span>
+                      <div>
+                        <strong className="text-zinc-200 font-medium">{item.title}:</strong>{' '}
+                        {item.desc}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
               </div>
             </div>
           )}

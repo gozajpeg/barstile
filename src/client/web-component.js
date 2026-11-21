@@ -81,7 +81,7 @@ export class BarstileWidgetElement extends BaseElement {
   connectedCallback() {
     if (this._widget) return;
 
-    const mode = this.getAttribute('data-mode') || 'interactive';
+    const mode = this.getAttribute('data-mode') || 'invisible';
     const challengeUrl = this.getAttribute('data-challenge-url') || '/api/barstile/challenge';
     const verifyUrl = this.getAttribute('data-verify-url') || '/api/barstile/verify';
 

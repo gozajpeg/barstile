@@ -8,6 +8,31 @@
 import { collectBrowserProbe, encodeProbeTelemetry } from './probe.js';
 import { createBehaviorTracker } from './behavior.js';
 import { solveWorker } from './worker.js';
+import { syncServerTime, getServerTime } from './clock.js';
+
+const sharedClearance = new Map();
+const sharedInFlight = new Map();
+
+/**
+ * Clears the shared clearance token cache across widgets.
+ */
+export function clearSharedClearance() {
+  sharedClearance.clear();
+  sharedInFlight.clear();
+}
+
+function isTokenFresh(tok) {
+  if (!tok || typeof tok !== 'string') return false;
+  const parts = tok.split('.');
+  if (parts.length === 4 || parts.length === 3) {
+    const expIdx = parts.length === 4 ? 2 : 1;
+    const exp = Number.parseInt(parts[expIdx], 10);
+    if (!Number.isNaN(exp)) {
+      return getServerTime() < (exp - 30_000);
+    }
+  }
+  return true;
+}
 
 const WIDGET_STYLE = `
 .barstile-container {
@@ -95,7 +120,7 @@ function injectStyles(doc) {
  *
  * @param {HTMLElement|string} target - Container element or CSS selector
  * @param {Object} [options]
- * @param {'interactive' | 'invisible'} [options.mode='interactive']
+ * @param {'invisible' | 'interactive'} [options.mode='invisible']
  * @param {string} [options.challengeUrl='/api/barstile/challenge'] - Endpoint to fetch challenge token
  * @param {string} [options.verifyUrl='/api/barstile/verify'] - Endpoint to verify solution & telemetry
  * @param {Function} [options.onSuccess] - Callback when verified: (token) => void
@@ -103,7 +128,7 @@ function injectStyles(doc) {
  * @returns {Object} Widget instance controller
  */
 export function renderWidget(target, {
-  mode = 'interactive',
+  mode = 'invisible',
   challengeUrl = '/api/barstile/challenge',
   verifyUrl = '/api/barstile/verify',
   onSuccess = null,
@@ -130,6 +155,14 @@ export function renderWidget(target, {
     container.appendChild(hiddenInput);
   }
 
+  // Pre-fill from shared clearance cache if fresh token exists for this verifyUrl
+  const cachedInitial = sharedClearance.get(verifyUrl);
+  if (cachedInitial && isTokenFresh(cachedInitial)) {
+    token = cachedInitial;
+    hiddenInput.value = token;
+    status = 'verified';
+  }
+
   let boxEl = null;
   let labelEl = null;
 
@@ -152,6 +185,13 @@ export function renderWidget(target, {
     labelEl = document.createElement('span');
     labelEl.className = 'barstile-label';
     labelEl.textContent = 'Verify you are human';
+
+    if (status === 'verified') {
+      boxEl.innerHTML = '<span class="barstile-check">✓</span>';
+      boxEl.style.borderColor = '#16a34a';
+      boxEl.setAttribute('aria-checked', 'true');
+      labelEl.textContent = 'Verified human';
+    }
 
     checkWrapper.appendChild(boxEl);
     checkWrapper.appendChild(labelEl);
@@ -176,14 +216,64 @@ export function renderWidget(target, {
         executeVerification().catch(() => {});
       }
     });
-  } else {
-    // Invisible mode: execute immediately on background thread
-    executeVerification().catch(() => {});
   }
 
   function executeVerification() {
-    if (status === 'verified') return Promise.resolve(token);
+    if (status === 'verified' && isTokenFresh(token)) return Promise.resolve(token);
     if (pendingVerification) return pendingVerification;
+
+    const cached = sharedClearance.get(verifyUrl);
+    if (cached && isTokenFresh(cached)) {
+      token = cached;
+      hiddenInput.value = token;
+      status = 'verified';
+      if (boxEl) {
+        boxEl.innerHTML = '<span class="barstile-check">✓</span>';
+        boxEl.style.borderColor = '#16a34a';
+        boxEl.setAttribute('aria-checked', 'true');
+        labelEl.textContent = 'Verified human';
+      }
+      if (typeof onSuccess === 'function') {
+        onSuccess(token);
+      }
+      return Promise.resolve(token);
+    }
+
+    const inFlight = sharedInFlight.get(verifyUrl);
+    if (inFlight) {
+      status = 'solving';
+      if (boxEl) {
+        boxEl.innerHTML = '<div class="barstile-spinner"></div>';
+        labelEl.textContent = 'Verifying...';
+      }
+      return inFlight.then((tok) => {
+        token = tok;
+        hiddenInput.value = token;
+        status = 'verified';
+        if (boxEl) {
+          boxEl.innerHTML = '<span class="barstile-check">✓</span>';
+          boxEl.style.borderColor = '#16a34a';
+          boxEl.setAttribute('aria-checked', 'true');
+          labelEl.textContent = 'Verified human';
+        }
+        if (typeof onSuccess === 'function') {
+          onSuccess(token);
+        }
+        return token;
+      }).catch((err) => {
+        status = 'error';
+        if (boxEl) {
+          boxEl.innerHTML = '<span style="color:#dc2626;font-weight:bold;">✕</span>';
+          boxEl.style.borderColor = '#dc2626';
+          labelEl.textContent = 'Verification failed. Try again.';
+        }
+        if (typeof onError === 'function') {
+          onError(err);
+        }
+        throw err;
+      });
+    }
+
     status = 'solving';
 
     if (boxEl) {
@@ -193,15 +283,25 @@ export function renderWidget(target, {
 
     pendingVerification = (async () => {
       try {
-        // 1. Fetch challenge token from endpoint
-        const chalRes = await fetch(challengeUrl, {
-          method: 'GET',
-          headers: { 'Accept': 'application/json' }
-        });
+        // 1. Fetch challenge token from endpoint (with single retry on network error)
+        let chalRes;
+        try {
+          chalRes = await fetch(challengeUrl, {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' }
+          });
+        } catch {
+          chalRes = await fetch(challengeUrl, {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' }
+          });
+        }
 
         if (!chalRes.ok && chalRes.status !== 449) {
           throw new Error(`Failed to retrieve challenge: HTTP ${chalRes.status}`);
         }
+
+        syncServerTime(chalRes);
 
         const chalData = await chalRes.json();
         const challengeToken = chalData.challenge || chalRes.headers.get('X-Barstile-Challenge');
@@ -221,7 +321,7 @@ export function renderWidget(target, {
         const solution = solveResult?.solution || solveResult;
 
         // 4. Submit solution and telemetry envelope to verifier
-        const verifyRes = await fetch(verifyUrl, {
+        let verifyRes = await fetch(verifyUrl, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -235,12 +335,41 @@ export function renderWidget(target, {
           })
         });
 
+        // 5. If server escalates difficulty (HTTP 449), solve higher difficulty challenge and resubmit
+        if (verifyRes.status === 449) {
+          const retryData = await verifyRes.json();
+          const escalatedChallenge = retryData.challenge || verifyRes.headers.get('X-Barstile-Challenge');
+          if (escalatedChallenge) {
+            const escalatedSolve = await solveWorker(escalatedChallenge);
+            const escalatedSolution = escalatedSolve?.solution || escalatedSolve;
+            verifyRes = await fetch(verifyUrl, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-Barstile-Solution': escalatedSolution,
+                'X-Barstile-Telemetry': probeEnvelope
+              },
+              body: JSON.stringify({
+                solution: escalatedSolution,
+                telemetry: probeEnvelope,
+                behavior
+              })
+            });
+          }
+        }
+
+        syncServerTime(verifyRes);
+
         if (!verifyRes.ok) {
           throw new Error(`Verification rejected: HTTP ${verifyRes.status}`);
         }
 
         const verifyData = await verifyRes.json();
-        token = verifyData.clearance || verifyRes.headers.get('X-Barstile-Clearance') || solution;
+        const clearance = verifyData.clearance || verifyRes.headers.get('X-Barstile-Clearance');
+        token = clearance || solution;
+        if (clearance) {
+          sharedClearance.set(verifyUrl, clearance);
+        }
 
         // Update hidden input and UI state
         hiddenInput.value = token;
@@ -271,16 +400,35 @@ export function renderWidget(target, {
         throw err;
       } finally {
         pendingVerification = null;
+        sharedInFlight.delete(verifyUrl);
       }
     })();
 
+    sharedInFlight.set(verifyUrl, pendingVerification);
     return pendingVerification;
   }
 
   // Automatic parent form submission interceptor
   const parentForm = container.closest('form');
   async function onFormSubmit(e) {
-    if (status !== 'verified') {
+    if (status !== 'verified' || !isTokenFresh(token)) {
+      const cached = sharedClearance.get(verifyUrl);
+      if (cached && isTokenFresh(cached)) {
+        token = cached;
+        hiddenInput.value = token;
+        status = 'verified';
+        if (boxEl) {
+          boxEl.innerHTML = '<span class="barstile-check">✓</span>';
+          boxEl.style.borderColor = '#16a34a';
+          boxEl.setAttribute('aria-checked', 'true');
+          labelEl.textContent = 'Verified human';
+        }
+        if (typeof onSuccess === 'function') {
+          onSuccess(token);
+        }
+        return;
+      }
+
       e.preventDefault();
       try {
         await executeVerification();
@@ -300,6 +448,18 @@ export function renderWidget(target, {
     getToken: () => token,
     getStatus: () => status,
     verify: executeVerification,
+    reset: () => {
+      token = null;
+      status = 'idle';
+      hiddenInput.value = '';
+      sharedClearance.delete(verifyUrl);
+      if (boxEl) {
+        boxEl.innerHTML = '';
+        boxEl.style.borderColor = '#9ca3af';
+        boxEl.setAttribute('aria-checked', 'false');
+        labelEl.textContent = 'Verify you are human';
+      }
+    },
     destroy: () => {
       if (parentForm) {
         parentForm.removeEventListener('submit', onFormSubmit);
@@ -318,7 +478,7 @@ export function autoInitializeWidgets() {
   const widgets = [];
   const elements = document.querySelectorAll('.barstile-widget, [data-barstile]');
   for (const el of elements) {
-    const mode = el.getAttribute('data-mode') || 'interactive';
+    const mode = el.getAttribute('data-mode') || 'invisible';
     const challengeUrl = el.getAttribute('data-challenge-url') || '/api/barstile/challenge';
     const verifyUrl = el.getAttribute('data-verify-url') || '/api/barstile/verify';
     widgets.push(renderWidget(el, { mode, challengeUrl, verifyUrl }));

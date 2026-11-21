@@ -1,4 +1,5 @@
 import { solve } from './solver.js';
+import { getClockOffset } from './clock.js';
 
 const WORKER_SCRIPT = `
 const H_INIT = new Uint32Array([
@@ -158,8 +159,9 @@ self.onmessage = function(event) {
     const salt = parts[0];
     const difficulty = parseInt(parts[1], 10);
     const expiresAt = parseInt(parts[2], 10);
+    const clockOffset = data.clockOffset || 0;
 
-    if (Date.now() > expiresAt) {
+    if ((Date.now() + clockOffset) > expiresAt) {
       self.postMessage({ type: 'error', error: 'barstile: challenge token has already expired' });
       return;
     }
@@ -340,6 +342,7 @@ export async function solveWorker(challenge, options = {}) {
     worker.postMessage({
       type: 'solve',
       challenge,
+      clockOffset: options.clockOffset !== undefined ? options.clockOffset : getClockOffset(),
       maxAttempts: options.maxAttempts || 20_000_000,
       startNonce: options.startNonce || 0,
       reportProgress: typeof options.onProgress === 'function'

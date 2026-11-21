@@ -1,9 +1,11 @@
 import { solve } from './solver.js';
 import { solveWorker } from './worker.js';
 import { collectBrowserProbe, encodeProbeTelemetry } from './probe.js';
+import { syncServerTime, getServerTime } from './clock.js';
 
 let storedClearance = null;
 let storedClearanceExpiresAt = 0;
+let inFlightPromise = null;
 
 /**
  * Manually clears any cached clearance token in the client interceptor.
@@ -11,6 +13,7 @@ let storedClearanceExpiresAt = 0;
 export function clearClearance() {
   storedClearance = null;
   storedClearanceExpiresAt = 0;
+  inFlightPromise = null;
 }
 
 /**
@@ -18,7 +21,7 @@ export function clearClearance() {
  * @returns {string | null}
  */
 export function getActiveClearance() {
-  if (storedClearance && Date.now() < storedClearanceExpiresAt) {
+  if (storedClearance && getServerTime() < storedClearanceExpiresAt) {
     return storedClearance;
   }
   return null;
@@ -88,6 +91,7 @@ export async function barstileFetch(input, init = {}, options = {}) {
   initialInit.headers = headers;
 
   const initialResponse = await fetchFn(firstInput, initialInit);
+  syncServerTime(initialResponse);
 
   if (useClearance) {
     const resClearance = initialResponse.headers.get(clearanceHeader.toLowerCase());
@@ -100,7 +104,23 @@ export async function barstileFetch(input, init = {}, options = {}) {
     return initialResponse;
   }
 
-  if (useClearance) {
+  // If another concurrent request is already solving and acquiring clearance, coalesce and wait for it
+  if (useClearance && inFlightPromise) {
+    try {
+      await inFlightPromise;
+    } catch {
+      // If concurrent solve failed, fall through to solve independently
+    }
+
+    const freshClearance = getActiveClearance();
+    if (freshClearance) {
+      const coalescedHeaders = new Headers(existingHeaders);
+      coalescedHeaders.set(clearanceHeader, freshClearance);
+      return fetchFn(input, { ...init, headers: coalescedHeaders });
+    }
+  }
+
+  if (useClearance && !inFlightPromise) {
     clearClearance();
   }
 
@@ -127,37 +147,50 @@ export async function barstileFetch(input, init = {}, options = {}) {
     );
   }
 
-  const useWorker = options.worker !== false;
-  const solverOpts = options.solverOptions || {};
-  const solutionResult = useWorker
-    ? await solveWorker(challenge, solverOpts)
-    : await solve(challenge, solverOpts);
+  const performSolveAndRetry = async () => {
+    const useWorker = options.worker !== false;
+    const solverOpts = options.solverOptions || {};
+    const solutionResult = useWorker
+      ? await solveWorker(challenge, solverOpts)
+      : await solve(challenge, solverOpts);
 
-  const retryInit = { ...init };
-  const retryHeaders = new Headers(existingHeaders);
-  retryHeaders.set(solutionHeader, solutionResult.solution);
+    const retryInit = { ...init };
+    const retryHeaders = new Headers(existingHeaders);
+    retryHeaders.set(solutionHeader, solutionResult.solution);
 
-  if (options.telemetry !== false) {
-    try {
-      const [salt] = challenge.split('.');
-      const probe = collectBrowserProbe(typeof window !== 'undefined' ? window : null);
-      const telemetryEnvelope = encodeProbeTelemetry(probe, salt);
-      retryHeaders.set(options.telemetryHeader || 'X-Barstile-Telemetry', telemetryEnvelope);
-    } catch {
-      // Telemetry collection should not block legitimate retry
+    if (options.telemetry !== false) {
+      try {
+        const [salt] = challenge.split('.');
+        const probe = collectBrowserProbe(typeof window !== 'undefined' ? window : null);
+        const telemetryEnvelope = encodeProbeTelemetry(probe, salt);
+        retryHeaders.set(options.telemetryHeader || 'X-Barstile-Telemetry', telemetryEnvelope);
+      } catch {
+        // Telemetry collection should not block legitimate retry
+      }
     }
-  }
 
-  retryInit.headers = retryHeaders;
+    retryInit.headers = retryHeaders;
+    const retryResponse = await fetchFn(input, retryInit);
+    syncServerTime(retryResponse);
 
-  const retryResponse = await fetchFn(input, retryInit);
+    if (useClearance) {
+      const freshClearance = retryResponse.headers.get(clearanceHeader.toLowerCase());
+      if (freshClearance) {
+        recordClearance(freshClearance);
+      }
+    }
+
+    return retryResponse;
+  };
 
   if (useClearance) {
-    const freshClearance = retryResponse.headers.get(clearanceHeader.toLowerCase());
-    if (freshClearance) {
-      recordClearance(freshClearance);
+    inFlightPromise = performSolveAndRetry();
+    try {
+      return await inFlightPromise;
+    } finally {
+      inFlightPromise = null;
     }
   }
 
-  return retryResponse;
+  return performSolveAndRetry();
 }

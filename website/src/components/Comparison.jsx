@@ -38,7 +38,7 @@ export function Comparison() {
             </div>
           </div>
 
-          {/* Card 2: Filter */}
+          {/* Card 2: Frictionless Filters */}
           <div className="flex flex-col p-6 sm:p-8 lg:p-10 h-full">
             <div className="h-[240px] sm:h-[260px] flex items-center justify-center w-full shrink-0">
               <IsometricFilter className="w-full max-w-[280px] h-[220px]" />
@@ -54,7 +54,7 @@ export function Comparison() {
             </div>
           </div>
 
-          {/* Card 3: Math Box */}
+          {/* Card 3: Transparent Scaling */}
           <div className="flex flex-col p-6 sm:p-8 lg:p-10 h-full">
             <div className="h-[240px] sm:h-[260px] flex items-center justify-center w-full shrink-0">
               <IsometricMath className="w-full max-w-[280px] h-[220px]" />

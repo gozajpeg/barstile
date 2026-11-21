@@ -13,5 +13,6 @@ export {
   decodeProbeTelemetry
 } from './probe.js';
 export { createBehaviorTracker } from './behavior.js';
-export { renderWidget, autoInitializeWidgets } from './widget.js';
+export { renderWidget, autoInitializeWidgets, clearSharedClearance } from './widget.js';
 export { BarstileWidgetElement } from './web-component.js';
+export { syncServerTime, getServerTime, getClockOffset, resetClockOffset } from './clock.js';

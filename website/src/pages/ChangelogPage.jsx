@@ -6,6 +6,36 @@ import { ArrowLeft, ArrowUpRight } from 'lucide-react';
 /* -------------------------------------------------------------------------- */
 const RELEASES = [
   {
+    id: 'release-v1-1-0',
+    version: 'v1.1.0',
+    date: 'Minor Release',
+    title: 'v1.1.0 Non-Interactive Defaults & Multi-Form Sharing',
+    summary:
+      'Zero-click invisible mode by default, clock skew compensation, multi-form token sharing, and automated difficulty escalation.',
+    highlights: [
+      {
+        title: 'Invisible Mode & Lazy Init',
+        desc: 'Defaulted widgets to invisible across HTML, React, and Web Components with lazy solving (idle on load, solving only on interaction or submit).'
+      },
+      {
+        title: 'Anti-Thundering Herd Coalescing',
+        desc: 'Coalesced concurrent barstileFetch calls into a single in-flight Web Worker solve, preventing multi-request CPU spikes.'
+      },
+      {
+        title: 'Client/Server Clock Skew Tolerance',
+        desc: 'Synchronized challenge timestamps with HTTP Date headers to eliminate false expiration errors on out-of-sync devices.'
+      },
+      {
+        title: 'Multi-Form Clearance Sharing',
+        desc: 'Shared cached clearance tokens across multiple protected forms on the same page with zero redundant solves.'
+      },
+      {
+        title: 'Adaptive Difficulty Escalation',
+        desc: 'Replaced false-positive 403 lockouts on privacy browsers with automated HTTP 449 challenge escalation and mobile-safe capping.'
+      }
+    ]
+  },
+  {
     id: 'release-v1-0-1',
     version: 'v1.0.1',
     date: 'Patch Release',
@@ -240,7 +270,7 @@ export function ChangelogPage({ onNavigate }) {
                 <ul className="space-y-3.5 text-sm text-zinc-400 leading-relaxed font-normal">
                   {rel.highlights.map((item, hIdx) => (
                     <li key={hIdx} className="flex items-start gap-2.5">
-                      <span className="text-zinc-600 select-none mt-1">—</span>
+                      <span className="text-zinc-600 select-none mt-1">-</span>
                       <div>
                         <strong className="text-zinc-200 font-medium">{item.title}:</strong>{' '}
                         {item.desc}

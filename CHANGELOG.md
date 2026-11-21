@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.1.0] - 2026-11-20
+
+### Added
+* Defaulted widget mode to `'invisible'` across the web widget, React component, and Web Component.
+* Client/server clock skew compensation via `src/client/clock.js` and `getServerTime()`.
+* Module-level token sharing (`sharedClearance`) across multiple protected forms on the same page.
+* Thundering herd promise coalescing in `barstileFetch` for concurrent asynchronous requests.
+* Automated PoW difficulty escalation (`HTTP 449`) on detected probe anomalies with mobile-safe cap.
+
+### Changed
+* Switched invisible widget initialization to lazy solve (idle on load, computes only on form interaction or submission).
+* Documented `blockBots: boolean | 'escalate'` configuration in `docs/API.md`.
+
+### Fixed
+* Prevented form rejection after long inactivity via automated token freshness checks (`isTokenFresh`).
+* Added immediate single-retry on transient network drop during challenge retrieval.
+* Guarded clock offset calculation against stale proxy/CDN caches using the `Age` header.
+* Filtered one-time route solutions (`clearance: false`) from being incorrectly cached or shared.
+
+---
+
 ## [1.0.1] - 2026-10-26
 
 ### Added

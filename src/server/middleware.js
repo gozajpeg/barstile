@@ -135,6 +135,7 @@ function discardStream(req, maxBytes = 65536) {
  * @param {number} [options.maxPreChallengeBodyBytes=65536] - Maximum allowed payload size before challenge solve (default: 64KB)
  * @param {string} [options.clearanceHeader='x-barstile-clearance'] - Clearance header name
  * @param {string} [options.clearanceCookie='barstile_clearance'] - Clearance cookie name
+ * @param {boolean} [options.secure] - Enable Secure attribute on clearance cookie (auto-detected from HTTPS if omitted)
  * @param {any} [options.replayCache] - Optional custom replay cache instance
  * @param {string} [options.challengeHeader='x-barstile-challenge'] - Response header containing challenge
  * @param {string} [options.solutionHeader='x-barstile-solution'] - Request header containing client solution
@@ -206,6 +207,11 @@ export function barstileMiddleware(options = {}) {
       }
 
       const clientIp = extractClientIp(req, { trustProxy: Boolean(options.trustProxy) });
+
+      const isSecure = options.secure !== undefined
+        ? Boolean(options.secure)
+        : Boolean(req.secure || req.headers?.['x-forwarded-proto'] === 'https');
+      const secureAttr = isSecure ? '; Secure' : '';
 
       // Adaptive tarpit & IP flood rate limit check
       if (enableTarpit && tarpitTracker) {
@@ -307,8 +313,8 @@ export function barstileMiddleware(options = {}) {
 
       // Dedicated Verify Endpoint (POST /api/barstile/verify)
       if (req.method?.toUpperCase() === 'POST' && pathname === '/api/barstile/verify') {
-        // Flaw 1 Fix: Guard against automation scrapers & telemetry omission
-        const shouldBlockBots = options.blockBots === true || (enableAdaptiveRisk && options.blockBots !== false);
+        // Flaw 1 Fix: Guard against automation scrapers & telemetry omission when blockBots is explicitly enabled
+        const shouldBlockBots = options.blockBots === true;
         if (shouldBlockBots) {
           if (!probe) {
             discardStream(req, 0);
@@ -366,13 +372,41 @@ export function barstileMiddleware(options = {}) {
           );
         }
 
+        const risk = calculateRiskScore({
+          headers: req.headers,
+          probe,
+          behavior
+        });
+
+        const maxEscalation = options.maxDifficulty || 5;
+        const targetDifficulty = Math.min(risk.recommendedDifficulty, maxEscalation);
+        const resolvedDifficulty = (enableAdaptiveRisk || options.blockBots === 'escalate')
+          ? Math.max(effectiveDifficulty, targetDifficulty)
+          : effectiveDifficulty;
+
         const verifyRes = await engine.verify(solution, {
           now: Date.now(),
           context: clientFingerprint,
-          minDifficulty: effectiveDifficulty
+          minDifficulty: resolvedDifficulty
         });
 
         if (!verifyRes.valid) {
+          if (verifyRes.reason === 'insufficient_difficulty') {
+            const freshChallenge = engine.issueChallenge({ difficulty: resolvedDifficulty, context: clientFingerprint });
+            res.setHeader(challengeHeader, freshChallenge);
+            appendExposeHeader(res, challengeHeader);
+            res.statusCode = 449;
+            res.setHeader('Content-Type', 'application/json');
+            return res.end(
+              JSON.stringify({
+                error: 'pow_required',
+                reason: 'insufficient_difficulty',
+                challenge: freshChallenge,
+                difficulty: resolvedDifficulty
+              })
+            );
+          }
+
           if (enableTarpit && tarpitTracker) {
             tarpitTracker.recordFailure(clientIp);
           }
@@ -398,7 +432,7 @@ export function barstileMiddleware(options = {}) {
         }
 
         const maxAgeSec = Math.floor(clearanceTtlMs / 1000);
-        const cookieStr = `${clearanceCookie}=${clearance}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAgeSec}`;
+        const cookieStr = `${clearanceCookie}=${clearance}; Path=/; HttpOnly; SameSite=Lax${secureAttr}; Max-Age=${maxAgeSec}`;
         appendSetCookie(res, cookieStr);
 
         res.statusCode = 200;
@@ -493,9 +527,11 @@ export function barstileMiddleware(options = {}) {
         behavior
       });
 
-      // Adaptive difficulty calculation based on risk score (opt-in via adaptiveRisk: true)
-      const resolvedDifficulty = enableAdaptiveRisk
-        ? Math.max(effectiveDifficulty, risk.recommendedDifficulty)
+      // Adaptive difficulty calculation based on risk score (opt-in via adaptiveRisk: true or blockBots: 'escalate')
+      const maxEscalation = options.maxDifficulty || 5;
+      const targetDifficulty = Math.min(risk.recommendedDifficulty, maxEscalation);
+      const resolvedDifficulty = (enableAdaptiveRisk || options.blockBots === 'escalate')
+        ? Math.max(effectiveDifficulty, targetDifficulty)
         : effectiveDifficulty;
 
       // Silent Pass for trusted human users
@@ -513,7 +549,7 @@ export function barstileMiddleware(options = {}) {
           }
 
           const maxAgeSec = Math.floor(clearanceTtlMs / 1000);
-          const cookieStr = `${clearanceCookie}=${silentClearance}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAgeSec}`;
+          const cookieStr = `${clearanceCookie}=${silentClearance}; Path=/; HttpOnly; SameSite=Lax${secureAttr}; Max-Age=${maxAgeSec}`;
           appendSetCookie(res, cookieStr);
         }
 
@@ -532,8 +568,8 @@ export function barstileMiddleware(options = {}) {
         return next ? next() : undefined;
       }
 
-      // Hard block for detected automation frameworks (Puppeteer, Playwright, Selenium)
-      const shouldBlockBots = options.blockBots === true || (enableAdaptiveRisk && options.blockBots !== false);
+      // Hard block for detected automation frameworks (Puppeteer, Playwright, Selenium) when explicitly requested
+      const shouldBlockBots = options.blockBots === true;
       if (shouldBlockBots && (probe?.isAutomated || (probe?.tampered && probe.tampered.length > 0))) {
         discardStream(req, 0);
         res.setHeader('Connection', 'close');
@@ -581,7 +617,7 @@ export function barstileMiddleware(options = {}) {
       const result = await engine.verify(solution, {
         now: Date.now(),
         context: clientFingerprint,
-        minDifficulty: effectiveDifficulty
+        minDifficulty: resolvedDifficulty
       });
 
       if (!result.valid) {
@@ -622,7 +658,7 @@ export function barstileMiddleware(options = {}) {
         }
 
         const maxAgeSec = Math.floor(clearanceTtlMs / 1000);
-        const cookieStr = `${clearanceCookie}=${issuedClearance}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAgeSec}`;
+        const cookieStr = `${clearanceCookie}=${issuedClearance}; Path=/; HttpOnly; SameSite=Lax${secureAttr}; Max-Age=${maxAgeSec}`;
         appendSetCookie(res, cookieStr);
       }
 

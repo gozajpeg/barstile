@@ -7,7 +7,7 @@ const reactPkg = await import('react').catch(() => null);
  * Zero external runtime dependencies, SSR safe, and unmount clean.
  *
  * @param {Object} props
- * @param {'interactive' | 'invisible'} [props.mode='interactive']
+ * @param {'invisible' | 'interactive'} [props.mode='invisible']
  * @param {string} [props.challengeUrl='/api/barstile/challenge']
  * @param {string} [props.verifyUrl='/api/barstile/verify']
  * @param {(token: string) => void} [props.onSuccess]
@@ -17,7 +17,7 @@ const reactPkg = await import('react').catch(() => null);
  * @returns {any}
  */
 export function BarstileWidget({
-  mode = 'interactive',
+  mode = 'invisible',
   challengeUrl = '/api/barstile/challenge',
   verifyUrl = '/api/barstile/verify',
   onSuccess,

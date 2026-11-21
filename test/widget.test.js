@@ -4,7 +4,7 @@ import http from 'node:http';
 import { barstileMiddleware } from '../src/server/middleware.js';
 import { createBarstile } from '../src/server/barstile.js';
 import { getClientFingerprint } from '../src/core/fingerprint.js';
-import { renderWidget, autoInitializeWidgets } from '../src/client/widget.js';
+import { renderWidget, autoInitializeWidgets, clearSharedClearance } from '../src/client/widget.js';
 import { encodeProbeTelemetry } from '../src/client/probe.js';
 import { solveWorker } from '../src/client/worker.js';
 
@@ -192,6 +192,40 @@ describe('Drop-in Client Widget and Verification Flow', () => {
         return res.end(JSON.stringify({ error: 'server_down' }));
       }
 
+      if (req.url === '/single-use-verify') {
+        let body = '';
+        req.on('data', chunk => { body += chunk; });
+        req.on('end', () => {
+          res.statusCode = 200;
+          res.setHeader('Content-Type', 'application/json');
+          return res.end(JSON.stringify({ verified: true }));
+        });
+        return;
+      }
+
+      if (req.url === '/escalate-verify') {
+        let body = '';
+        req.on('data', chunk => { body += chunk; });
+        req.on('end', () => {
+          const parsed = JSON.parse(body || '{}');
+          const solution = parsed.solution || req.headers['x-barstile-solution'] || '';
+          const chalPart = solution.split(':')[0] || '';
+          const diff = Number.parseInt(chalPart.split('.')[1] || '1', 10);
+          if (diff < 2) {
+            const fingerprint = getClientFingerprint(req);
+            const escalated = engine.issueChallenge({ difficulty: 2, context: fingerprint });
+            res.statusCode = 449;
+            res.setHeader('Content-Type', 'application/json');
+            res.setHeader('X-Barstile-Challenge', escalated);
+            return res.end(JSON.stringify({ error: 'pow_required', reason: 'insufficient_difficulty', challenge: escalated }));
+          }
+          res.statusCode = 200;
+          res.setHeader('Content-Type', 'application/json');
+          return res.end(JSON.stringify({ verified: true, clearance: 'mock_clearance_escalated_token' }));
+        });
+        return;
+      }
+
       middleware(req, res, () => {
         res.statusCode = 200;
         res.setHeader('Content-Type', 'application/json');
@@ -220,9 +254,11 @@ describe('Drop-in Client Widget and Verification Flow', () => {
     mockDOM = createMockDOM();
     globalThis.document = mockDOM.doc;
     globalThis.window = mockDOM.win;
+    clearSharedClearance();
   });
 
   afterEach(() => {
+    clearSharedClearance();
     globalThis.document = origDoc;
     globalThis.window = origWin;
   });
@@ -230,6 +266,7 @@ describe('Drop-in Client Widget and Verification Flow', () => {
   test('renderWidget creates DOM structure, accessibility attributes, and injects styles', () => {
     const container = mockDOM.createElement('div');
     const widget = renderWidget(container, {
+      mode: 'interactive',
       challengeUrl: `${serverUrl}/api/barstile/challenge`,
       verifyUrl: `${serverUrl}/api/barstile/verify`
     });
@@ -262,11 +299,28 @@ describe('Drop-in Client Widget and Verification Flow', () => {
     widget.destroy();
   });
 
+  test('renderWidget defaults to invisible mode without creating checkbox DOM', () => {
+    const container = mockDOM.createElement('div');
+    const widget = renderWidget(container, {
+      challengeUrl: `${serverUrl}/api/barstile/challenge`,
+      verifyUrl: `${serverUrl}/api/barstile/verify`
+    });
+
+    assert.equal(widget.getStatus(), 'idle');
+    const hiddenInput = container.querySelector('input[name="barstile-token"]');
+    assert.ok(hiddenInput, 'Hidden input barstile-token must be created');
+    const root = container.children.find(c => c.className === 'barstile-container');
+    assert.equal(root, undefined, 'No visual checkbox container should be rendered in default invisible mode');
+
+    widget.destroy();
+  });
+
   test('clean challenge and verify integration against mock HTTP server', async () => {
     const container = mockDOM.createElement('div');
     let successToken = null;
 
     const widget = renderWidget(container, {
+      mode: 'interactive',
       challengeUrl: `${serverUrl}/api/barstile/challenge`,
       verifyUrl: `${serverUrl}/api/barstile/verify`,
       onSuccess: (tok) => {
@@ -332,6 +386,90 @@ describe('Drop-in Client Widget and Verification Flow', () => {
 
     const hiddenInput = container.querySelector('input[name="barstile-token"]');
     assert.ok(hiddenInput.value, 'Hidden input must be populated with token');
+
+    widget.destroy();
+  });
+
+  test('form submission intercepts and re-verifies if clearance token has expired (>15 mins)', async () => {
+    const form = mockDOM.createElement('form');
+    const container = mockDOM.createElement('div');
+    form.appendChild(container);
+
+    let nativeSubmitCalled = false;
+    form._onSubmitNative = () => {
+      nativeSubmitCalled = true;
+    };
+
+    const widget = renderWidget(container, {
+      challengeUrl: `${serverUrl}/api/barstile/challenge`,
+      verifyUrl: `${serverUrl}/api/barstile/verify`
+    });
+
+    // Wait for initial verification
+    const initialToken = await widget.verify();
+    assert.ok(initialToken);
+    assert.equal(widget.getStatus(), 'verified');
+
+    const origNow = Date.now;
+    try {
+      // Simulate user waiting 16 minutes before submitting
+      Date.now = () => origNow() + 16 * 60 * 1000;
+
+      let prevented = false;
+      const submitEvt = {
+        type: 'submit',
+        preventDefault: () => {
+          prevented = true;
+        }
+      };
+
+      form.dispatchEvent(submitEvt);
+      assert.equal(prevented, true, 'Form submit must be intercepted because token is expired');
+
+      const deadline = Date.now() + 2000;
+      while (!nativeSubmitCalled && Date.now() < deadline) {
+        await new Promise(r => setTimeout(r, 20));
+      }
+
+      assert.equal(nativeSubmitCalled, true, 'Form must natively submit after re-verification');
+      assert.equal(widget.getStatus(), 'verified');
+      assert.notEqual(widget.getToken(), initialToken, 'Must have received a fresh non-expired token');
+    } finally {
+      Date.now = origNow;
+      widget.destroy();
+    }
+  });
+
+  test('form submission allows immediate native submit when token is verified and fresh', async () => {
+    const form = mockDOM.createElement('form');
+    const container = mockDOM.createElement('div');
+    form.appendChild(container);
+
+    let nativeSubmitCalled = false;
+    form._onSubmitNative = () => {
+      nativeSubmitCalled = true;
+    };
+
+    const widget = renderWidget(container, {
+      challengeUrl: `${serverUrl}/api/barstile/challenge`,
+      verifyUrl: `${serverUrl}/api/barstile/verify`
+    });
+
+    // Wait until verified
+    await widget.verify();
+    assert.equal(widget.getStatus(), 'verified');
+
+    let prevented = false;
+    const submitEvt = {
+      type: 'submit',
+      preventDefault: () => {
+        prevented = true;
+      }
+    };
+
+    form.dispatchEvent(submitEvt);
+
+    assert.equal(prevented, false, 'Fresh token must NOT prevent default form submit');
 
     widget.destroy();
   });
@@ -437,6 +575,7 @@ describe('Drop-in Client Widget and Verification Flow', () => {
   test('keyboard accessibility: Enter and Space trigger verification while other keys are ignored', async () => {
     const container = mockDOM.createElement('div');
     const widget = renderWidget(container, {
+      mode: 'interactive',
       challengeUrl: `${serverUrl}/api/barstile/challenge`,
       verifyUrl: `${serverUrl}/api/barstile/verify`
     });
@@ -469,6 +608,7 @@ describe('Drop-in Client Widget and Verification Flow', () => {
     let capturedError = null;
 
     const widget = renderWidget(container, {
+      mode: 'interactive',
       challengeUrl: `${serverUrl}/error-challenge-500`,
       verifyUrl: `${serverUrl}/api/barstile/verify`,
       onError: (err) => {
@@ -495,7 +635,7 @@ describe('Drop-in Client Widget and Verification Flow', () => {
     widget.destroy();
   });
 
-  test('invisible mode triggers verification immediately upon instantiation', async () => {
+  test('invisible mode remains idle until form submission or programmatic verify()', async () => {
     const container = mockDOM.createElement('div');
     const widget = renderWidget(container, {
       mode: 'invisible',
@@ -503,7 +643,7 @@ describe('Drop-in Client Widget and Verification Flow', () => {
       verifyUrl: `${serverUrl}/api/barstile/verify`
     });
 
-    assert.equal(widget.getStatus(), 'solving');
+    assert.equal(widget.getStatus(), 'idle');
     const token = await widget.verify();
     assert.ok(token);
     assert.equal(widget.getStatus(), 'verified');
@@ -541,6 +681,7 @@ describe('Drop-in Client Widget and Verification Flow', () => {
   test('retry after error state allows user to click box and successfully verify', async () => {
     const failContainer = mockDOM.createElement('div');
     const widget = renderWidget(failContainer, {
+      mode: 'interactive',
       challengeUrl: `${serverUrl}/api/barstile/challenge`,
       verifyUrl: `${serverUrl}/api/barstile/verify`,
       onError: () => {}
@@ -651,6 +792,7 @@ describe('Drop-in Client Widget and Verification Flow', () => {
   test('keyboard Enter or Space in error state initiates fresh verification retry', async () => {
     const failContainer = mockDOM.createElement('div');
     const widget = renderWidget(failContainer, {
+      mode: 'interactive',
       challengeUrl: `${serverUrl}/api/barstile/challenge`,
       verifyUrl: `${serverUrl}/api/barstile/verify`,
       onError: () => {}
@@ -745,5 +887,206 @@ describe('Drop-in Client Widget and Verification Flow', () => {
       widget.destroy();
     });
     assert.equal(standaloneContainer.innerHTML, '');
+  });
+
+  test('adaptive difficulty escalation: widget solves HTTP 449 challenge and verifies successfully', async () => {
+    const container = mockDOM.createElement('div');
+    let verifiedToken = null;
+
+    const widget = renderWidget(container, {
+      challengeUrl: `${serverUrl}/api/barstile/challenge`,
+      verifyUrl: `${serverUrl}/escalate-verify`,
+      onSuccess(tok) {
+        verifiedToken = tok;
+      }
+    });
+
+    const resToken = await widget.verify();
+    assert.equal(resToken, 'mock_clearance_escalated_token');
+    assert.equal(verifiedToken, 'mock_clearance_escalated_token');
+    assert.equal(widget.getStatus(), 'verified');
+  });
+
+  test('multiple forms on same page: second widget reuses fresh clearance token without re-solving', async () => {
+    const form1 = mockDOM.createElement('form');
+    const container1 = mockDOM.createElement('div');
+    form1.appendChild(container1);
+
+    const form2 = mockDOM.createElement('form');
+    const container2 = mockDOM.createElement('div');
+    form2.appendChild(container2);
+
+    const widget1 = renderWidget(container1, {
+      challengeUrl: `${serverUrl}/api/barstile/challenge`,
+      verifyUrl: `${serverUrl}/api/barstile/verify`
+    });
+
+    const token1 = await widget1.verify();
+    assert.ok(token1);
+    assert.equal(widget1.getStatus(), 'verified');
+
+    // Second widget initializes or verifies after first widget already verified
+    const widget2 = renderWidget(container2, {
+      challengeUrl: `${serverUrl}/api/barstile/challenge`,
+      verifyUrl: `${serverUrl}/api/barstile/verify`
+    });
+
+    // Should already be pre-filled with the shared clearance token
+    assert.equal(widget2.getStatus(), 'verified');
+    assert.equal(widget2.getToken(), token1);
+    const hidden2 = container2.querySelector('input[name="barstile-token"]');
+    assert.equal(hidden2.value, token1);
+
+    // Explicit verify() call returns immediately with the same token
+    const token2 = await widget2.verify();
+    assert.equal(token2, token1);
+
+    widget1.destroy();
+    widget2.destroy();
+  });
+
+  test('multiple forms: concurrent verification across widgets coalesces into a single network solve', async () => {
+    const form1 = mockDOM.createElement('form');
+    const container1 = mockDOM.createElement('div');
+    form1.appendChild(container1);
+
+    const form2 = mockDOM.createElement('form');
+    const container2 = mockDOM.createElement('div');
+    form2.appendChild(container2);
+
+    const widget1 = renderWidget(container1, {
+      challengeUrl: `${serverUrl}/api/barstile/challenge`,
+      verifyUrl: `${serverUrl}/api/barstile/verify`
+    });
+    const widget2 = renderWidget(container2, {
+      challengeUrl: `${serverUrl}/api/barstile/challenge`,
+      verifyUrl: `${serverUrl}/api/barstile/verify`
+    });
+
+    const [t1, t2] = await Promise.all([widget1.verify(), widget2.verify()]);
+    assert.ok(t1);
+    assert.equal(t1, t2);
+    assert.equal(widget1.getStatus(), 'verified');
+    assert.equal(widget2.getStatus(), 'verified');
+
+    widget1.destroy();
+    widget2.destroy();
+  });
+
+  test('multiple forms: widget.reset() clears shared clearance and widget status', async () => {
+    const container1 = mockDOM.createElement('div');
+    const widget1 = renderWidget(container1, {
+      challengeUrl: `${serverUrl}/api/barstile/challenge`,
+      verifyUrl: `${serverUrl}/api/barstile/verify`
+    });
+
+    const token = await widget1.verify();
+    assert.ok(token);
+
+    widget1.reset();
+    assert.equal(widget1.getStatus(), 'idle');
+    assert.equal(widget1.getToken(), null);
+
+    // New widget should not see the cleared token
+    const container2 = mockDOM.createElement('div');
+    const widget2 = renderWidget(container2, {
+      challengeUrl: `${serverUrl}/api/barstile/challenge`,
+      verifyUrl: `${serverUrl}/api/barstile/verify`
+    });
+    assert.equal(widget2.getStatus(), 'idle');
+    assert.equal(widget2.getToken(), null);
+
+    widget1.destroy();
+    widget2.destroy();
+  });
+
+  test('multiple forms: widgets with different verifyUrl do not share clearance tokens', async () => {
+    const container1 = mockDOM.createElement('div');
+    const container2 = mockDOM.createElement('div');
+
+    const widget1 = renderWidget(container1, {
+      challengeUrl: `${serverUrl}/api/barstile/challenge`,
+      verifyUrl: `${serverUrl}/api/barstile/verify`
+    });
+    const widget2 = renderWidget(container2, {
+      challengeUrl: `${serverUrl}/api/barstile/challenge`,
+      verifyUrl: `${serverUrl}/api/barstile/other-verify`
+    });
+
+    const token1 = await widget1.verify();
+    assert.ok(token1);
+    assert.equal(widget1.getStatus(), 'verified');
+
+    // Widget 2 pointing to different verifyUrl remains idle
+    assert.equal(widget2.getStatus(), 'idle');
+    assert.equal(widget2.getToken(), null);
+
+    widget1.destroy();
+    widget2.destroy();
+  });
+
+  test('multiple forms: second form submit uses shared clearance and submits immediately', async () => {
+    const form1 = mockDOM.createElement('form');
+    const container1 = mockDOM.createElement('div');
+    form1.appendChild(container1);
+
+    const form2 = mockDOM.createElement('form');
+    const container2 = mockDOM.createElement('div');
+    form2.appendChild(container2);
+
+    const widget1 = renderWidget(container1, {
+      challengeUrl: `${serverUrl}/api/barstile/challenge`,
+      verifyUrl: `${serverUrl}/api/barstile/verify`
+    });
+    const widget2 = renderWidget(container2, {
+      challengeUrl: `${serverUrl}/api/barstile/challenge`,
+      verifyUrl: `${serverUrl}/api/barstile/verify`
+    });
+
+    await widget1.verify();
+
+    let submitted = false;
+    form2._onSubmitNative = () => {
+      submitted = true;
+    };
+
+    let defaultPrevented = false;
+    form2.dispatchEvent({
+      type: 'submit',
+      preventDefault: () => {
+        defaultPrevented = true;
+      }
+    });
+
+    assert.equal(defaultPrevented, false, 'Second form submit should not be prevented when shared clearance is fresh');
+    assert.equal(widget2.getStatus(), 'verified');
+
+    widget1.destroy();
+    widget2.destroy();
+  });
+
+  test('single-use route: does not cache or share token when server returns no clearance token', async () => {
+    const container1 = mockDOM.createElement('div');
+    const widget1 = renderWidget(container1, {
+      challengeUrl: `${serverUrl}/api/barstile/challenge`,
+      verifyUrl: `${serverUrl}/single-use-verify`
+    });
+
+    const token1 = await widget1.verify();
+    assert.ok(token1);
+    assert.equal(widget1.getStatus(), 'verified');
+
+    // Second widget on same single-use verifyUrl should NOT be pre-filled
+    const container2 = mockDOM.createElement('div');
+    const widget2 = renderWidget(container2, {
+      challengeUrl: `${serverUrl}/api/barstile/challenge`,
+      verifyUrl: `${serverUrl}/single-use-verify`
+    });
+
+    assert.equal(widget2.getStatus(), 'idle');
+    assert.equal(widget2.getToken(), null);
+
+    widget1.destroy();
+    widget2.destroy();
   });
 });

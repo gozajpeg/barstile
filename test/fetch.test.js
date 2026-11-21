@@ -2,7 +2,7 @@ import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
 import { barstileMiddleware } from '../src/server/middleware.js';
-import { barstileFetch } from '../src/client/fetch.js';
+import { barstileFetch, clearClearance } from '../src/client/fetch.js';
 
 describe('Transparent barstileFetch Interceptor', () => {
   function createTestServer() {
@@ -100,6 +100,33 @@ describe('Transparent barstileFetch Interceptor', () => {
       assert.equal(res.status, 200);
       const data = await res.json();
       assert.equal(data.protected, true);
+    } finally {
+      await close();
+    }
+  });
+
+  test('coalesces concurrent barstileFetch calls (thundering herd) so only one challenge is solved', async () => {
+    const { url, close } = await createTestServer();
+
+    try {
+      clearClearance();
+
+      // Launch 5 simultaneous requests with no prior clearance token
+      const results = await Promise.all([
+        barstileFetch(`${url}/api/p1`),
+        barstileFetch(`${url}/api/p2`),
+        barstileFetch(`${url}/api/p3`),
+        barstileFetch(`${url}/api/p4`),
+        barstileFetch(`${url}/api/p5`)
+      ]);
+
+      assert.equal(results.length, 5);
+      for (const res of results) {
+        assert.equal(res.status, 200);
+        const data = await res.json();
+        assert.equal(data.protected, true);
+        assert.equal(data.verified, true);
+      }
     } finally {
       await close();
     }

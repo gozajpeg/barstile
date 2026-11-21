@@ -343,4 +343,57 @@ describe('HTTP Middleware Integration', () => {
     assert.equal(res.ended, true);
     assert.ok(res.headers['access-control-allow-headers'].includes('x-barstile-solution'));
   });
+
+  test('appends Secure attribute to clearance cookie when secure: true or HTTPS is detected', async () => {
+    // 1. Explicit secure: true option
+    const server1 = await createTestServer({ secure: true });
+    try {
+      const initRes = await fetch(server1.url);
+      const challenge = initRes.headers.get('x-barstile-challenge');
+      const { solution } = solveSync(challenge);
+      const res = await fetch(server1.url, {
+        headers: { 'x-barstile-solution': solution }
+      });
+      assert.equal(res.status, 200);
+      const setCookie = res.headers.get('set-cookie');
+      assert.match(setCookie, /;\s*Secure/i, 'Explicit secure: true must add ; Secure');
+    } finally {
+      await server1.close();
+    }
+
+    // 2. HTTPS detected via x-forwarded-proto
+    const server2 = await createTestServer();
+    try {
+      const initRes = await fetch(server2.url);
+      const challenge = initRes.headers.get('x-barstile-challenge');
+      const { solution } = solveSync(challenge);
+      const res = await fetch(server2.url, {
+        headers: {
+          'x-barstile-solution': solution,
+          'x-forwarded-proto': 'https'
+        }
+      });
+      assert.equal(res.status, 200);
+      const setCookie = res.headers.get('set-cookie');
+      assert.match(setCookie, /;\s*Secure/i, 'x-forwarded-proto: https must auto-detect ; Secure');
+    } finally {
+      await server2.close();
+    }
+
+    // 3. Plain HTTP without secure option omits Secure (localhost development safe)
+    const server3 = await createTestServer();
+    try {
+      const initRes = await fetch(server3.url);
+      const challenge = initRes.headers.get('x-barstile-challenge');
+      const { solution } = solveSync(challenge);
+      const res = await fetch(server3.url, {
+        headers: { 'x-barstile-solution': solution }
+      });
+      assert.equal(res.status, 200);
+      const setCookie = res.headers.get('set-cookie');
+      assert.doesNotMatch(setCookie, /;\s*Secure/i, 'Plain HTTP without secure option must omit ; Secure');
+    } finally {
+      await server3.close();
+    }
+  });
 });
