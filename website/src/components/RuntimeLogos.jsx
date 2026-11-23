@@ -9,7 +9,7 @@ export function RuntimeLogos() {
         title="Node.js"
       >
         <svg
-          role="img"
+          aria-hidden="true"
           viewBox="0 0 24 24"
           className="w-7 h-7 sm:w-8 sm:h-8 fill-current group-hover:text-[#5FA04E] transition-colors"
         >
@@ -24,7 +24,7 @@ export function RuntimeLogos() {
         title="Bun"
       >
         <svg
-          role="img"
+          aria-hidden="true"
           viewBox="0 0 24 24"
           className="w-7 h-7 sm:w-8 sm:h-8 fill-current group-hover:text-[#FBF0DF] transition-colors"
         >
@@ -39,7 +39,7 @@ export function RuntimeLogos() {
         title="Deno"
       >
         <svg
-          role="img"
+          aria-hidden="true"
           viewBox="0 0 24 24"
           className="w-7 h-7 sm:w-8 sm:h-8 fill-current group-hover:text-zinc-100 transition-colors"
         >
@@ -54,7 +54,7 @@ export function RuntimeLogos() {
         title="Next.js"
       >
         <svg
-          role="img"
+          aria-hidden="true"
           viewBox="0 0 24 24"
           className="w-7 h-7 sm:w-8 sm:h-8 fill-current group-hover:text-white transition-colors"
         >
@@ -69,7 +69,7 @@ export function RuntimeLogos() {
         title="Express"
       >
         <svg
-          role="img"
+          aria-hidden="true"
           viewBox="0 0 24 24"
           className="w-7 h-7 sm:w-8 sm:h-8 fill-current group-hover:text-zinc-100 transition-colors"
         >
@@ -84,7 +84,7 @@ export function RuntimeLogos() {
         title="React"
       >
         <svg
-          role="img"
+          aria-hidden="true"
           viewBox="0 0 24 24"
           className="w-7 h-7 sm:w-8 sm:h-8 fill-current group-hover:text-[#61DAFB] transition-colors"
         >

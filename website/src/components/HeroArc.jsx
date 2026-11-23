@@ -14,10 +14,20 @@ import React from 'react';
 export function HeroArc() {
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden z-0 select-none">
+      {/* TV Static Noise Texture Overlay - 100% GPU hardware accelerated, 0ms CPU time */}
+      <div
+        className="absolute inset-0 pointer-events-none opacity-[0.06] mix-blend-screen z-10"
+        style={{
+          backgroundImage: "url('/noise.png')",
+          backgroundRepeat: 'repeat'
+        }}
+      />
+
       {/* ============================================================== */}
       {/* 1. DESKTOP SVG (True un-squished circular arc, overlaps edges)  */}
       {/* ============================================================== */}
       <svg
+        aria-hidden="true"
         viewBox="0 0 1920 1080"
         preserveAspectRatio="xMidYMid slice"
         fill="none"
@@ -55,34 +65,6 @@ export function HeroArc() {
             <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
           </radialGradient>
 
-          <filter id="cradleGlowWithGrainDesktop" x="0%" y="0%" width="100%" height="100%">
-            <feTurbulence
-              type="fractalNoise"
-              baseFrequency="0.75"
-              numOctaves="3"
-              stitchTiles="stitch"
-              result="rawNoise"
-            />
-            <feColorMatrix
-              type="matrix"
-              values="0 0 0 0 1
-                      0 0 0 0 1
-                      0 0 0 0 1
-                      0 0 0 0.16 0"
-              result="whiteGrain"
-            />
-            <feComposite
-              in="whiteGrain"
-              in2="SourceGraphic"
-              operator="in"
-              result="maskedGrain"
-            />
-            <feMerge>
-              <feMergeNode in="SourceGraphic" />
-              <feMergeNode in="maskedGrain" />
-            </feMerge>
-          </filter>
-
           <linearGradient id="arcStrokeGradientDesktop" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stopColor="#ffffff" stopOpacity="0.1" />
             <stop offset="25%" stopColor="#ffffff" stopOpacity="0.4" />
@@ -93,22 +75,20 @@ export function HeroArc() {
         </defs>
 
         <g clipPath="url(#insideBowlClipDesktop)" className="animate-inner-glow">
-          <g filter="url(#cradleGlowWithGrainDesktop)">
-            <rect
-              x="0"
-              y="0"
-              width="1920"
-              height="1080"
-              fill="url(#cradleGlowLinearDesktop)"
-            />
-            <rect
-              x="0"
-              y="0"
-              width="1920"
-              height="1080"
-              fill="url(#cradleGlowRadialDesktop)"
-            />
-          </g>
+          <rect
+            x="0"
+            y="0"
+            width="1920"
+            height="1080"
+            fill="url(#cradleGlowLinearDesktop)"
+          />
+          <rect
+            x="0"
+            y="0"
+            width="1920"
+            height="1080"
+            fill="url(#cradleGlowRadialDesktop)"
+          />
         </g>
 
         {/* Refined crisp tracer arc with subtle natural luminance */}
@@ -129,6 +109,7 @@ export function HeroArc() {
       {/* 2. MOBILE SVG (True un-squished circular arc, overlaps edges)   */}
       {/* ============================================================== */}
       <svg
+        aria-hidden="true"
         viewBox="0 0 1920 1080"
         preserveAspectRatio="xMidYMid slice"
         fill="none"
@@ -166,34 +147,6 @@ export function HeroArc() {
             <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
           </radialGradient>
 
-          <filter id="cradleGlowWithGrainMobile" x="0%" y="0%" width="100%" height="100%">
-            <feTurbulence
-              type="fractalNoise"
-              baseFrequency="0.75"
-              numOctaves="3"
-              stitchTiles="stitch"
-              result="rawNoise"
-            />
-            <feColorMatrix
-              type="matrix"
-              values="0 0 0 0 1
-                      0 0 0 0 1
-                      0 0 0 0 1
-                      0 0 0 0.16 0"
-              result="whiteGrain"
-            />
-            <feComposite
-              in="whiteGrain"
-              in2="SourceGraphic"
-              operator="in"
-              result="maskedGrain"
-            />
-            <feMerge>
-              <feMergeNode in="SourceGraphic" />
-              <feMergeNode in="maskedGrain" />
-            </feMerge>
-          </filter>
-
           <linearGradient id="arcStrokeGradientMobile" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stopColor="#ffffff" stopOpacity="0.1" />
             <stop offset="25%" stopColor="#ffffff" stopOpacity="0.4" />
@@ -204,22 +157,20 @@ export function HeroArc() {
         </defs>
 
         <g clipPath="url(#insideBowlClipMobile)" className="animate-inner-glow">
-          <g filter="url(#cradleGlowWithGrainMobile)">
-            <rect
-              x="0"
-              y="0"
-              width="1920"
-              height="1080"
-              fill="url(#cradleGlowLinearMobile)"
-            />
-            <rect
-              x="0"
-              y="0"
-              width="1920"
-              height="1080"
-              fill="url(#cradleGlowRadialMobile)"
-            />
-          </g>
+          <rect
+            x="0"
+            y="0"
+            width="1920"
+            height="1080"
+            fill="url(#cradleGlowLinearMobile)"
+          />
+          <rect
+            x="0"
+            y="0"
+            width="1920"
+            height="1080"
+            fill="url(#cradleGlowRadialMobile)"
+          />
         </g>
 
         {/* Refined crisp tracer arc with subtle natural luminance */}

@@ -79,7 +79,7 @@ const res = await barstileFetch('/api/contact', {
     category: 'Getting Started',
     title: 'How Barstile Works',
     summary: 'A simple look at background Proof-of-Work defense.',
-    desc: 'Instead of making users click pictures of traffic lights, Barstile uses computer math in the background. Real people never notice it, but bots trying to spam thousands of requests quickly run out of processing power.',
+    desc: 'Instead of making users click pictures of traffic lights or checkboxes, Barstile uses computer math in the background. Real people don\'t notice the friction, but bots trying to spam thousands of requests quickly run out of processing power.',
     steps: [
       {
         num: '1',
@@ -249,7 +249,7 @@ server.listen(3000);`
       },
       {
         title: 'Web Worker background solve',
-        desc: 'Math calculations run in a background thread so the user interface never stutters.'
+        desc: 'Math calculations run in a background thread to prevent UI stutter.'
       },
       {
         title: 'Automatic retry with barstileFetch',
@@ -371,7 +371,7 @@ export default function LoginForm() {
       },
       {
         title: 'Mobile safe limit',
-        desc: 'Automatic escalation is capped at difficulty 5 so budget mobile phones never freeze.'
+        desc: 'Automatic escalation is capped at difficulty 5 to prevent mobile lag.'
       }
     ]
   },

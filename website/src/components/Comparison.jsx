@@ -33,7 +33,7 @@ export function Comparison() {
                 REST APIs & Endpoints
               </h3>
               <p className="text-[20px] sm:text-[24px] text-zinc-400 font-normal leading-normal">
-                Protects API routes and server load on your own server, no tracking, no third parties, completely private.
+                Protects API routes and server load on your own server, no tracking, and no third parties involved.
               </p>
             </div>
           </div>
@@ -65,7 +65,7 @@ export function Comparison() {
                 Transparent Scaling
               </h3>
               <p className="text-[20px] sm:text-[24px] text-zinc-400 font-normal leading-normal">
-                Client-side math-based PoW that resolves without user interruption, keeping your server CPU and memory flat as traffic scales.
+                Client-side math-based PoW that resolves without user interruption, keeping your server CPU and memory low as traffic scales.
               </p>
             </div>
           </div>

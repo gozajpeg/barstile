@@ -267,7 +267,7 @@ export function ChangelogPage({ onNavigate }) {
                   Core Capabilities
                 </h3>
 
-                <ul className="space-y-3.5 text-sm text-zinc-400 leading-relaxed font-normal">
+                <ul className="space-y-3.5 text-base text-zinc-400 leading-relaxed font-normal">
                   {rel.highlights.map((item, hIdx) => (
                     <li key={hIdx} className="flex items-start gap-2.5">
                       <span className="text-zinc-600 select-none mt-1">-</span>

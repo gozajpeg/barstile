@@ -9,7 +9,7 @@ export function Footer({ onNavigate }) {
   };
 
   return (
-    <footer className="relative z-10 bg-transparent px-6 py-10 sm:py-14 text-xs select-none">
+    <footer className="relative z-10 bg-transparent px-6 pt-6 pb-10 sm:py-14 text-xs select-none">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-end justify-between gap-8">
         {/* Brand & Hero Subtext */}
         <div className="flex flex-col items-center sm:items-start text-center sm:text-left">

@@ -12,10 +12,20 @@ import React from 'react';
 export function FooterWave() {
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden z-0 select-none">
+      {/* TV Static Noise Texture Overlay - 100% GPU hardware accelerated, 0ms CPU time */}
+      <div
+        className="absolute inset-0 pointer-events-none opacity-[0.06] mix-blend-screen z-10"
+        style={{
+          backgroundImage: "url('/noise.png')",
+          backgroundRepeat: 'repeat'
+        }}
+      />
+
       {/* ============================================================== */}
       {/* 1. DESKTOP SVG (True un-squished fluid wave line, overlaps edges)*/}
       {/* ============================================================== */}
       <svg
+        aria-hidden="true"
         viewBox="0 0 1920 1080"
         preserveAspectRatio="xMidYMid slice"
         fill="none"
@@ -57,35 +67,6 @@ export function FooterWave() {
             <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
           </radialGradient>
 
-          {/* Subtle noise grain filter matching HeroArc texture */}
-          <filter id="fluidGlowGrainDesktop" x="0%" y="0%" width="100%" height="100%">
-            <feTurbulence
-              type="fractalNoise"
-              baseFrequency="0.75"
-              numOctaves="3"
-              stitchTiles="stitch"
-              result="rawNoise"
-            />
-            <feColorMatrix
-              type="matrix"
-              values="0 0 0 0 1
-                      0 0 0 0 1
-                      0 0 0 0 1
-                      0 0 0 0.16 0"
-              result="whiteGrain"
-            />
-            <feComposite
-              in="whiteGrain"
-              in2="SourceGraphic"
-              operator="in"
-              result="maskedGrain"
-            />
-            <feMerge>
-              <feMergeNode in="SourceGraphic" />
-              <feMergeNode in="maskedGrain" />
-            </feMerge>
-          </filter>
-
           {/* Single wave luminous stroke gradient */}
           <linearGradient id="fluidWaveStrokeDesktop" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stopColor="#ffffff" stopOpacity="0.1" />
@@ -98,22 +79,20 @@ export function FooterWave() {
 
         {/* Ambient Glow filling the wave interior */}
         <g clipPath="url(#fluidWaveUnderClipDesktop)">
-          <g filter="url(#fluidGlowGrainDesktop)">
-            <rect
-              x="0"
-              y="0"
-              width="1920"
-              height="1080"
-              fill="url(#fluidGlowLinearDesktop)"
-            />
-            <rect
-              x="0"
-              y="0"
-              width="1920"
-              height="1080"
-              fill="url(#fluidGlowRadialDesktop)"
-            />
-          </g>
+          <rect
+            x="0"
+            y="0"
+            width="1920"
+            height="1080"
+            fill="url(#fluidGlowLinearDesktop)"
+          />
+          <rect
+            x="0"
+            y="0"
+            width="1920"
+            height="1080"
+            fill="url(#fluidGlowRadialDesktop)"
+          />
         </g>
 
         {/* SINGLE static fluid ocean wave line */}
@@ -132,6 +111,7 @@ export function FooterWave() {
       {/* 2. MOBILE SVG (Single fluid wave line for narrow screens)       */}
       {/* ============================================================== */}
       <svg
+        aria-hidden="true"
         viewBox="0 0 1920 1080"
         preserveAspectRatio="xMidYMid slice"
         fill="none"
@@ -172,34 +152,6 @@ export function FooterWave() {
             <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
           </radialGradient>
 
-          <filter id="fluidGlowGrainMobile" x="0%" y="0%" width="100%" height="100%">
-            <feTurbulence
-              type="fractalNoise"
-              baseFrequency="0.75"
-              numOctaves="3"
-              stitchTiles="stitch"
-              result="rawNoise"
-            />
-            <feColorMatrix
-              type="matrix"
-              values="0 0 0 0 1
-                      0 0 0 0 1
-                      0 0 0 0 1
-                      0 0 0 0.16 0"
-              result="whiteGrain"
-            />
-            <feComposite
-              in="whiteGrain"
-              in2="SourceGraphic"
-              operator="in"
-              result="maskedGrain"
-            />
-            <feMerge>
-              <feMergeNode in="SourceGraphic" />
-              <feMergeNode in="maskedGrain" />
-            </feMerge>
-          </filter>
-
           <linearGradient id="fluidWaveStrokeMobile" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stopColor="#ffffff" stopOpacity="0.1" />
             <stop offset="25%" stopColor="#ffffff" stopOpacity="0.4" />
@@ -210,22 +162,20 @@ export function FooterWave() {
         </defs>
 
         <g clipPath="url(#fluidWaveUnderClipMobile)">
-          <g filter="url(#fluidGlowGrainMobile)">
-            <rect
-              x="0"
-              y="0"
-              width="1920"
-              height="1080"
-              fill="url(#fluidGlowLinearMobile)"
-            />
-            <rect
-              x="0"
-              y="0"
-              width="1920"
-              height="1080"
-              fill="url(#fluidGlowRadialMobile)"
-            />
-          </g>
+          <rect
+            x="0"
+            y="0"
+            width="1920"
+            height="1080"
+            fill="url(#fluidGlowLinearMobile)"
+          />
+          <rect
+            x="0"
+            y="0"
+            width="1920"
+            height="1080"
+            fill="url(#fluidGlowRadialMobile)"
+          />
         </g>
 
         <path

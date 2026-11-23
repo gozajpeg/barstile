@@ -1003,8 +1003,9 @@ export function CapabilitiesCarousel({
         {/* Previous Button */}
         <button
           onClick={handlePrev}
-          className="w-7 h-7 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.08] backdrop-blur-md text-white/50 hover:text-white active:scale-90 flex items-center justify-center transition-all"
+          className="w-7 h-7 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.08] backdrop-blur-md text-white/50 hover:text-white active:scale-90 flex items-center justify-center transition-all cursor-pointer"
           title="Previous slide"
+          aria-label="Previous slide"
         >
           <ChevronLeft className="w-3.5 h-3.5" />
         </button>
@@ -1020,6 +1021,7 @@ export function CapabilitiesCarousel({
                 onClick={() => setActiveIndex(idx)}
                 className="flex items-center h-4 focus:outline-none group cursor-pointer"
                 title={`Go to ${slide.title}`}
+                aria-label={`Go to slide ${idx + 1}: ${slide.title}`}
               >
                 {/* Fluid spring stretch: morphs smoothly between w-2 and w-8 */}
                 <div
@@ -1047,8 +1049,9 @@ export function CapabilitiesCarousel({
         {/* Next Button */}
         <button
           onClick={handleNext}
-          className="w-7 h-7 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.08] backdrop-blur-md text-white/50 hover:text-white active:scale-90 flex items-center justify-center transition-all"
+          className="w-7 h-7 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.08] backdrop-blur-md text-white/50 hover:text-white active:scale-90 flex items-center justify-center transition-all cursor-pointer"
           title="Next slide"
+          aria-label="Next slide"
         >
           <ChevronRight className="w-3.5 h-3.5" />
         </button>
@@ -1062,8 +1065,9 @@ export function CapabilitiesCarousel({
               setIsManualPause(false);
             }
           }}
-          className="w-7 h-7 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.08] backdrop-blur-md text-white/50 hover:text-white active:scale-90 flex items-center justify-center transition-all ml-1"
-          title={isEffectivelyPlaying ? 'Pause auto-scroll' : 'Resume auto-scroll'}
+          className="w-7 h-7 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.08] backdrop-blur-md text-white/50 hover:text-white active:scale-90 flex items-center justify-center transition-all ml-1 cursor-pointer"
+          title={isEffectivelyPlaying ? 'Pause autoplay' : 'Play autoplay'}
+          aria-label={isEffectivelyPlaying ? 'Pause carousel autoplay' : 'Play carousel autoplay'}
         >
           {isEffectivelyPlaying ? (
             <Pause className="w-3 h-3" />

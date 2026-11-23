@@ -2,12 +2,13 @@ import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { Navbar } from './components/Navbar.jsx';
 import { Hero } from './components/Hero.jsx';
 import { Comparison } from './components/Comparison.jsx';
-import { CapabilitiesCarousel } from './components/CapabilitiesCarousel.jsx';
+import { Benchmarks } from './components/Benchmarks.jsx';
 import { VersionDrop } from './components/VersionDrop.jsx';
 import { FAQ } from './components/FAQ.jsx';
 import { Action } from './components/Action.jsx';
 import { Footer } from './components/Footer.jsx';
 
+const CapabilitiesCarousel = lazy(() => import('./components/CapabilitiesCarousel.jsx').then(m => ({ default: m.CapabilitiesCarousel })));
 const DocsPage = lazy(() => import('./pages/DocsPage.jsx').then(m => ({ default: m.DocsPage })));
 const ChangelogPage = lazy(() => import('./pages/ChangelogPage.jsx').then(m => ({ default: m.ChangelogPage })));
 const PrivacyPage = lazy(() => import('./pages/PrivacyPage.jsx').then(m => ({ default: m.PrivacyPage })));
@@ -79,6 +80,7 @@ export default function App() {
             <main>
               <Hero onNavigate={handleNavigate} />
               <Comparison />
+              <Benchmarks />
               <CapabilitiesCarousel onNavigate={handleNavigate} />
               <VersionDrop onNavigate={handleNavigate} />
               <FAQ />

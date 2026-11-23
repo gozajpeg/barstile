@@ -21,15 +21,15 @@ export function Action({ onNavigate }) {
       <FooterWave />
 
       {/* Top spacer */}
-      <div className="h-6" />
+      <div className="h-2 sm:h-6" />
 
       {/* CTA Content: Centered safely INSIDE the wave crest */}
-      <div className="relative z-10 max-w-4xl mx-auto my-auto text-center">
+      <div className="relative z-10 max-w-4xl mx-auto mt-auto mb-4 sm:my-auto text-center">
         {/* Editorial CTA Headline */}
         <h2 className="text-[24px] font-semibold tracking-tight text-white leading-none">
           Keep it safe, don't overdo.
         </h2>
-        <p className="text-[24px] text-zinc-500 font-normal tracking-tight leading-none mt-0.5 mb-10">
+        <p className="text-[24px] text-zinc-500 font-normal tracking-tight leading-none mt-0.5 mb-8 sm:mb-10">
           Simple integration is all you need.
         </p>
 
