@@ -20,6 +20,9 @@ describe('Web Standard Fetch API & Next.js Server Action Protection', () => {
       const challengeHeader = response.headers.get('X-Barstile-Challenge');
       assert.ok(challengeHeader, 'Must set X-Barstile-Challenge header');
 
+      const cacheControl = response.headers.get('Cache-Control');
+      assert.equal(cacheControl, 'private, no-store, no-cache, max-age=0', 'Must prevent CDN and Next.js caching');
+
       const body = await response.json();
       assert.equal(body.challenge, challengeHeader);
     });
@@ -72,6 +75,9 @@ describe('Web Standard Fetch API & Next.js Server Action Protection', () => {
       const response = await handleRequest(engine, request);
       assert.ok(response, 'Must intercept unverified request');
       assert.equal(response.status, 449);
+
+      const cacheControl = response.headers.get('Cache-Control');
+      assert.equal(cacheControl, 'private, no-store, no-cache, max-age=0', 'Must prevent CDN and Next.js caching');
 
       const body = await response.json();
       assert.equal(body.error, 'challenge_required');

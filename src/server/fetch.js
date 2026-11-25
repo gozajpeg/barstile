@@ -78,6 +78,7 @@ export async function handleRequest(engine, request, options = {}) {
       status: 200,
       headers: {
         'Content-Type': 'application/json',
+        'Cache-Control': 'private, no-store, no-cache, max-age=0',
         [challengeHeader]: challenge,
         'Access-Control-Expose-Headers': challengeHeader
       }
@@ -168,6 +169,7 @@ export async function handleRequest(engine, request, options = {}) {
     status: 449,
     headers: {
       'Content-Type': 'application/json',
+      'Cache-Control': 'private, no-store, no-cache, max-age=0',
       [challengeHeader]: challenge,
       'Access-Control-Expose-Headers': challengeHeader
     }
