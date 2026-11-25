@@ -20,24 +20,26 @@ const FRAMEWORKS = [
 
 export function RuntimeLogos() {
   return (
-    <div className="grid grid-cols-3 sm:grid-cols-5 gap-x-6 sm:gap-x-10 gap-y-4 sm:gap-y-5 max-w-4xl mx-auto w-full select-none">
-      {FRAMEWORKS.map((fw) => (
-        <div
-          key={fw.name}
-          className="flex items-center justify-center gap-2.5 sm:gap-3 text-zinc-500 hover:text-zinc-300 transition-colors group cursor-default"
-          title={fw.name}
-        >
-          <img
-            src={fw.icon}
-            alt={fw.name}
-            className="w-6 h-6 sm:w-7 sm:h-7 object-contain transition-transform group-hover:scale-105 shrink-0"
-            loading="lazy"
-          />
-          <span className="text-sm sm:text-[15px] font-medium tracking-tight font-sans whitespace-nowrap">
-            {fw.name}
-          </span>
-        </div>
-      ))}
+    <div className="w-screen max-w-none flex justify-center select-none overflow-visible">
+      <div className="flex flex-nowrap items-center justify-center gap-x-8 sm:gap-x-12 shrink-0">
+        {FRAMEWORKS.map((fw) => (
+          <div
+            key={fw.name}
+            className="flex items-center gap-2.5 sm:gap-3 text-zinc-500 hover:text-zinc-300 transition-colors group cursor-default shrink-0"
+            title={fw.name}
+          >
+            <img
+              src={fw.icon}
+              alt={fw.name}
+              className="w-6 h-6 sm:w-7 sm:h-7 object-contain transition-transform group-hover:scale-105 shrink-0"
+              loading="lazy"
+            />
+            <span className="text-sm sm:text-[15px] font-medium tracking-tight font-sans whitespace-nowrap">
+              {fw.name}
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
