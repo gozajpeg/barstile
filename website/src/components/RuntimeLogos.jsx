@@ -20,20 +20,20 @@ const COMPATIBLE_FRAMEWORKS = [
 
 export function RuntimeLogos() {
   return (
-    <div className="grid grid-cols-3 sm:grid-cols-5 gap-x-4 sm:gap-x-8 md:gap-x-10 gap-y-2.5 sm:gap-y-3 max-w-3xl mx-auto select-none">
+    <div className="grid grid-cols-3 sm:grid-cols-5 gap-x-6 sm:gap-x-10 md:gap-x-12 gap-y-3.5 sm:gap-y-4 max-w-4xl mx-auto select-none items-center justify-items-center sm:justify-items-start px-2">
       {COMPATIBLE_FRAMEWORKS.map((item) => (
         <div
           key={item.name}
-          className="flex items-center justify-center sm:justify-start gap-2 px-2 py-1 rounded-md text-zinc-400 hover:text-white transition-colors group cursor-default"
+          className="flex items-center gap-2.5 sm:gap-3 text-zinc-500 hover:text-zinc-200 transition-colors group cursor-default w-full justify-center sm:justify-start"
           title={item.name}
         >
           <img
             src={item.icon}
             alt={item.name}
-            className="w-4 h-4 sm:w-5 sm:h-5 object-contain rounded-sm filter brightness-95 group-hover:brightness-110 transition-all shrink-0"
+            className="w-6 h-6 sm:w-7 sm:h-7 object-contain filter grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-200 shrink-0"
             loading="lazy"
           />
-          <span className="text-xs sm:text-[13px] font-medium tracking-tight font-sans whitespace-nowrap">
+          <span className="text-xs sm:text-sm font-medium tracking-tight font-sans whitespace-nowrap">
             {item.name}
           </span>
         </div>

@@ -13,7 +13,7 @@ export function Hero({ onNavigate }) {
       <HeroArc />
 
       {/* Main Content Centered in Full Viewport */}
-      <div className="relative z-10 max-w-4xl mx-auto -translate-y-4 sm:-translate-y-6 md:-translate-y-8">
+      <div className="relative z-10 max-w-4xl mx-auto -translate-y-6 sm:-translate-y-8 md:-translate-y-10">
         <div className="relative max-w-2xl mx-auto">
           {/* Logo Eyes: Absolutely anchored above heading with zero flow displacement */}
           <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-7 sm:mb-9 pointer-events-none flex items-center justify-center">
