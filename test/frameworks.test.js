@@ -5,6 +5,7 @@ import { barstileMiddleware } from '../src/server/middleware.js';
 import { createBarstile } from '../src/server/barstile.js';
 import { BarstileWidgetElement } from '../src/client/web-component.js';
 import { BarstileWidget } from '../src/frameworks/react.js';
+import { renderWidget } from '../src/client/widget.js';
 
 function createMockDOM() {
   const elementsById = new Map();
@@ -332,6 +333,114 @@ describe('Zero-Dependency Framework Bindings', () => {
       // Unmount cleanup
       cleanupFunction();
       assert.equal(containerDiv.children.length, 0);
+    });
+  });
+
+  describe('Express & Connect Middleware Lifecycle', () => {
+    test('barstileMiddleware halts unverified request without calling next()', () => {
+      const engine = createBarstile({ difficulty: 1 });
+      const middleware = barstileMiddleware({ engine });
+
+      let nextCalled = false;
+      let resEnded = false;
+      const headers = {};
+      const req = {
+        method: 'GET',
+        url: '/api/protected',
+        headers: { 'user-agent': 'Mozilla/5.0' },
+        socket: { remoteAddress: '127.0.0.1' }
+      };
+      const res = {
+        statusCode: 200,
+        setHeader: (k, v) => { headers[k.toLowerCase()] = v; },
+        getHeader: (k) => headers[k.toLowerCase()],
+        end: () => { resEnded = true; }
+      };
+
+      middleware(req, res, () => { nextCalled = true; });
+      assert.equal(res.statusCode, 449);
+      assert.equal(resEnded, true);
+      assert.equal(nextCalled, false);
+    });
+  });
+
+  describe('Fastify Lifecycle Hook (onRequest)', () => {
+    test('guard halts unverified request and prevents done() invocation', () => {
+      const engine = createBarstile({ difficulty: 1 });
+      const guard = barstileMiddleware({ engine });
+
+      let hookDoneCalled = false;
+      let fastifyEnded = false;
+      const mockFastifyRequest = {
+        raw: {
+          method: 'POST',
+          url: '/api/submit',
+          headers: { 'user-agent': 'Mozilla/5.0 Fastify' },
+          socket: { remoteAddress: '10.0.0.1' }
+        }
+      };
+      const mockFastifyReply = {
+        raw: {
+          statusCode: 200,
+          setHeader: () => {},
+          getHeader: () => null,
+          end: () => { fastifyEnded = true; }
+        }
+      };
+
+      // Native Fastify hook: fastify.addHook('onRequest', (request, reply, done) => guard(request.raw, reply.raw, done))
+      guard(mockFastifyRequest.raw, mockFastifyReply.raw, () => { hookDoneCalled = true; });
+      assert.equal(mockFastifyReply.raw.statusCode, 449);
+      assert.equal(fastifyEnded, true);
+      assert.equal(hookDoneCalled, false);
+    });
+  });
+
+  describe('Koa Context Delegation', () => {
+    test('middleware attaches to ctx.req and ctx.res and halts unverified request', () => {
+      const engine = createBarstile({ difficulty: 1 });
+      const middleware = barstileMiddleware({ engine });
+
+      let koaEnded = false;
+      const mockCtx = {
+        req: {
+          method: 'GET',
+          url: '/koa/resource',
+          headers: { 'user-agent': 'Mozilla/5.0 Koa' },
+          socket: { remoteAddress: '192.168.1.1' }
+        },
+        res: {
+          statusCode: 200,
+          setHeader: () => {},
+          getHeader: () => null,
+          end: () => { koaEnded = true; }
+        }
+      };
+
+      let nextCalled = false;
+      middleware(mockCtx.req, mockCtx.res, () => { nextCalled = true; });
+      assert.equal(mockCtx.res.statusCode, 449);
+      assert.equal(koaEnded, true);
+      assert.equal(nextCalled, false);
+    });
+  });
+
+  describe('Vue & Headless DOM Integration (renderWidget)', () => {
+    test('renderWidget mounts hidden token input and cleans up cleanly on unmount', () => {
+      const containerDiv = mockDOM.createElement('div');
+      const widget = renderWidget(containerDiv, {
+        challengeUrl: `${serverUrl}/api/barstile/challenge`,
+        verifyUrl: `${serverUrl}/api/barstile/verify`,
+        mode: 'invisible'
+      });
+
+      assert.ok(widget, 'Must return widget instance');
+      assert.ok(containerDiv.querySelector('input[name="barstile-token"]'), 'Must mount token input');
+      assert.equal(typeof widget.destroy, 'function');
+
+      // Vue onUnmounted lifecycle hook
+      widget.destroy();
+      assert.equal(containerDiv.children.length, 0, 'Must clean up child nodes on destroy');
     });
   });
 });
