@@ -1,5 +1,6 @@
 export { Barstile, createBarstile } from './barstile.js';
 export { barstileMiddleware } from './middleware.js';
+export { handleRequest, verifyAction } from './fetch.js';
 export { verifySolution, parseSolution } from '../core/verifier.js';
 export { createChallengeToken, parseChallengeToken, verifyChallengeToken } from '../core/challenge.js';
 export { createClearanceToken, verifyClearanceToken } from '../core/clearance.js';

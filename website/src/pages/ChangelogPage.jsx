@@ -6,6 +6,36 @@ import { ArrowLeft, ArrowUpRight } from 'lucide-react';
 /* -------------------------------------------------------------------------- */
 const RELEASES = [
   {
+    id: 'release-v1-2-0',
+    version: 'v1.2.0',
+    date: 'Minor Release',
+    title: 'v1.2.0 TypeScript Typings, Fetch API & Next.js Server Actions',
+    summary:
+      'First-class TypeScript declarations across all entry points, Web Standard Request/Response middleware, and Next.js Server Action verification.',
+    highlights: [
+      {
+        title: 'Full TypeScript Declarations',
+        desc: 'Added complete .d.ts types for barstile, barstile/server, barstile/client, barstile/react, and barstile/web-component with strict exports mapping.'
+      },
+      {
+        title: 'Web Standard handleRequest (Fetch API)',
+        desc: 'Native zero-dependency support for Next.js App Router (middleware.ts), Cloudflare Workers, Hono, and Bun using standard Request/Response objects.'
+      },
+      {
+        title: 'Next.js Server Action Protection (verifyAction)',
+        desc: 'One-line cryptographic verification for FormData in Next.js Server Actions with automated anti-replay defense.'
+      },
+      {
+        title: 'Node 18 & SSR Event Compatibility',
+        desc: 'Added safe CustomEvent degrading to ensure crash-free execution in Node 18 environments and non-browser SSR.'
+      },
+      {
+        title: 'Multi-OS CI Matrix',
+        desc: 'Automated 9-job CI matrix testing every commit on Ubuntu, Windows, and macOS across Node 18, 20, and 22.'
+      }
+    ]
+  },
+  {
     id: 'release-v1-1-0',
     version: 'v1.1.0',
     date: 'Minor Release',

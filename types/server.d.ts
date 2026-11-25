@@ -188,3 +188,42 @@ export function evaluateBehaviorTelemetry(behavior: any): { score: number; reaso
 
 export function decodeProbeTelemetry(encoded: string): any;
 export function encodeProbeTelemetry(probe: any): string;
+
+export interface HandleRequestOptions {
+  difficulty?: number;
+  challengePath?: string;
+  verifyPath?: string;
+  challengeHeader?: string;
+  clearanceHeader?: string;
+  clearanceCookie?: string;
+  clearanceTtlMs?: number;
+  trustProxy?: boolean;
+  bindIp?: boolean;
+  bindSubnet?: boolean;
+  bindUserAgent?: boolean;
+  shouldChallenge?: (request: any) => boolean;
+}
+
+export function handleRequest(
+  engine: Barstile,
+  request: any,
+  options?: HandleRequestOptions
+): Promise<any | null>;
+
+export interface VerifyActionOptions {
+  engine: Barstile;
+  tokenField?: string;
+  context?: string;
+}
+
+export interface VerifyActionResult {
+  valid: boolean;
+  error?: string;
+  token?: string;
+  type?: 'clearance' | 'solution';
+}
+
+export function verifyAction(
+  formData: any,
+  options: VerifyActionOptions
+): Promise<VerifyActionResult>;
