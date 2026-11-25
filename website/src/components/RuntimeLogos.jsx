@@ -10,7 +10,7 @@ const FRAMEWORKS = [
   { name: 'Vue', icon: '/frameworks/vue.svg' },
   { name: 'Svelte', icon: '/frameworks/svelte.svg' },
   { name: 'Fastify', icon: '/frameworks/fastify.svg' },
-  { name: 'Cloudflare', icon: '/frameworks/cloudflare.svg' },
+  { name: 'Cloudflare Workers', icon: '/frameworks/cloudflare-workers.svg' },
   { name: 'Hono', icon: '/frameworks/hono.svg' },
   { name: 'Astro', icon: '/frameworks/astro.svg' },
   { name: 'Angular', icon: '/frameworks/angular.svg' },
