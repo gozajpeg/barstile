@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.2.0] - 2026-11-25
+
+### Added
+* First-class TypeScript declarations (`types/`) across all entry points (`barstile`, `server`, `client`, `react`, `web-component`).
+* Web Standard Fetch API support via `handleRequest(engine, request, options)` for Next.js App Router (`middleware.ts`), Cloudflare Workers, Hono, and Bun.
+* Next.js Server Action verification via `verifyAction(formData, options)` for one-line cryptographic validation and anti-replay defense.
+* Multi-OS and multi-Node CI test matrix (`.github/workflows/test.yml`) covering Ubuntu, Windows, and macOS on Node 18, 20, and 22.
+* Portable test runner (`scripts/test.js`) ensuring cross-platform test discovery without shell globbing dependencies.
+
+### Fixed
+* Added `createCustomEvent` safe fallback in `src/client/web-component.js` to prevent `ReferenceError: CustomEvent is not defined` in Node 18 and SSR environments.
+* Fixed event constructor mock in `test/frameworks.test.js` to avoid attempting assignment to read-only `Event.prototype.type`.
+
+---
+
 ## [1.1.0] - 2026-11-20
 
 ### Added
