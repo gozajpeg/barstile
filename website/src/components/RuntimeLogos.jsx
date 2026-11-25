@@ -1,232 +1,43 @@
 import React from 'react';
 
+const COMPATIBLE_FRAMEWORKS = [
+  { name: 'Node.js', icon: '/frameworks/nodejs.png' },
+  { name: 'Next.js', icon: '/frameworks/nextjs.png' },
+  { name: 'React', icon: '/frameworks/react.png' },
+  { name: 'Vue', icon: '/frameworks/vue.png' },
+  { name: 'Svelte', icon: '/frameworks/svelte.png' },
+  { name: 'Express', icon: '/frameworks/express.png' },
+  { name: 'Fastify', icon: '/frameworks/fastify.png' },
+  { name: 'Bun', icon: '/frameworks/bun.png' },
+  { name: 'Deno', icon: '/frameworks/deno.png' },
+  { name: 'Cloudflare', icon: '/frameworks/cloudflare.png' },
+  { name: 'Astro', icon: '/frameworks/astro.png' },
+  { name: 'Hono', icon: '/frameworks/hono.png' },
+  { name: 'Nuxt', icon: '/frameworks/nuxt.png' },
+  { name: 'Angular', icon: '/frameworks/angular.png' },
+  { name: 'Koa', icon: '/frameworks/koa.png' }
+];
+
 export function RuntimeLogos() {
   return (
-    <div className="grid grid-cols-3 sm:grid-cols-5 gap-x-4 sm:gap-x-8 gap-y-3.5 sm:gap-y-4.5 max-w-3xl mx-auto select-none">
-      {/* 1. Node.js */}
-      <div
-        className="flex items-center justify-center gap-2 sm:gap-2.5 text-zinc-500 hover:text-zinc-300 transition-colors group cursor-default"
-        title="Node.js"
-      >
-        <svg
-          aria-hidden="true"
-          viewBox="0 0 24 24"
-          className="w-6 h-6 sm:w-7 sm:h-7 fill-current group-hover:text-[#5FA04E] transition-colors"
+    <div className="grid grid-cols-3 sm:grid-cols-5 gap-x-4 sm:gap-x-8 md:gap-x-10 gap-y-2.5 sm:gap-y-3 max-w-3xl mx-auto select-none">
+      {COMPATIBLE_FRAMEWORKS.map((item) => (
+        <div
+          key={item.name}
+          className="flex items-center justify-center sm:justify-start gap-2 px-2 py-1 rounded-md text-zinc-400 hover:text-white transition-colors group cursor-default"
+          title={item.name}
         >
-          <path d="M11.998 24c-.321 0-.641-.084-.922-.247l-2.936-1.737c-.438-.245-.224-.332-.08-.383.585-.203.703-.25 1.328-.604.065-.037.151-.023.218.017l2.256 1.339c.082.045.197.045.272 0l8.795-5.076c.082-.047.134-.141.134-.238V6.921c0-.099-.053-.192-.137-.242l-8.791-5.072c-.081-.047-.189-.047-.271 0L3.075 6.68c-.085.049-.139.145-.139.241v10.15c0 .097.054.189.139.235l2.409 1.392c1.307.654 2.108-.116 2.108-.89V7.787c0-.142.114-.253.256-.253h1.115c.139 0 .255.112.255.253v10.021c0 1.745-.95 2.745-2.604 2.745-.508 0-.909 0-2.026-.551L2.28 18.675c-.57-.329-.922-.945-.922-1.604V6.921c0-.659.353-1.275.922-1.603l8.795-5.082c.557-.315 1.296-.315 1.848 0l8.794 5.082c.57.329.924.944.924 1.603v10.15c0 .659-.354 1.273-.924 1.604l-8.794 5.078c-.276.158-.595.242-.921.242zm7.101-10.007c0-1.9-1.284-2.406-3.987-2.763-2.731-.361-3.009-.548-3.009-1.187 0-.528.235-1.233 2.258-1.233 1.807 0 2.473.389 2.747 1.607.024.115.129.199.247.199h1.141c.071 0 .138-.031.186-.081.048-.054.074-.123.067-.196-.177-2.098-1.571-3.076-4.388-3.076-2.508 0-4.004 1.058-4.004 2.833 0 1.925 1.488 2.457 3.895 2.695 2.88.282 3.103.703 3.103 1.269 0 .983-.789 1.402-2.642 1.402-2.327 0-2.839-.584-3.011-1.742-.02-.124-.126-.215-.253-.215h-1.137c-.141 0-.254.112-.254.253 0 1.482.806 3.248 4.655 3.248 2.846 0 4.444-1.097 4.444-3.014z" />
-        </svg>
-        <span className="text-xs sm:text-[14px] font-medium tracking-tight font-sans">Node.js</span>
-      </div>
-
-      {/* 2. Bun */}
-      <div
-        className="flex items-center justify-center gap-2 sm:gap-2.5 text-zinc-500 hover:text-zinc-300 transition-colors group cursor-default"
-        title="Bun"
-      >
-        <svg
-          aria-hidden="true"
-          viewBox="0 0 24 24"
-          className="w-6 h-6 sm:w-7 sm:h-7 fill-current group-hover:text-[#FBF0DF] transition-colors"
-        >
-          <path d="M12 22.596c6.628 0 12-4.338 12-9.688 0-3.318-2.057-6.248-5.219-7.986-1.286-.715-2.297-1.357-3.139-1.89C14.058 2.025 13.08 1.404 12 1.404c-1.097 0-2.334.785-3.966 1.821a49.92 49.92 0 0 1-2.816 1.697C2.057 6.66 0 9.59 0 12.908c0 5.35 5.372 9.687 12 9.687v.001ZM10.599 4.715c.334-.759.503-1.58.498-2.409 0-.145.202-.187.23-.029.658 2.783-.902 4.162-2.057 4.624-.124.048-.199-.121-.103-.209a5.763 5.763 0 0 0 1.432-1.977Zm2.058-.102a5.82 5.82 0 0 0-.782-2.306v-.016c-.069-.123.086-.263.185-.172 1.962 2.111 1.307 4.067.556 5.051-.082.103-.23-.003-.189-.126a5.85 5.85 0 0 0 .23-2.431Zm1.776-.561a5.727 5.727 0 0 0-1.612-1.806v-.014c-.112-.085-.024-.274.114-.218 2.595 1.087 2.774 3.18 2.459 4.407a.116.116 0 0 1-.049.071.11.11 0 0 1-.153-.026.122.122 0 0 1-.022-.083 5.891 5.891 0 0 0-.737-2.331Zm-5.087.561c-.617.546-1.282.76-2.063 1-.117 0-.195-.078-.156-.181 1.752-.909 2.376-1.649 2.999-2.778 0 0 .155-.118.188.085 0 .304-.349 1.329-.968 1.874Zm4.945 11.237a2.957 2.957 0 0 1-.937 1.553c-.346.346-.8.565-1.286.62a2.178 2.178 0 0 1-1.327-.62 2.955 2.955 0 0 1-.925-1.553.244.244 0 0 1 .064-.198.234.234 0 0 1 .193-.069h3.965a.226.226 0 0 1 .19.07c.05.053.073.125.063.197Zm-5.458-2.176a1.862 1.862 0 0 1-2.384-.245 1.98 1.98 0 0 1-.233-2.447c.207-.319.503-.566.848-.713a1.84 1.84 0 0 1 1.092-.11c.366.075.703.261.967.531a1.98 1.98 0 0 1 .408 2.114 1.931 1.931 0 0 1-.698.869v.001Zm8.495.005a1.86 1.86 0 0 1-2.381-.253 1.964 1.964 0 0 1-.547-1.366c0-.384.11-.76.32-1.079.207-.319.503-.567.849-.713a1.844 1.844 0 0 1 1.093-.108c.367.076.704.262.968.534a1.98 1.98 0 0 1 .4 2.117 1.932 1.932 0 0 1-.702.868Z" />
-        </svg>
-        <span className="text-xs sm:text-[14px] font-medium tracking-tight font-sans">Bun</span>
-      </div>
-
-      {/* 3. Deno */}
-      <div
-        className="flex items-center justify-center gap-2 sm:gap-2.5 text-zinc-500 hover:text-zinc-300 transition-colors group cursor-default"
-        title="Deno"
-      >
-        <svg
-          aria-hidden="true"
-          viewBox="0 0 24 24"
-          className="w-6 h-6 sm:w-7 sm:h-7 fill-current group-hover:text-zinc-100 transition-colors"
-        >
-          <path d="M1.105 18.02A11.9 11.9 0 0 1 0 12.985q0-.698.078-1.376a12 12 0 0 1 .231-1.34A12 12 0 0 1 4.025 4.02a12 12 0 0 1 5.46-2.771 12 12 0 0 1 3.428-.23c1.452.112 2.825.477 4.077 1.05a12 12 0 0 1 2.78 1.774 12.02 12.02 0 0 1 4.053 7.078A12 12 0 0 1 24 12.985q0 .454-.036.914a12 12 0 0 1-.728 3.305 12 12 0 0 1-2.38 3.875c-1.33 1.357-3.02 1.962-4.43 1.936a4.4 4.4 0 0 1-2.724-1.024c-.99-.853-1.391-1.83-1.53-2.919a5 5 0 0 1 .128-1.518c.105-.38.37-1.116.76-1.437-.455-.197-1.04-.624-1.226-.829-.045-.05-.04-.13 0-.183a.155.155 0 0 1 .177-.053c.392.134.869.267 1.372.35.66.111 1.484.25 2.317.292 2.03.1 4.153-.813 4.812-2.627s.403-3.609-1.96-4.685-3.454-2.356-5.363-3.128c-1.247-.505-2.636-.205-4.06.582-3.838 2.121-7.277 8.822-5.69 15.032a.191.191 0 0 1-.315.19 12 12 0 0 1-1.25-1.634 12 12 0 0 1-.769-1.404M11.57 6.087c.649-.051 1.214.501 1.31 1.236.13.979-.228 1.99-1.41 2.013-1.01.02-1.315-.997-1.248-1.614.066-.616.574-1.575 1.35-1.635" />
-        </svg>
-        <span className="text-xs sm:text-[14px] font-medium tracking-tight font-sans">Deno</span>
-      </div>
-
-      {/* 4. Next.js */}
-      <div
-        className="flex items-center justify-center gap-2 sm:gap-2.5 text-zinc-500 hover:text-zinc-300 transition-colors group cursor-default"
-        title="Next.js"
-      >
-        <svg
-          aria-hidden="true"
-          viewBox="0 0 24 24"
-          className="w-6 h-6 sm:w-7 sm:h-7 fill-current group-hover:text-white transition-colors"
-        >
-          <path d="M18.665 21.978C16.758 23.255 14.465 24 12 24 5.377 24 0 18.623 0 12S5.377 0 12 0s12 5.377 12 12c0 3.583-1.574 6.801-4.067 9.001L9.219 7.2H7.2v9.596h1.615V9.251l9.85 12.727Zm-3.332-8.533 1.6 2.061V7.2h-1.6v6.245Z" />
-        </svg>
-        <span className="text-xs sm:text-[14px] font-medium tracking-tight font-sans">Next.js</span>
-      </div>
-
-      {/* 5. Remix */}
-      <div
-        className="flex items-center justify-center gap-2 sm:gap-2.5 text-zinc-500 hover:text-zinc-300 transition-colors group cursor-default"
-        title="Remix"
-      >
-        <svg
-          aria-hidden="true"
-          viewBox="0 0 24 24"
-          className="w-6 h-6 sm:w-7 sm:h-7 fill-current group-hover:text-white transition-colors"
-        >
-          <path d="M15.42 16.5c-1.39 0-2.31-.69-3.07-2.29l-1.3-2.73c-.6-1.27-1.12-1.74-2.18-1.78H7.5v6.8H4.5V4.5h5.45c3.27 0 5.43 1.76 5.43 4.67 0 1.94-.96 3.42-2.48 4.14 1.05.69 1.76 1.83 2.52 3.44l.87 1.84c.48 1.02.93 1.41 1.71 1.41h.5v2.5h-1c-1.07 0-1.89-.48-2.58-2l-.98-2zm-6.55-9.5H7.5v3.2h1.37c1.47 0 2.47-.72 2.47-1.6 0-.89-1-1.6-2.47-1.6z" />
-        </svg>
-        <span className="text-xs sm:text-[14px] font-medium tracking-tight font-sans">Remix</span>
-      </div>
-
-      {/* 6. Express */}
-      <div
-        className="flex items-center justify-center gap-2 sm:gap-2.5 text-zinc-500 hover:text-zinc-300 transition-colors group cursor-default"
-        title="Express"
-      >
-        <svg
-          aria-hidden="true"
-          viewBox="0 0 24 24"
-          className="w-6 h-6 sm:w-7 sm:h-7 fill-current group-hover:text-zinc-100 transition-colors"
-        >
-          <path d="M12.262 16.666h1.146l6.975-9.325H19.22zm9.778 1.441v.004l-4.334-5.706-.557.74 4.873 6.682H.945V4.173h9.505l5.026 6.7.574-.772-4.374-5.928h.003l-.719-.945H0v17.544h24zM10.917 8.705a3.8 3.8 0 0 0-1.292-1.183q-.796-.45-1.916-.45c-.746 0-1.37.14-1.906.424a3.76 3.76 0 0 0-1.31 1.12 4.9 4.9 0 0 0-.75 1.581 7.17 7.17 0 0 0 0 3.696c.148.567.402 1.101.75 1.573a3.5 3.5 0 0 0 1.31 1.066q.803.39 1.906.389 1.77 0 2.739-.868.966-.867 1.328-2.457h-1.139q-.271 1.084-.977 1.734-.704.651-1.952.65-.812 0-1.392-.342a3.1 3.1 0 0 1-.957-.869 3.5 3.5 0 0 1-.551-1.182 5 5 0 0 1-.17-1.133 9 9 0 0 0-.015-.286 4.5 4.5 0 0 1 .015-.829c.047-.418.147-.83.296-1.223A3.7 3.7 0 0 1 5.54 9.05a2.9 2.9 0 0 1 .922-.742q.541-.28 1.246-.28c.47 0 .869.093 1.23.28q.541.281.922.742.379.461.587 1.057t.225 1.246H5.625l.004.957h6.182a7.3 7.3 0 0 0-.18-1.924 4.9 4.9 0 0 0-.715-1.68z" />
-        </svg>
-        <span className="text-xs sm:text-[14px] font-medium tracking-tight font-sans">Express</span>
-      </div>
-
-      {/* 7. Fastify */}
-      <div
-        className="flex items-center justify-center gap-2 sm:gap-2.5 text-zinc-500 hover:text-zinc-300 transition-colors group cursor-default"
-        title="Fastify"
-      >
-        <svg
-          aria-hidden="true"
-          viewBox="0 0 24 24"
-          className="w-6 h-6 sm:w-7 sm:h-7 fill-current group-hover:text-white transition-colors"
-        >
-          <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.666 8.358-4.22 5.093h2.646L9.67 19.34l1.326-5.889H8.35L12.57 8.358z" />
-        </svg>
-        <span className="text-xs sm:text-[14px] font-medium tracking-tight font-sans">Fastify</span>
-      </div>
-
-      {/* 8. Hono */}
-      <div
-        className="flex items-center justify-center gap-2 sm:gap-2.5 text-zinc-500 hover:text-zinc-300 transition-colors group cursor-default"
-        title="Hono"
-      >
-        <svg
-          aria-hidden="true"
-          viewBox="0 0 24 24"
-          className="w-6 h-6 sm:w-7 sm:h-7 fill-current group-hover:text-[#E36002] transition-colors"
-        >
-          <path d="M12.636 1.465a.695.695 0 0 0-.964.137C9.932 3.824 8.78 6.46 8.243 9.42c-.417-1.026-.64-2.096-.64-3.18 0-.46-.518-.74-.897-.48C4.542 7.228 3 10.428 3 14.07 3 19.002 7.029 23 12 23s9-3.998 9-8.93c0-4.707-2.73-8.824-8.364-12.605zm-.636 18.535c-2.761 0-5-2.239-5-5 0-1.879 1.054-3.513 2.613-4.348.147-.078.326-.046.438.077.92 1.01 2.057 1.771 3.327 2.193.185.062.29.255.244.444-.241.97-.087 1.95.42 2.765.115.185.087.427-.066.579-.76.757-1.256 1.76-1.976 3.29z" />
-        </svg>
-        <span className="text-xs sm:text-[14px] font-medium tracking-tight font-sans">Hono</span>
-      </div>
-
-      {/* 9. Cloudflare */}
-      <div
-        className="flex items-center justify-center gap-2 sm:gap-2.5 text-zinc-500 hover:text-zinc-300 transition-colors group cursor-default"
-        title="Cloudflare Workers"
-      >
-        <svg
-          aria-hidden="true"
-          viewBox="0 0 24 24"
-          className="w-6 h-6 sm:w-7 sm:h-7 fill-current group-hover:text-[#F38020] transition-colors"
-        >
-          <path d="M18.2 13.7c-.1-.7-.4-1.3-.9-1.8-.5-.5-1.1-.8-1.8-.9-.4-.7-1-1.2-1.8-1.5-.7-.3-1.5-.4-2.3-.2-.7.2-1.4.6-1.9 1.2-.5.5-.8 1.2-.9 2-.5-.1-1.1 0-1.6.2-.5.2-.9.6-1.2 1-.3.4-.4.9-.4 1.4 0 .5.2 1 .5 1.4.3.4.8.7 1.3.8h10.1c.5 0 1-.2 1.4-.5.4-.3.6-.8.7-1.3.1-.5 0-1-.2-1.4-.2-.3-.5-.6-.9-.7z" />
-        </svg>
-        <span className="text-xs sm:text-[14px] font-medium tracking-tight font-sans">Cloudflare</span>
-      </div>
-
-      {/* 10. Astro */}
-      <div
-        className="flex items-center justify-center gap-2 sm:gap-2.5 text-zinc-500 hover:text-zinc-300 transition-colors group cursor-default"
-        title="Astro"
-      >
-        <svg
-          aria-hidden="true"
-          viewBox="0 0 24 24"
-          className="w-6 h-6 sm:w-7 sm:h-7 fill-current group-hover:text-[#FF5D01] transition-colors"
-        >
-          <path d="M8.358 20.162c-1.186-1.07-2.24-2.618-2.585-4.103a.53.53 0 0 1 .74-.602 12.04 12.04 0 0 0 3.31 1.258c.28.058.463-.223.344-.474a9.927 9.927 0 0 1-.955-4.526c.038-1.57.51-3.084 1.344-4.394.048-.075.144-.099.219-.053l4.634 2.825c.08.049.183.03.24-.045a11.168 11.168 0 0 1 3.51-2.923.498.498 0 0 1 .69.52c-.22 1.488-.13 3.01.272 4.453.078.277.41.36.6.15 1.085-1.2 2.275-2.074 3.567-2.62.158-.067.332.04.33.212-.022 1.83-.564 3.633-1.57 5.22-.073.115-.046.267.06.353 1.157.94 2.453 1.636 3.864 2.072.188.058.267.28.156.44-1.242 1.79-2.932 3.197-4.912 4.09-.16.073-.346-.013-.393-.183-.392-1.423-.497-2.918-.31-4.38.037-.285-.246-.508-.523-.41-1.393.49-2.87.697-4.354.613-.263-.015-.46.216-.407.475.295 1.442.27 2.93-.075 4.363-.042.174-.226.269-.39.202-2.146-.874-3.99-2.316-5.385-4.173a.478.478 0 0 1 .147-.642zm3.64-15.34a.5.5 0 0 1 .374-.176c.14 0 .274.06.368.167l3.722 4.22c.18.204.09.525-.173.61a10.97 10.97 0 0 1-3.916.326.5.5 0 0 1-.444-.45l-.013-.082.082-4.615z" />
-        </svg>
-        <span className="text-xs sm:text-[14px] font-medium tracking-tight font-sans">Astro</span>
-      </div>
-
-      {/* 11. React */}
-      <div
-        className="flex items-center justify-center gap-2 sm:gap-2.5 text-zinc-500 hover:text-zinc-300 transition-colors group cursor-default"
-        title="React"
-      >
-        <svg
-          aria-hidden="true"
-          viewBox="0 0 24 24"
-          className="w-6 h-6 sm:w-7 sm:h-7 fill-current group-hover:text-[#61DAFB] transition-colors"
-        >
-          <path d="M14.23 12.004a2.236 2.236 0 0 1-2.235 2.236 2.236 2.236 0 0 1-2.236-2.236 2.236 2.236 0 0 1 2.235-2.236 2.236 2.236 0 0 1 2.236 2.236zm2.648-10.69c-1.346 0-3.107.96-4.888 2.622-1.78-1.653-3.542-2.602-4.887-2.602-.41 0-.783.093-1.106.278-1.375.793-1.683 3.264-.973 6.365C1.98 8.917 0 10.42 0 12.004c0 1.59 1.99 3.097 5.043 4.03-.704 3.113-.39 5.588.988 6.38.32.187.69.275 1.102.275 1.345 0 3.107-.96 4.888-2.624 1.78 1.654 3.542 2.603 4.887 2.603.41 0 .783-.09 1.106-.275 1.374-.792 1.683-3.263.973-6.365C22.02 15.096 24 13.59 24 12.004c0-1.59-1.99-3.097-5.043-4.032.704-3.11.39-5.587-.988-6.38-.318-.184-.688-.277-1.092-.278zm-.005 1.09v.006c.225 0 .406.044.558.127.666.382.955 1.835.73 3.704-.054.46-.142.945-.25 1.44-.96-.236-2.006-.417-3.107-.534-.66-.905-1.345-1.727-2.035-2.447 1.592-1.48 3.087-2.292 4.105-2.295zm-9.77.02c1.012 0 2.514.808 4.11 2.28-.686.72-1.37 1.537-2.02 2.442-1.107.117-2.154.298-3.113.538-.112-.49-.195-.964-.254-1.42-.23-1.868.054-3.32.714-3.707.19-.09.4-.127.563-.132zm4.882 3.05c.455.468.91.992 1.36 1.564-.44-.02-.89-.034-1.345-.034-.46 0-.915.01-1.36.034.44-.572.895-1.096 1.345-1.565zM12 8.1c.74 0 1.477.034 2.202.093.406.582.802 1.203 1.183 1.86.372.64.71 1.29 1.018 1.946-.308.655-.646 1.31-1.013 1.95-.38.66-.773 1.288-1.18 1.87-.728.063-1.466.098-2.21.098-.74 0-1.477-.035-2.202-.093-.406-.582-.802-1.204-1.183-1.86-.372-.64-.71-1.29-1.018-1.946.303-.657.646-1.313 1.013-1.954.38-.66.773-1.286 1.18-1.868.728-.064 1.466-.098 2.21-.098zm-3.635.254c-.24.377-.48.763-.704 1.16-.225.39-.435.782-.635 1.174-.265-.656-.49-1.31-.676-1.947.64-.15 1.315-.283 2.015-.386zm7.26 0c.695.103 1.365.23 2.006.387-.18.632-.405 1.282-.66 1.933-.2-.39-.41-.783-.64-1.174-.225-.392-.465-.774-.705-1.146zm3.063.675c.484.15.944.317 1.375.498 1.732.74 2.852 1.708 2.852 2.476-.005.768-1.125 1.74-2.857 2.475-.42.18-.88.342-1.355.493-.28-.958-.646-1.956-1.1-2.98.45-1.017.81-2.01 1.085-2.964zm-13.395.004c.278.96.645 1.957 1.1 2.98-.45 1.017-.812 2.01-1.086 2.964-.484-.15-.944-.318-1.37-.5-1.732-.737-2.852-1.706-2.852-2.474 0-.768 1.12-1.742 2.852-2.476.42-.18.88-.342 1.356-.494zm11.678 4.28c.265.657.49 1.312.676 1.948-.64.157-1.316.29-2.016.39.24-.375.48-.762.705-1.158.225-.39.435-.788.636-1.18zm-9.945.02c.2.392.41.783.64 1.175.23.39.465.772.705 1.143-.695-.102-1.365-.23-2.006-.386.18-.63.406-1.282.66-1.933zM17.92 16.32c.112.493.2.968.254 1.423.23 1.868-.054 3.32-.714 3.708-.147.09-.338.128-.563.128-1.012 0-2.514-.807-4.11-2.28.686-.72 1.37-1.536 2.02-2.44 1.107-.118 2.154-.3 3.113-.54zm-11.83.01c.96.234 2.006.415 3.107.532.66.905 1.345 1.727 2.035 2.446-1.595 1.483-3.092 2.295-4.11 2.295-.22-.005-.406-.05-.553-.132-.666-.38-.955-1.834-.73-3.703.054-.46.142-.944.25-1.438zm4.56.64c.44.02.89.034 1.345.034.46 0 .915-.01 1.36-.034-.44.572-.895 1.095-1.345 1.565-.455-.47-.91-.993-1.36-1.565z" />
-        </svg>
-        <span className="text-xs sm:text-[14px] font-medium tracking-tight font-sans">React</span>
-      </div>
-
-      {/* 12. Vue.js */}
-      <div
-        className="flex items-center justify-center gap-2 sm:gap-2.5 text-zinc-500 hover:text-zinc-300 transition-colors group cursor-default"
-        title="Vue.js"
-      >
-        <svg
-          aria-hidden="true"
-          viewBox="0 0 24 24"
-          className="w-6 h-6 sm:w-7 sm:h-7 fill-current group-hover:text-[#42B883] transition-colors"
-        >
-          <path d="M24 1.61H14.04L12 5.16 9.96 1.61H0L12 22.39 24 1.61ZM12 14.08L5.16 2.23H9.14L12 7.18L14.86 2.23H18.84L12 14.08Z" />
-        </svg>
-        <span className="text-xs sm:text-[14px] font-medium tracking-tight font-sans">Vue.js</span>
-      </div>
-
-      {/* 13. Svelte */}
-      <div
-        className="flex items-center justify-center gap-2 sm:gap-2.5 text-zinc-500 hover:text-zinc-300 transition-colors group cursor-default"
-        title="Svelte"
-      >
-        <svg
-          aria-hidden="true"
-          viewBox="0 0 24 24"
-          className="w-6 h-6 sm:w-7 sm:h-7 fill-current group-hover:text-[#FF3E00] transition-colors"
-        >
-          <path d="M21.22 3.86a4.83 4.83 0 0 0-6.66-.99l-7.39 4.9a4.83 4.83 0 0 0-1.8 5.76l1.04 2.23-2.12 1.4a4.83 4.83 0 0 0-1.51 6.57 4.83 4.83 0 0 0 6.66.99l7.39-4.9a4.83 4.83 0 0 0 1.8-5.76l-1.04-2.23 2.12-1.4a4.83 4.83 0 0 0 1.51-6.57zm-12.7 6.03a2.38 2.38 0 0 1 .89-2.84l7.39-4.9a2.38 2.38 0 0 1 3.28.49 2.38 2.38 0 0 1-.74 3.24l-2.13 1.41a4.83 4.83 0 0 0-2.23 2.58l-1.04-2.23a2.38 2.38 0 0 1-5.42 2.25zm6.96 4.22l2.12-1.41a2.38 2.38 0 0 1 3.3.49 2.38 2.38 0 0 1-.74 3.24l-7.39 4.9a2.38 2.38 0 0 1-3.28-.49 2.38 2.38 0 0 1 .74-3.24l2.13-1.41a4.83 4.83 0 0 0 2.23-2.58l1.04 2.23a2.38 2.38 0 0 1-.15-1.73z" />
-        </svg>
-        <span className="text-xs sm:text-[14px] font-medium tracking-tight font-sans">Svelte</span>
-      </div>
-
-      {/* 14. Angular */}
-      <div
-        className="flex items-center justify-center gap-2 sm:gap-2.5 text-zinc-500 hover:text-zinc-300 transition-colors group cursor-default"
-        title="Angular"
-      >
-        <svg
-          aria-hidden="true"
-          viewBox="0 0 24 24"
-          className="w-6 h-6 sm:w-7 sm:h-7 fill-current group-hover:text-[#DD0031] transition-colors"
-        >
-          <path d="M12 2.5L2.14 6l1.52 12.38L12 22.5l8.34-4.12L21.86 6 12 2.5zm0 2.82l6.23 2.19-1.03 8.35L12 18.42l-5.2-2.56-1.03-8.35L12 5.32zm0 3.32l-3.23 7.42h1.61l.65-1.62h3.94l.65 1.62h1.61L12 8.64zm-1.03 4.46L12 10.51l1.03 2.59h-2.06z" />
-        </svg>
-        <span className="text-xs sm:text-[14px] font-medium tracking-tight font-sans">Angular</span>
-      </div>
-
-      {/* 15. SolidJS */}
-      <div
-        className="flex items-center justify-center gap-2 sm:gap-2.5 text-zinc-500 hover:text-zinc-300 transition-colors group cursor-default"
-        title="SolidJS"
-      >
-        <svg
-          aria-hidden="true"
-          viewBox="0 0 24 24"
-          className="w-6 h-6 sm:w-7 sm:h-7 fill-current group-hover:text-[#446b9e] transition-colors"
-        >
-          <path d="M2.5 17.5l7-4.5 12 2-6.5 4.5-12.5-2zm0-5.5l7-4.5 12 2-6.5 4.5-12.5-2zm0-5.5l7-4.5 12 2-6.5 4.5-12.5-2z" />
-        </svg>
-        <span className="text-xs sm:text-[14px] font-medium tracking-tight font-sans">SolidJS</span>
-      </div>
+          <img
+            src={item.icon}
+            alt={item.name}
+            className="w-4 h-4 sm:w-5 sm:h-5 object-contain rounded-sm filter brightness-95 group-hover:brightness-110 transition-all shrink-0"
+            loading="lazy"
+          />
+          <span className="text-xs sm:text-[13px] font-medium tracking-tight font-sans whitespace-nowrap">
+            {item.name}
+          </span>
+        </div>
+      ))}
     </div>
   );
 }

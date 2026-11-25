@@ -7,13 +7,13 @@ export function Hero({ onNavigate }) {
   return (
     <section
       id="hero"
-      className="relative min-h-screen w-full flex flex-col items-center justify-center px-6 text-center select-none overflow-hidden"
+      className="relative min-h-[760px] sm:min-h-[820px] md:min-h-screen w-full flex flex-col items-center justify-center px-6 text-center select-none overflow-hidden"
     >
       {/* Architectural Framing Arc with Animated Wrapping Beam */}
       <HeroArc />
 
       {/* Main Content Centered in Full Viewport */}
-      <div className="relative z-10 max-w-4xl mx-auto">
+      <div className="relative z-10 max-w-4xl mx-auto -translate-y-4 sm:-translate-y-6 md:-translate-y-8">
         <div className="relative max-w-2xl mx-auto">
           {/* Logo Eyes: Absolutely anchored above heading with zero flow displacement */}
           <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-7 sm:mb-9 pointer-events-none flex items-center justify-center">
@@ -115,12 +115,12 @@ export function Hero({ onNavigate }) {
 
       {/* Lower Architectural Area: Grounded Subheading & Ecosystem Runtimes */}
       <div
-        className="absolute bottom-[6%] sm:bottom-[7%] md:bottom-[8%] inset-x-0 z-10 px-6 max-w-4xl mx-auto flex flex-col items-center animate-ease-in-up"
+        className="absolute bottom-4 sm:bottom-6 md:bottom-8 inset-x-0 z-10 px-6 max-w-4xl mx-auto flex flex-col items-center animate-ease-in-up"
         style={{ animationDelay: '1350ms' }}
       >
         {/* Subheading */}
-        <div className="text-center mb-6 sm:mb-7 pointer-events-none max-w-2xl mx-auto">
-          <p className="text-[20px] sm:text-[24px] text-zinc-400 font-normal tracking-tight leading-snug">
+        <div className="text-center mb-3 sm:mb-4 pointer-events-none max-w-2xl mx-auto">
+          <p className="text-[17px] sm:text-[20px] md:text-[22px] text-zinc-400 font-normal tracking-tight leading-snug">
             Protects endpoints and forms from automated bots{' '}
             <br className="hidden sm:inline" />
             without visual puzzles, third-party trackers, or user interruptions.
