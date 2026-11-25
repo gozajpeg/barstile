@@ -115,12 +115,12 @@ export function Hero({ onNavigate }) {
 
       {/* Lower Architectural Area: Grounded Subheading & Ecosystem Runtimes */}
       <div
-        className="relative z-10 mt-12 sm:mt-16 pb-12 px-6 max-w-4xl mx-auto flex flex-col items-center animate-ease-in-up"
+        className="absolute bottom-[6%] sm:bottom-[7%] md:bottom-[8%] inset-x-0 z-10 px-6 max-w-4xl mx-auto flex flex-col items-center animate-ease-in-up"
         style={{ animationDelay: '1350ms' }}
       >
         {/* Subheading */}
         <div className="text-center mb-6 sm:mb-7 pointer-events-none max-w-2xl mx-auto">
-          <p className="text-[18px] sm:text-[22px] text-zinc-400 font-normal tracking-tight leading-snug">
+          <p className="text-[20px] sm:text-[24px] text-zinc-400 font-normal tracking-tight leading-snug">
             Protects endpoints and forms from automated bots{' '}
             <br className="hidden sm:inline" />
             without visual puzzles, third-party trackers, or user interruptions.
