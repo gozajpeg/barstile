@@ -5,6 +5,7 @@
   <p>Protects endpoints and forms from automated bots without visual puzzles or third-party trackers.</p>
 
   <p>
+    <a href="https://github.com/gozajpeg/barstile/actions/workflows/test.yml"><img src="https://github.com/gozajpeg/barstile/actions/workflows/test.yml/badge.svg" alt="CI" /></a>
     <a href="https://nodejs.org"><img src="https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg?style=flat-square" alt="node version" /></a>
     <a href="https://www.npmjs.com/package/barstile"><img src="https://img.shields.io/badge/npm-barstile-red.svg?style=flat-square" alt="npm package" /></a>
     <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square" alt="license" /></a>
