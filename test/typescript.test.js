@@ -68,7 +68,15 @@ describe('TypeScript Type Definitions & Package Exports', () => {
     assert.ok(reactDts.includes('BarstileWidgetProps'), 'BarstileWidgetProps must be declared');
   });
 
-  it('TypeScript consumer fixture runs and executes successfully with native Node type-stripping', async () => {
+  it('TypeScript consumer fixture runs and executes successfully with native Node type-stripping', async (t) => {
+    const [major, minor] = process.versions.node.split('.').map(Number);
+    const supportsTypeStrip = major > 22 || (major === 22 && minor >= 6);
+
+    if (!supportsTypeStrip) {
+      t.skip(`Node ${process.version} does not support --experimental-strip-types (requires >= 22.6.0)`);
+      return;
+    }
+
     const { execFileSync } = await import('node:child_process');
     const fixturePath = path.join(__dirname, 'fixtures', 'ts_consumer.ts');
     const stdout = execFileSync(process.execPath, ['--experimental-strip-types', fixturePath], {
