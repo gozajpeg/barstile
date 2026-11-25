@@ -64,6 +64,18 @@ class FallbackElement {
 
 const BaseElement = typeof HTMLElement !== 'undefined' ? HTMLElement : FallbackElement;
 
+function createCustomEvent(type, detail) {
+  if (typeof CustomEvent !== 'undefined') {
+    return new CustomEvent(type, { detail, bubbles: true, composed: true });
+  }
+  if (typeof Event !== 'undefined') {
+    const evt = new Event(type, { bubbles: true, composed: true });
+    evt.detail = detail;
+    return evt;
+  }
+  return { type, detail, bubbles: true, composed: true };
+}
+
 /**
  * Native HTML5 Custom Element `<barstile-widget>`.
  * Embeddable across React, Vue, Svelte, Angular, Solid, and standard HTML.
@@ -90,18 +102,10 @@ export class BarstileWidgetElement extends BaseElement {
       challengeUrl,
       verifyUrl,
       onSuccess: (token) => {
-        this.dispatchEvent(new CustomEvent('barstile-success', {
-          detail: { token },
-          bubbles: true,
-          composed: true
-        }));
+        this.dispatchEvent(createCustomEvent('barstile-success', { token }));
       },
       onError: (error) => {
-        this.dispatchEvent(new CustomEvent('barstile-error', {
-          detail: { error },
-          bubbles: true,
-          composed: true
-        }));
+        this.dispatchEvent(createCustomEvent('barstile-error', { error }));
       }
     });
   }

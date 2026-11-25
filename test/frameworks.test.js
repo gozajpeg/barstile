@@ -153,6 +153,7 @@ describe('Zero-Dependency Framework Bindings', () => {
   let origDoc;
   let origWin;
   let origReact;
+  let origCustomEvent;
   let mockDOM;
 
   before(async () => {
@@ -185,16 +186,30 @@ describe('Zero-Dependency Framework Bindings', () => {
     origDoc = globalThis.document;
     origWin = globalThis.window;
     origReact = globalThis.React;
+    origCustomEvent = globalThis.CustomEvent;
 
     mockDOM = createMockDOM();
     globalThis.document = mockDOM.doc;
     globalThis.window = mockDOM.win;
+
+    if (typeof globalThis.CustomEvent === 'undefined') {
+      globalThis.CustomEvent = class CustomEvent extends (typeof Event !== 'undefined' ? Event : Object) {
+        constructor(type, init = {}) {
+          super(type, init);
+          this.type = type;
+          this.detail = init.detail;
+          this.bubbles = !!init.bubbles;
+          this.composed = !!init.composed;
+        }
+      };
+    }
   });
 
   afterEach(() => {
     globalThis.document = origDoc;
     globalThis.window = origWin;
     globalThis.React = origReact;
+    globalThis.CustomEvent = origCustomEvent;
   });
 
   describe('Native HTML5 Web Component (<barstile-widget>)', () => {
