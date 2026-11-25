@@ -7,15 +7,13 @@ export function Hero({ onNavigate }) {
   return (
     <section
       id="hero"
-      className="relative w-full min-h-screen flex flex-col items-center px-6 text-center select-none"
+      className="relative min-h-screen w-full flex flex-col items-center justify-center px-6 text-center select-none overflow-hidden"
     >
-      {/* Architectural Framing Arc with Animated Wrapping Beam (anchored to top 100vh viewport) */}
-      <div className="absolute top-0 inset-x-0 h-screen pointer-events-none overflow-hidden z-0">
-        <HeroArc />
-      </div>
+      {/* Architectural Framing Arc with Animated Wrapping Beam */}
+      <HeroArc />
 
-      {/* Main Content Centered in Upper Viewport */}
-      <div className="relative z-10 max-w-4xl mx-auto min-h-[66vh] sm:min-h-[70vh] flex flex-col items-center justify-center pt-28 sm:pt-32">
+      {/* Main Content Centered in Full Viewport */}
+      <div className="relative z-10 max-w-4xl mx-auto">
         <div className="relative max-w-2xl mx-auto">
           {/* Logo Eyes: Absolutely anchored above heading with zero flow displacement */}
           <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-7 sm:mb-9 pointer-events-none flex items-center justify-center">
@@ -117,11 +115,11 @@ export function Hero({ onNavigate }) {
 
       {/* Lower Architectural Area: Grounded Subheading & Ecosystem Runtimes */}
       <div
-        className="relative z-10 w-full max-w-4xl mx-auto flex flex-col items-center mt-6 sm:mt-8 pb-24 sm:pb-32 animate-ease-in-up"
+        className="absolute bottom-[6%] sm:bottom-[7%] md:bottom-[8%] inset-x-0 z-10 px-6 max-w-4xl mx-auto flex flex-col items-center animate-ease-in-up"
         style={{ animationDelay: '1350ms' }}
       >
         {/* Subheading */}
-        <div className="text-center mb-8 sm:mb-10 pointer-events-none max-w-2xl mx-auto">
+        <div className="text-center mb-6 sm:mb-7 pointer-events-none max-w-2xl mx-auto">
           <p className="text-[20px] sm:text-[24px] text-zinc-400 font-normal tracking-tight leading-snug">
             Protects endpoints and forms from automated bots{' '}
             <br className="hidden sm:inline" />
@@ -130,7 +128,7 @@ export function Hero({ onNavigate }) {
         </div>
 
         {/* Logos: Ecosystem runtimes & frameworks that run Barstile */}
-        <div className="w-full pointer-events-auto">
+        <div className="pointer-events-auto">
           <RuntimeLogos />
         </div>
       </div>
