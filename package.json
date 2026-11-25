@@ -43,8 +43,8 @@
     "assets"
   ],
   "scripts": {
-    "test": "node --test test/**/*.test.js",
-    "test:watch": "node --test --watch test/**/*.test.js",
+    "test": "node scripts/test.js",
+    "test:watch": "node --test --watch test/*.test.js",
     "dev": "npm --prefix website run dev",
     "build:website": "npm --prefix website run build"
   },
