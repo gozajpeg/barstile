@@ -196,10 +196,7 @@ describe('Zero-Dependency Framework Bindings', () => {
       globalThis.CustomEvent = class CustomEvent extends (typeof Event !== 'undefined' ? Event : Object) {
         constructor(type, init = {}) {
           super(type, init);
-          this.type = type;
           this.detail = init.detail;
-          this.bubbles = !!init.bubbles;
-          this.composed = !!init.composed;
         }
       };
     }
