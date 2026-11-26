@@ -31,6 +31,18 @@ describe('Cryptographic Client Fingerprinting', () => {
       assert.equal(ip, '198.51.100.8');
     });
 
+    test('extracts CF-Connecting-IP when trustProxy is true', () => {
+      const req = {
+        socket: { remoteAddress: '10.0.0.1' },
+        headers: {
+          'cf-connecting-ip': '198.51.100.99',
+          'x-forwarded-for': '203.0.113.195'
+        }
+      };
+      const ip = extractClientIp(req, { trustProxy: true });
+      assert.equal(ip, '198.51.100.99');
+    });
+
     test('returns 127.0.0.1 for missing request object or empty socket', () => {
       assert.equal(extractClientIp(null), '127.0.0.1');
       assert.equal(extractClientIp({}), '127.0.0.1');

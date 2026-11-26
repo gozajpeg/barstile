@@ -13,6 +13,14 @@ export function extractClientIp(req, { trustProxy = false } = {}) {
   if (!req) return '127.0.0.1';
 
   if (trustProxy) {
+    let cfIp = req.headers?.['cf-connecting-ip'];
+    if (Array.isArray(cfIp)) {
+      cfIp = cfIp[0];
+    }
+    if (typeof cfIp === 'string' && cfIp.trim()) {
+      return cfIp.trim();
+    }
+
     let xForwardedFor = req.headers?.['x-forwarded-for'];
     if (Array.isArray(xForwardedFor)) {
       xForwardedFor = xForwardedFor[0];
