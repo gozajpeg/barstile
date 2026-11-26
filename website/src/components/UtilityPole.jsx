@@ -2,14 +2,20 @@ import React from 'react';
 
 /**
  * UtilityPole Component
- * Architectural perspective illustration of a dedicated utility pole based on real-world reference:
- * - Vertical pole rising on the right side
- * - Dual crossarms with diagonal braces and ceramic pin insulators
- * - Cylindrical distribution transformers mounted to the mast
- * - 4 clean, taut, parallel utility cables sweeping diagonally across the sky to the left
- * - Zero third-party clutter: only your dedicated lines, explaining "Yours is always yours."
+ * High-definition architectural perspective illustration of a dedicated utility pole:
+ * - A single, high-quality transmission cable spanning all the way across the card.
+ * - Layered conductor rendering: atmospheric aerial halo, metallic conductor body, and specular top glint.
+ * - Single precision suspension clamp at the ceramic insulator with a clean transformer jumper.
+ * - Vertical pole rising along the right edge with dual crossarms, braces, and transformers.
+ * - Zero third-party taps or tangled rat's nest: "Yours is always yours."
  */
 export function UtilityPole({ className = '' }) {
+  // Single high-quality catenary cable curve across the entire sky
+  // From beyond right edge (x=400, y=14) through insulator clamp (x=268, y=28) to far left (x=-20, y=72)
+  const cablePath = "M 400 14 L 272 26 C 180 58, 80 72, -20 68";
+  // Cable highlight glint (offset 0.4px higher)
+  const cableHighlightPath = "M 400 13.6 L 272 25.6 C 180 57.6, 80 71.6, -20 67.6";
+
   return (
     <div className={`relative w-full h-full flex items-center justify-end select-none pointer-events-none overflow-hidden ${className}`}>
       <svg
@@ -20,17 +26,26 @@ export function UtilityPole({ className = '' }) {
         shapeRendering="geometricPrecision"
       >
         <defs>
-          {/* Subtle sky ambient glow */}
-          <radialGradient id="poleSkyGlow" cx="75%" cy="30%" r="70%">
-            <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.06" />
-            <stop offset="50%" stopColor="#ffffff" stopOpacity="0.02" />
+          {/* Subtle sky ambient glow centered near crossarm */}
+          <radialGradient id="poleSkyGlow" cx="72%" cy="26%" r="65%">
+            <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.08" />
+            <stop offset="45%" stopColor="#ffffff" stopOpacity="0.02" />
             <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
           </radialGradient>
 
+          {/* High-Quality Cable Conductor Gradient */}
+          <linearGradient id="hqCableGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#94a3b8" stopOpacity="0.75" />
+            <stop offset="25%" stopColor="#e2e8f0" stopOpacity="0.95" />
+            <stop offset="55%" stopColor="#ffffff" stopOpacity="1" />
+            <stop offset="75%" stopColor="#cbd5e1" stopOpacity="0.9" />
+            <stop offset="100%" stopColor="#64748b" stopOpacity="0.8" />
+          </linearGradient>
+
           {/* Mast/Pole Gradient (Weathered Concrete / Dark Treated Wood) */}
           <linearGradient id="poleBodyGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#32353e" />
-            <stop offset="35%" stopColor="#25272e" />
+            <stop offset="0%" stopColor="#343740" />
+            <stop offset="35%" stopColor="#262830" />
             <stop offset="70%" stopColor="#1a1c22" />
             <stop offset="100%" stopColor="#101114" />
           </linearGradient>
@@ -57,89 +72,58 @@ export function UtilityPole({ className = '' }) {
             <stop offset="50%" stopColor="#2e313a" />
             <stop offset="100%" stopColor="#17181e" />
           </linearGradient>
-
-          {/* Cable Line Gradient (Crisp high-contrast conductor) */}
-          <linearGradient id="cableGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#ffffff" stopOpacity="0.15" />
-            <stop offset="40%" stopColor="#ffffff" stopOpacity="0.75" />
-            <stop offset="100%" stopColor="#ffffff" stopOpacity="0.9" />
-          </linearGradient>
         </defs>
 
         {/* Ambient Sky Backlight */}
-        <ellipse cx="280" cy="90" rx="140" ry="90" fill="url(#poleSkyGlow)" />
+        <ellipse cx="270" cy="80" rx="150" ry="90" fill="url(#poleSkyGlow)" />
 
         {/* ============================================================== */}
-        {/* 1. DEDICATED CLEAN POWER/DATA LINES (Diagonal Sweep to Left)    */}
+        {/* 1. SINGLE HIGH-QUALITY TRANSMISSION LINE (All Across)           */}
         {/* ============================================================== */}
-        {/* Top high-voltage primary line from upper crossarm */}
+        {/* Layer 1: Soft Atmospheric Glow / Ambient Light Catch */}
         <path
-          d="M 248 38 C 160 30, 80 18, -10 6"
-          stroke="url(#cableGrad)"
-          strokeWidth="1.25"
+          d={cablePath}
+          stroke="#ffffff"
+          strokeOpacity="0.08"
+          strokeWidth="4"
           strokeLinecap="round"
-        />
-        <path
-          d="M 312 38 C 220 32, 120 18, -10 2"
-          stroke="#555866"
-          strokeWidth="1"
-          strokeOpacity="0.5"
-          strokeLinecap="round"
+          fill="none"
         />
 
-        {/* 4 Clean Parallel Distribution Feeders (Sweeping gracefully left) */}
-        {/* Line 1 */}
+        {/* Layer 2: Main Conductor Core Body */}
         <path
-          d="M 226 122 C 150 134, 70 115, -10 74"
-          stroke="#ffffff"
-          strokeOpacity="0.75"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-        />
-        {/* Line 2 */}
-        <path
-          d="M 228 134 C 152 148, 72 130, -10 90"
-          stroke="#ffffff"
-          strokeOpacity="0.8"
-          strokeWidth="1.6"
-          strokeLinecap="round"
-        />
-        {/* Line 3 */}
-        <path
-          d="M 230 146 C 154 162, 74 145, -10 106"
-          stroke="#ffffff"
-          strokeOpacity="0.85"
-          strokeWidth="1.7"
-          strokeLinecap="round"
-        />
-        {/* Line 4 */}
-        <path
-          d="M 232 158 C 156 176, 76 160, -10 122"
-          stroke="#ffffff"
-          strokeOpacity="0.9"
+          d={cablePath}
+          stroke="url(#hqCableGrad)"
           strokeWidth="1.8"
           strokeLinecap="round"
+          fill="none"
         />
 
-        {/* Jumper Wires connecting Transformers to Lines */}
+        {/* Layer 3: Specular Top Glint / Highlight Thread */}
         <path
-          d="M 252 82 C 248 68, 238 60, 226 122"
-          stroke="#686c7d"
-          strokeWidth="1"
-          fill="none"
+          d={cableHighlightPath}
+          stroke="#ffffff"
+          strokeWidth="0.65"
+          strokeOpacity="0.95"
           strokeLinecap="round"
-        />
-        <path
-          d="M 288 92 C 284 80, 260 90, 228 134"
-          stroke="#686c7d"
-          strokeWidth="1"
           fill="none"
-          strokeLinecap="round"
         />
+
+        {/* Single Jumper Lead: Dropping cleanly from the clamp into the transformer bushing */}
         <path
-          d="M 298 94 C 304 110, 290 148, 230 146"
-          stroke="#505462"
-          strokeWidth="0.9"
+          d="M 268 28 C 264 45, 258 60, 254 78"
+          stroke="#717688"
+          strokeWidth="1.2"
+          strokeLinecap="round"
+          fill="none"
+        />
+        {/* Jumper wire highlight */}
+        <path
+          d="M 268 28 C 264 45, 258 60, 254 78"
+          stroke="#ffffff"
+          strokeWidth="0.4"
+          strokeOpacity="0.6"
+          strokeLinecap="round"
           fill="none"
         />
 
@@ -185,14 +169,28 @@ export function UtilityPole({ className = '' }) {
 
         {/* Ceramic Bell / Pin Insulators on Crossarms */}
         {/* Upper Crossarm Insulators */}
-        {[248, 268, 292, 312].map((ix, i) => (
-          <g key={`upper-ins-${i}`}>
-            <rect x={ix - 3.5} y="26" width="7" height="8" rx="1.5" fill="url(#insulatorGrad)" stroke="#555968" strokeWidth="0.5" />
-            <line x1={ix - 4} y1="29" x2={ix + 4} y2="29" stroke="#686c7c" strokeWidth="0.6" />
-            <line x1={ix - 4} y1="32" x2={ix + 4} y2="32" stroke="#686c7c" strokeWidth="0.6" />
-            <line x1={ix} y1="26" x2={ix} y2="22" stroke="#8b90a0" strokeWidth="1" />
-          </g>
-        ))}
+        {[248, 268, 292, 312].map((ix, i) => {
+          const isActiveInsulator = ix === 268;
+          return (
+            <g key={`upper-ins-${i}`}>
+              <rect x={ix - 3.5} y="26" width="7" height="8" rx="1.5" fill="url(#insulatorGrad)" stroke="#555968" strokeWidth="0.5" />
+              <line x1={ix - 4} y1="29" x2={ix + 4} y2="29" stroke="#686c7c" strokeWidth="0.6" />
+              <line x1={ix - 4} y1="32" x2={ix + 4} y2="32" stroke="#686c7c" strokeWidth="0.6" />
+              <line x1={ix} y1="26" x2={ix} y2="22" stroke="#8b90a0" strokeWidth="1" />
+
+              {/* High-Precision Aluminum Strain Clamp on the active conductor insulator */}
+              {isActiveInsulator && (
+                <g>
+                  {/* Clamp body bracket */}
+                  <rect x={ix - 4.5} y="24" width="9" height="5" rx="1" fill="#cbd5e1" stroke="#475569" strokeWidth="0.5" />
+                  {/* Clamp bolt heads */}
+                  <circle cx={ix - 2.5} cy="26.5" r="0.8" fill="#1e293b" />
+                  <circle cx={ix + 2.5} cy="26.5" r="0.8" fill="#1e293b" />
+                </g>
+              )}
+            </g>
+          );
+        })}
 
         {/* Lower Crossarm Insulators */}
         {[238, 258, 302, 322].map((ix, i) => (
