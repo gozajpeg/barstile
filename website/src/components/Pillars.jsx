@@ -22,19 +22,20 @@ const FRAMEWORKS = [
 const REPEATED_FRAMEWORKS = [...FRAMEWORKS, ...FRAMEWORKS, ...FRAMEWORKS];
 
 /* -------------------------------------------------------------------------- */
-/* Big Curved Non-Hoverable Runtime Marquee (Right-to-Left, Center Apex)     */
+/* Big Curved Non-Hoverable Runtime Marquee with Dynamic Center Color Reveal   */
 /* -------------------------------------------------------------------------- */
 function FrameworksMarquee() {
   const containerRef = useRef(null);
   const itemsRef = useRef([]);
   const imagesRef = useRef([]);
+  const textsRef = useRef([]);
 
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
     const count = REPEATED_FRAMEWORKS.length;
-    const spacing = 110; // spacing between logos
+    const spacing = 125; // spacing between logo + name pairs
     const totalSpan = count * spacing;
 
     let animId;
@@ -49,12 +50,13 @@ function FrameworksMarquee() {
       lastTime = now;
 
       // Drift speed in pixels per second (Right to Left drift)
-      offset += 48 * dt;
+      offset += 46 * dt;
 
       for (let i = 0; i < count; i++) {
         const g = itemsRef.current[i];
         const img = imagesRef.current[i];
-        if (!g || !img) continue;
+        const txt = textsRef.current[i];
+        if (!g || !img || !txt) continue;
 
         // Calculate x position along track
         let x = (i * spacing - offset) % totalSpan;
@@ -65,10 +67,11 @@ function FrameworksMarquee() {
         const absDist = Math.abs(dist);
 
         // Hide items outside visible range
-        if (absDist > 1.2) {
+        if (absDist > 1.25) {
           if (g.style.visibility !== 'hidden') {
             g.style.visibility = 'hidden';
             img.style.opacity = '0';
+            txt.style.opacity = '0';
           }
           continue;
         }
@@ -76,29 +79,51 @@ function FrameworksMarquee() {
         // Cosine factor: 1.0 at center (apex), 0.0 at outer edges
         const cosFactor = (Math.cos(Math.min(absDist, 1) * Math.PI) + 1) / 2;
 
-        // 1. Subtle organic curve: Apex at y = 65, gentle 38px downward curve towards edges (y = 103)
-        const y = 65 + (1 - cosFactor) * 38;
+        // 1. Natural, gentle circular/cosine curve: Apex at y = 60, smooth 42px curve down to y = 102
+        const y = 60 + (1 - cosFactor) * 42;
 
-        // 2. Gentle tilt angle along the curve (-8deg on left to +8deg on right)
-        const rot = dist * 8;
+        // 2. Smooth tangent rotation along the curve (-9deg on left to +9deg on right)
+        const rot = dist * 9;
 
-        // 3. Dramatic Scale: 1.22 in center (large ~66px), drops to 0.35 at edges (~19px)
-        const scale = (0.35 + 0.87 * cosFactor).toFixed(3);
+        // 3. Balanced, proportional scale: 0.78 at edges up to 1.12 at center (no harsh fisheye pinch)
+        const scale = (0.78 + 0.34 * cosFactor).toFixed(3);
 
-        // 4. Smooth Edge Opacity: exactly 0 at absDist >= 1.0 (zero pop on entry/exit)
+        // 4. Dynamic Center Color Reveal:
+        // absDist <= 0.20 -> 0% grayscale (100% full vibrant authentic color)
+        // absDist >= 0.55 -> 100% grayscale (muted monochrome)
+        // 0.20 to 0.55   -> smooth color fade transition
+        let grayscale = 100;
+        let textBrightness = 113; // #71717a
+
+        if (absDist <= 0.20) {
+          grayscale = 0;
+          textBrightness = 244; // #f4f4f5
+        } else if (absDist < 0.55) {
+          const colorRatio = (absDist - 0.20) / 0.35; // 0 at center, 1 at edges
+          grayscale = Math.round(colorRatio * 100);
+          textBrightness = Math.round(244 - colorRatio * 131);
+        }
+
+        // 5. Smooth Edge Dissolve: exactly 0 at absDist >= 1.05 (zero pop)
         let opacity = 0;
-        if (absDist < 1.0) {
-          const edgeFade = absDist > 0.72 ? (1.0 - absDist) / 0.28 : 1.0;
-          opacity = Math.max(0, (0.35 + 0.65 * cosFactor) * edgeFade);
+        if (absDist < 1.05) {
+          const edgeFade = absDist > 0.75 ? (1.05 - absDist) / 0.30 : 1.0;
+          opacity = Math.max(0, (0.45 + 0.55 * cosFactor) * edgeFade);
         }
 
         if (opacity <= 0.001) {
           g.style.visibility = 'hidden';
           img.style.opacity = '0';
+          txt.style.opacity = '0';
         } else {
           g.style.visibility = 'visible';
           img.style.opacity = opacity.toFixed(3);
+          txt.style.opacity = (opacity * 0.95).toFixed(3);
         }
+
+        // Apply dynamic grayscale filter
+        img.style.filter = `grayscale(${grayscale}%) brightness(${grayscale === 0 ? 100 : 85}%) contrast(${grayscale === 0 ? 100 : 85}%)`;
+        txt.style.fill = `rgb(${textBrightness}, ${textBrightness}, ${textBrightness})`;
 
         g.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0) rotate(${rot.toFixed(1)}deg) scale(${scale})`;
       }
@@ -133,7 +158,7 @@ function FrameworksMarquee() {
   return (
     <div
       ref={containerRef}
-      className="w-full h-[140px] sm:h-[160px] relative overflow-hidden pointer-events-none select-none mt-4 sm:mt-6"
+      className="w-full h-[160px] sm:h-[185px] relative overflow-hidden pointer-events-none select-none mt-4 sm:mt-6"
       style={{
         maskImage:
           'linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%)',
@@ -142,7 +167,7 @@ function FrameworksMarquee() {
       }}
     >
       <svg
-        viewBox="0 0 1200 160"
+        viewBox="0 0 1200 175"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         className="w-full h-full overflow-visible"
@@ -162,17 +187,34 @@ function FrameworksMarquee() {
             <image
               ref={(el) => (imagesRef.current[idx] = el)}
               href={fw.icon}
-              width="54"
-              height="54"
-              x="-27"
-              y="-27"
+              width="48"
+              height="48"
+              x="-24"
+              y="-26"
               preserveAspectRatio="xMidYMid meet"
               style={{
-                filter: 'grayscale(100%) contrast(85%) brightness(85%)',
+                filter: 'grayscale(100%)',
                 opacity: 0,
                 transition: 'none'
               }}
             />
+            <text
+              ref={(el) => (textsRef.current[idx] = el)}
+              x="0"
+              y="36"
+              textAnchor="middle"
+              fontFamily="monospace"
+              fontSize="11"
+              fontWeight="600"
+              letterSpacing="0.03em"
+              style={{
+                fill: '#71717a',
+                opacity: 0,
+                transition: 'none'
+              }}
+            >
+              {fw.name}
+            </text>
           </g>
         ))}
       </svg>
@@ -213,7 +255,7 @@ export function Pillars() {
               </p>
             </div>
 
-            {/* Big Curved Non-Hoverable Marquee */}
+            {/* Big Curved Non-Hoverable Marquee with Dynamic Color Reveal & Names */}
             <FrameworksMarquee />
           </div>
 
