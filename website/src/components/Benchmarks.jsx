@@ -22,16 +22,6 @@ const BENCHMARK_METRICS = [
     barstileWidth: '1.5%' // Small visible indicator amount
   },
   {
-    id: 'server-calls',
-    stat: '-100%',
-    title: 'Server Calls',
-    otherValue: '1 call',
-    otherWidth: '20%', // Based on 5 calls: 1 / 5 = 20%
-    isOtherFull: false,
-    barstileValue: '0 calls',
-    barstileWidth: '1.5%' // Small visible indicator amount
-  },
-  {
     id: 'external-tracking',
     stat: '0',
     title: 'External Tracking',
@@ -64,7 +54,7 @@ export function Benchmarks() {
           </p>
         </div>
 
-        {/* 4 Comparison Rows */}
+        {/* 3 Comparison Rows */}
         <div className="flex flex-col gap-10 sm:gap-12">
           {BENCHMARK_METRICS.map((metric) => (
             <div
