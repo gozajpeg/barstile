@@ -30,12 +30,12 @@ function Cell({ fw }) {
   return (
     <div
       title={fw.name}
-      className="w-10 h-10 sm:w-12 sm:h-12 border border-white/[0.12] -mr-px -mb-px flex items-center justify-center bg-white/[0.015] hover:border-white/[0.4] hover:bg-white/[0.08] transition-all duration-200 group cursor-default relative shrink-0 z-0 hover:z-10"
+      className="w-10 h-10 sm:w-14 sm:h-14 lg:w-16 lg:h-16 border border-white/[0.12] -mr-px -mb-px flex items-center justify-center bg-white/[0.015] hover:border-white/[0.4] hover:bg-white/[0.08] transition-all duration-200 group cursor-default relative shrink-0 z-0 hover:z-10"
     >
       <img
         src={fw.icon}
         alt={fw.name}
-        className="w-5 h-5 sm:w-6 sm:h-6 object-contain filter grayscale opacity-60 group-hover:filter-none group-hover:opacity-100 transition-all duration-200"
+        className="w-5 h-5 sm:w-7 sm:h-7 lg:w-8 lg:h-8 object-contain filter grayscale opacity-60 group-hover:filter-none group-hover:opacity-100 transition-all duration-200"
         loading="lazy"
       />
     </div>
@@ -43,7 +43,7 @@ function Cell({ fw }) {
 }
 
 function EmptyCell() {
-  return <div className="w-10 h-10 sm:w-12 sm:h-12 -mr-px -mb-px shrink-0 pointer-events-none" />;
+  return <div className="w-10 h-10 sm:w-14 sm:h-14 lg:w-16 lg:h-16 -mr-px -mb-px shrink-0 pointer-events-none" />;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -69,7 +69,7 @@ export function Pillars() {
         {/* 1 + 3 Layout Container with Section 2 Divider Styling */}
         <div className="border-t border-b border-white/[0.08] divide-y divide-white/[0.08]">
           {/* Top Full-Width Hero Card: Split Layout (Text Left, Equalizer Wireframe Right) */}
-          <div className="w-full flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8 p-6 sm:p-8 lg:p-10">
+          <div className="w-full flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8 p-6 sm:px-8 sm:py-6 lg:px-10 lg:py-4 lg:min-h-[285px]">
             {/* Left Side: Punchy Typography */}
             <div className="max-w-md">
               <h3 className="text-[20px] sm:text-[24px] font-semibold tracking-tight text-white leading-snug">
@@ -81,7 +81,7 @@ export function Pillars() {
             </div>
 
             {/* Right Side: Equalizer Wireframe Grid (6, 3, 4, 2) matching exact blueprint */}
-            <div className="flex flex-col shrink-0 self-center lg:self-auto py-2">
+            <div className="flex flex-col shrink-0 self-center lg:self-auto">
               {/* Row 1: 6 connected square cells */}
               <div className="flex">
                 {FRAMEWORKS.row1.map((fw) => (
