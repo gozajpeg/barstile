@@ -17,12 +17,22 @@ export function Pillars() {
           </p>
         </div>
 
-        {/* Asymmetrical Bento Grid matching Section 2 container styling */}
+        {/* 1 + 3 Layout Container */}
         <div className="border-t border-b border-white/[0.08] divide-y divide-white/[0.08]">
-          {/* Row 1: Wide Card (7 cols) + Compact Card (5 cols) */}
-          <div className="grid grid-cols-1 md:grid-cols-12 divide-y md:divide-y-0 md:divide-x divide-white/[0.08]">
-            {/* Card 1: No Third Parties (Wide: 7 cols) */}
-            <div className="md:col-span-7 flex flex-col p-8 sm:p-10 lg:p-12 justify-center">
+          {/* Top Full-Width Hero Card: 15 Frameworks */}
+          <div className="w-full flex flex-col p-8 sm:p-10 lg:p-12 justify-center">
+            <h3 className="text-[20px] sm:text-[24px] font-semibold tracking-tight text-white leading-snug">
+              15 JS & TS frameworks.
+            </h3>
+            <p className="text-[20px] sm:text-[24px] text-zinc-500 font-normal tracking-tight leading-snug mt-1 sm:mt-0.5">
+              And counting.
+            </p>
+          </div>
+
+          {/* Bottom 3-Column Grid: The Privacy & Independence Triumvirate */}
+          <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-white/[0.08]">
+            {/* Card 1: No Third Parties */}
+            <div className="flex flex-col p-8 sm:p-10 lg:p-12 justify-center">
               <h3 className="text-[20px] sm:text-[24px] font-semibold tracking-tight text-white leading-snug">
                 No third parties.
               </h3>
@@ -31,8 +41,8 @@ export function Pillars() {
               </p>
             </div>
 
-            {/* Card 2: Zero Cookies (Compact: 5 cols) */}
-            <div className="md:col-span-5 flex flex-col p-8 sm:p-10 lg:p-12 justify-center">
+            {/* Card 2: Zero Cookies */}
+            <div className="flex flex-col p-8 sm:p-10 lg:p-12 justify-center">
               <h3 className="text-[20px] sm:text-[24px] font-semibold tracking-tight text-white leading-snug">
                 Zero cookies.
               </h3>
@@ -40,27 +50,14 @@ export function Pillars() {
                 Not even the crumbs.
               </p>
             </div>
-          </div>
 
-          {/* Row 2: Compact Card (5 cols) + Wide Card (7 cols) */}
-          <div className="grid grid-cols-1 md:grid-cols-12 divide-y md:divide-y-0 md:divide-x divide-white/[0.08]">
-            {/* Card 3: No Analytics (Compact: 5 cols) */}
-            <div className="md:col-span-5 flex flex-col p-8 sm:p-10 lg:p-12 justify-center">
+            {/* Card 3: No Analytics */}
+            <div className="flex flex-col p-8 sm:p-10 lg:p-12 justify-center">
               <h3 className="text-[20px] sm:text-[24px] font-semibold tracking-tight text-white leading-snug">
                 No analytics.
               </h3>
               <p className="text-[20px] sm:text-[24px] text-zinc-500 font-normal tracking-tight leading-snug mt-1 sm:mt-0.5">
                 Just pure work.
-              </p>
-            </div>
-
-            {/* Card 4: 15 JS & TS Frameworks (Wide: 7 cols) */}
-            <div className="md:col-span-7 flex flex-col p-8 sm:p-10 lg:p-12 justify-center">
-              <h3 className="text-[20px] sm:text-[24px] font-semibold tracking-tight text-white leading-snug">
-                15 JS & TS frameworks.
-              </h3>
-              <p className="text-[20px] sm:text-[24px] text-zinc-500 font-normal tracking-tight leading-snug mt-1 sm:mt-0.5">
-                And counting.
               </p>
             </div>
           </div>
