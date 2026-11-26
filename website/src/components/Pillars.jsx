@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 
 const FRAMEWORKS = [
   { name: 'Node.js', icon: '/frameworks/nodejs.svg' },
@@ -17,217 +17,6 @@ const FRAMEWORKS = [
   { name: 'Remix', icon: '/frameworks/remix.svg' },
   { name: 'Koa', icon: '/frameworks/koa.svg' }
 ];
-
-// Repeat 3x (45 items) so wrapping occurs far off-screen with zero visible jumps
-const REPEATED_FRAMEWORKS = [...FRAMEWORKS, ...FRAMEWORKS, ...FRAMEWORKS];
-
-/* -------------------------------------------------------------------------- */
-/* Big Curved Non-Hoverable Runtime Marquee with Dynamic Center Color Reveal   */
-/* -------------------------------------------------------------------------- */
-function FrameworksMarquee() {
-  const containerRef = useRef(null);
-  const itemsRef = useRef([]);
-  const imagesRef = useRef([]);
-  const textsRef = useRef([]);
-
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    const count = REPEATED_FRAMEWORKS.length;
-    const spacing = 165; // spacing between [icon + name] chips
-    const totalSpan = count * spacing;
-
-    // True circular arc parameters (uniform curvature from left edge to right edge)
-    const cx = 600;
-    const apexY = 55;
-    const R = 1500;
-    const cy = apexY + R; // 1555
-
-    let animId;
-    let offset = 0;
-    let lastTime = performance.now();
-    let isVisible = true;
-
-    const tick = (now) => {
-      if (!isVisible) return;
-
-      const dt = Math.min((now - lastTime) / 1000, 0.1);
-      lastTime = now;
-
-      // Drift speed in pixels per second (Right to Left drift)
-      offset += 46 * dt;
-
-      for (let i = 0; i < count; i++) {
-        const g = itemsRef.current[i];
-        const img = imagesRef.current[i];
-        const txt = textsRef.current[i];
-        if (!g || !img || !txt) continue;
-
-        // Calculate x position along track
-        let x = (i * spacing - offset) % totalSpan;
-        if (x < -300) x += totalSpan;
-
-        const dx = x - cx;
-        const absDx = Math.abs(dx);
-
-        // Hide items far outside visible boundaries
-        if (absDx > 750) {
-          if (g.style.visibility !== 'hidden') {
-            g.style.visibility = 'hidden';
-            img.style.opacity = '0';
-            txt.style.opacity = '0';
-          }
-          continue;
-        }
-
-        // 1. True circular arc: uniform curve across whole span with zero flat edges
-        const safeDx = Math.max(-R + 1, Math.min(R - 1, dx));
-        const y = cy - Math.sqrt(R * R - safeDx * safeDx);
-        const rot = Math.asin(safeDx / R) * (180 / Math.PI);
-
-        // Normalized distance from center (0 at apex, 1 at 650px outer boundaries)
-        const normDist = Math.min(absDx / 650, 1);
-        const cosFactor = (Math.cos(normDist * Math.PI) + 1) / 2;
-
-        // 2. Proportional scale: scales icon + name together smoothly (0.72 at sides to 1.14 in center)
-        const scale = (0.72 + 0.42 * cosFactor).toFixed(3);
-
-        // 3. Dynamic Center Color Reveal:
-        // absDx <= 180 -> 0% grayscale (100% full vibrant authentic color)
-        // absDx >= 460 -> 100% grayscale (muted monochrome)
-        // 180 to 460   -> smooth color fade transition
-        let grayscale = 100;
-        let textBright = 113; // #71717a
-
-        if (absDx <= 180) {
-          grayscale = 0;
-          textBright = 244; // #f4f4f5
-        } else if (absDx < 460) {
-          const colorRatio = (absDx - 180) / 280; // 0 at center, 1 at edges
-          grayscale = Math.round(colorRatio * 100);
-          textBright = Math.round(244 - colorRatio * 131);
-        }
-
-        // 4. Smooth Edge Dissolve at outer margins (zero pop on entry/exit)
-        let opacity = 0;
-        if (absDx < 680) {
-          const edgeFade = absDx > 520 ? (680 - absDx) / 160 : 1.0;
-          opacity = Math.max(0, (0.4 + 0.6 * cosFactor) * edgeFade);
-        }
-
-        if (opacity <= 0.001) {
-          g.style.visibility = 'hidden';
-          img.style.opacity = '0';
-          txt.style.opacity = '0';
-        } else {
-          g.style.visibility = 'visible';
-          img.style.opacity = opacity.toFixed(3);
-          txt.style.opacity = (opacity * 0.95).toFixed(3);
-        }
-
-        // Apply dynamic grayscale filter to logo and color brightness to text
-        img.style.filter = `grayscale(${grayscale}%) brightness(${grayscale === 0 ? 100 : 85}%) contrast(${grayscale === 0 ? 100 : 85}%)`;
-        txt.style.fill = `rgb(${textBright}, ${textBright}, ${textBright})`;
-
-        g.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0) rotate(${rot.toFixed(1)}deg) scale(${scale})`;
-      }
-
-      animId = requestAnimationFrame(tick);
-    };
-
-    animId = requestAnimationFrame(tick);
-
-    // Sleep animation when off-screen to preserve CPU
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        isVisible = entry.isIntersecting;
-        if (isVisible) {
-          lastTime = performance.now();
-          animId = requestAnimationFrame(tick);
-        } else {
-          cancelAnimationFrame(animId);
-        }
-      },
-      { threshold: 0.05 }
-    );
-
-    observer.observe(container);
-
-    return () => {
-      cancelAnimationFrame(animId);
-      observer.disconnect();
-    };
-  }, []);
-
-  return (
-    <div
-      ref={containerRef}
-      className="w-full h-[170px] sm:h-[195px] relative overflow-hidden pointer-events-none select-none mt-4 sm:mt-6"
-      style={{
-        maskImage:
-          'linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)',
-        WebkitMaskImage:
-          'linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)'
-      }}
-    >
-      <svg
-        viewBox="0 0 1200 190"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        className="w-full h-full overflow-visible"
-        preserveAspectRatio="xMidYMid meet"
-        shapeRendering="geometricPrecision"
-      >
-        {REPEATED_FRAMEWORKS.map((fw, idx) => (
-          <g
-            key={`${fw.name}-${idx}`}
-            ref={(el) => (itemsRef.current[idx] = el)}
-            style={{
-              willChange: 'transform',
-              transformOrigin: '0 0',
-              visibility: 'hidden'
-            }}
-          >
-            {/* Logo Icon on Left Side */}
-            <image
-              ref={(el) => (imagesRef.current[idx] = el)}
-              href={fw.icon}
-              width="42"
-              height="42"
-              x="-48"
-              y="-21"
-              preserveAspectRatio="xMidYMid meet"
-              style={{
-                filter: 'grayscale(100%)',
-                opacity: 0,
-                transition: 'none'
-              }}
-            />
-            {/* Framework Name on Right Side (scales proportionally with icon) */}
-            <text
-              ref={(el) => (textsRef.current[idx] = el)}
-              x="4"
-              y="6"
-              textAnchor="start"
-              fontFamily="monospace"
-              fontSize="14"
-              fontWeight="600"
-              letterSpacing="0.02em"
-              style={{
-                fill: '#71717a',
-                opacity: 0,
-                transition: 'none'
-              }}
-            >
-              {fw.name}
-            </text>
-          </g>
-        ))}
-      </svg>
-    </div>
-  );
-}
 
 /* -------------------------------------------------------------------------- */
 /* Main Pillars Section Component (1 + 3 Layout)                              */
@@ -251,9 +40,9 @@ export function Pillars() {
 
         {/* 1 + 3 Layout Container with Section 2 Divider Styling */}
         <div className="border-t border-b border-white/[0.08] divide-y divide-white/[0.08]">
-          {/* Top Full-Width Hero Card: 15 Frameworks with Big Curved Marquee */}
-          <div className="w-full flex flex-col p-6 sm:p-8 lg:p-10 justify-between overflow-hidden">
-            <div>
+          {/* Top Full-Width Hero Card: 15 Frameworks with Clean 5x3 Grid */}
+          <div className="w-full flex flex-col p-6 sm:p-8 lg:p-10 justify-between">
+            <div className="mb-6 sm:mb-8">
               <h3 className="text-[20px] sm:text-[24px] font-semibold tracking-tight text-white leading-snug">
                 15 JS & TS frameworks.
               </h3>
@@ -262,8 +51,25 @@ export function Pillars() {
               </p>
             </div>
 
-            {/* Big Curved Non-Hoverable Marquee with Side-by-Side Name & Continuous Arc */}
-            <FrameworksMarquee />
+            {/* Clean 5x3 Grid (3-col mobile / 5-col desktop) */}
+            <div className="grid grid-cols-3 sm:grid-cols-5 gap-2.5 sm:gap-3 w-full">
+              {FRAMEWORKS.map((fw) => (
+                <div
+                  key={fw.name}
+                  className="flex items-center gap-2.5 px-3 py-2.5 sm:px-4 sm:py-3 rounded-md border border-white/[0.08] bg-white/[0.015] hover:border-white/[0.22] hover:bg-white/[0.04] transition-all duration-200 group"
+                >
+                  <img
+                    src={fw.icon}
+                    alt={fw.name}
+                    className="w-5 h-5 sm:w-6 sm:h-6 object-contain shrink-0 filter grayscale opacity-60 group-hover:filter-none group-hover:opacity-100 transition-all duration-200"
+                    loading="lazy"
+                  />
+                  <span className="text-xs sm:text-[13px] font-mono text-zinc-400 group-hover:text-white transition-colors duration-200 truncate">
+                    {fw.name}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* Bottom 3-Column Grid: Exact Same Container & Card Sizing as Section 2 */}
