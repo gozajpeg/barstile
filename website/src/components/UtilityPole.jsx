@@ -243,23 +243,6 @@ export function UtilityPole({ className = '' }) {
           <circle cx="298" cy="84" r="1.5" fill="#d4af37" />
         </g>
 
-        {/* ============================================================== */}
-        {/* 5. STREETLIGHT FIXTURE (Modeled from reference image)          */}
-        {/* ============================================================== */}
-        <g>
-          {/* Mounting arm curving outward to the left */}
-          <path
-            d="M 276 178 C 260 178, 235 186, 222 195"
-            stroke="#454854"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            fill="none"
-          />
-          {/* Fixture Luminaire Head */}
-          <ellipse cx="220" cy="196" rx="8" ry="3.5" fill="#2a2c35" stroke="#4b4f5d" strokeWidth="0.6" />
-          {/* Gentle downlight warm/white lens */}
-          <ellipse cx="220" cy="197" rx="6" ry="2" fill="#fff" fillOpacity="0.4" />
-        </g>
       </svg>
     </div>
   );
