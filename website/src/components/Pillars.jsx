@@ -7,8 +7,8 @@ export function Pillars() {
       className="min-h-screen w-full flex flex-col items-center justify-center px-6 sm:px-12 py-24 select-none content-lazy"
     >
       <div className="max-w-7xl w-full mx-auto">
-        {/* Section Top Heading: Standard Barstile Site-Wide Typography */}
-        <div className="mb-14 sm:mb-16 text-center">
+        {/* Section Top Heading: Exact Match to Section 2 Typography & Spacing */}
+        <div className="mb-16 text-center">
           <h2 className="text-[20px] sm:text-[24px] font-semibold tracking-tight text-white leading-none">
             Privacy isn't a feature. It's the architecture.
           </h2>
@@ -17,10 +17,10 @@ export function Pillars() {
           </p>
         </div>
 
-        {/* 1 + 3 Layout Container */}
+        {/* 1 + 3 Layout Container with Section 2 Divider Styling */}
         <div className="border-t border-b border-white/[0.08] divide-y divide-white/[0.08]">
           {/* Top Full-Width Hero Card: 15 Frameworks */}
-          <div className="w-full flex flex-col p-8 sm:p-10 lg:p-12 justify-center">
+          <div className="w-full flex flex-col p-6 sm:p-8 lg:p-10 justify-center">
             <h3 className="text-[20px] sm:text-[24px] font-semibold tracking-tight text-white leading-snug">
               15 JS & TS frameworks.
             </h3>
@@ -29,10 +29,10 @@ export function Pillars() {
             </p>
           </div>
 
-          {/* Bottom 3-Column Grid: The Privacy & Independence Triumvirate */}
+          {/* Bottom 3-Column Grid: Exact Same Container & Card Sizing as Section 2 */}
           <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-white/[0.08]">
             {/* Card 1: No Third Parties */}
-            <div className="flex flex-col p-8 sm:p-10 lg:p-12 justify-center">
+            <div className="flex flex-col p-6 sm:p-8 lg:p-10 h-full justify-center">
               <h3 className="text-[20px] sm:text-[24px] font-semibold tracking-tight text-white leading-snug">
                 No third parties.
               </h3>
@@ -42,7 +42,7 @@ export function Pillars() {
             </div>
 
             {/* Card 2: Zero Cookies */}
-            <div className="flex flex-col p-8 sm:p-10 lg:p-12 justify-center">
+            <div className="flex flex-col p-6 sm:p-8 lg:p-10 h-full justify-center">
               <h3 className="text-[20px] sm:text-[24px] font-semibold tracking-tight text-white leading-snug">
                 Zero cookies.
               </h3>
@@ -52,7 +52,7 @@ export function Pillars() {
             </div>
 
             {/* Card 3: No Analytics */}
-            <div className="flex flex-col p-8 sm:p-10 lg:p-12 justify-center">
+            <div className="flex flex-col p-6 sm:p-8 lg:p-10 h-full justify-center">
               <h3 className="text-[20px] sm:text-[24px] font-semibold tracking-tight text-white leading-snug">
                 No analytics.
               </h3>
