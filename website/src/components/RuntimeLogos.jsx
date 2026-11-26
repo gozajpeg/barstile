@@ -47,7 +47,8 @@ export function RuntimeLogos() {
 
     let animId;
     let offset = 0;
-    let lastTime = performance.now();
+    const startTime = performance.now();
+    let lastTime = startTime;
     let isVisible = true;
 
     const tick = (now) => {
@@ -57,8 +58,13 @@ export function RuntimeLogos() {
       lastTime = now;
 
       if (!isHovered.current) {
-        // Continuous smooth drift speed (radians per second)
-        offset += 0.038 * dt;
+        const elapsed = now - startTime;
+        let speed = 0;
+        if (elapsed >= 1800) {
+          const boost = elapsed < 4800 ? 0.45 * Math.pow(1 - (elapsed - 1800) / 3000, 3) : 0;
+          speed = 0.038 + boost;
+        }
+        offset += speed * dt;
       }
 
       for (let i = 0; i < count; i++) {
@@ -161,7 +167,7 @@ export function RuntimeLogos() {
     <div
       ref={containerRef}
       className="absolute inset-0 pointer-events-none overflow-hidden z-10 select-none"
-      style={{ animation: 'innerGlowFade 1.2s cubic-bezier(0.16, 1, 0.3, 1) 2s both' }}
+      style={{ animation: 'innerGlowFade 700ms ease-out 1800ms both' }}
       role="region"
       aria-label="Supported frameworks and runtimes"
     >
