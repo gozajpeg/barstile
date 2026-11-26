@@ -1,7 +1,7 @@
 import React from 'react';
 import { BlueprintGate } from './BlueprintGate.jsx';
 import { UtilityPole } from './UtilityPole.jsx';
-import { EmptyCookieJar } from './EmptyCookieJar.jsx';
+import { NoDesignNeeded } from './NoDesignNeeded.jsx';
 
 const FRAMEWORKS = {
   row1: [
@@ -144,8 +144,8 @@ export function Pillars() {
             </div>
           </div>
 
-          {/* Bottom 3-Column Grid: Exact Same Container & Card Sizing as Section 2 */}
-          <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-white/[0.08]">
+          {/* Bottom 2-Column Grid: Perfectly balanced 2x2 Bento with Top Row */}
+          <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-white/[0.08]">
             {/* Card 3: No Third Parties with Utility Pole Graphic */}
             <div className="relative flex flex-col justify-end p-6 sm:p-7 lg:p-7 h-full overflow-hidden min-h-[260px] sm:min-h-[280px]">
               {/* Graphic: Utility Pole with dedicated clean lines */}
@@ -164,31 +164,19 @@ export function Pillars() {
               </div>
             </div>
 
-            {/* Card 4: Zero Cookies */}
+            {/* Card 4: Combined Zero Cookies & No Analytics */}
             <div className="relative flex flex-col justify-end p-6 sm:p-7 lg:p-7 h-full overflow-hidden min-h-[260px] sm:min-h-[280px]">
-              {/* Graphic: Tipped Empty Glass Jar on the right */}
-              <div className="absolute inset-0 pointer-events-none flex items-center justify-end overflow-hidden z-0">
-                <EmptyCookieJar />
+              {/* Graphic: Self-aware cursive hand-drawn annotation on the right */}
+              <div className="absolute inset-0 pointer-events-none flex items-center justify-end overflow-hidden z-0 pr-4 sm:pr-8">
+                <NoDesignNeeded />
               </div>
 
               <div className="absolute bottom-6 sm:bottom-7 lg:bottom-7 left-6 sm:left-7 lg:left-7 z-10 pointer-events-none">
                 <h3 className="text-[18px] sm:text-[24px] font-semibold tracking-tight text-white leading-snug whitespace-nowrap">
-                  Zero cookies.
+                  Zero cookies. No analytics.
                 </h3>
                 <p className="text-[18px] sm:text-[24px] text-zinc-500 font-normal tracking-tight leading-snug mt-1 sm:mt-0.5 whitespace-nowrap">
-                  Not even the crumbs.
-                </p>
-              </div>
-            </div>
-
-            {/* Card 5: No Analytics */}
-            <div className="relative flex flex-col justify-end p-6 sm:p-7 lg:p-7 h-full overflow-hidden min-h-[260px] sm:min-h-[280px]">
-              <div className="absolute bottom-6 sm:bottom-7 lg:bottom-7 left-6 sm:left-7 lg:left-7 z-10 pointer-events-none">
-                <h3 className="text-[18px] sm:text-[24px] font-semibold tracking-tight text-white leading-snug whitespace-nowrap">
-                  No analytics.
-                </h3>
-                <p className="text-[18px] sm:text-[24px] text-zinc-500 font-normal tracking-tight leading-snug mt-1 sm:mt-0.5 whitespace-nowrap">
-                  Just pure work.
+                  Not even the crumbs. Just pure work.
                 </p>
               </div>
             </div>
