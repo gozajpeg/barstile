@@ -30,12 +30,12 @@ function Cell({ fw }) {
   return (
     <div
       title={fw.name}
-      className="w-11 h-11 sm:w-12 sm:h-12 lg:w-14 lg:h-14 border border-white/[0.12] -mr-px -mb-px flex items-center justify-center bg-white/[0.015] hover:border-white/[0.4] hover:bg-white/[0.08] transition-all duration-200 group cursor-default relative shrink-0 z-0 hover:z-10"
+      className="w-10 h-10 sm:w-11 sm:h-11 lg:w-12 lg:h-12 border border-white/[0.12] -mr-px -mb-px flex items-center justify-center bg-white/[0.015] hover:border-white/[0.4] hover:bg-white/[0.08] transition-all duration-200 group cursor-default relative shrink-0 z-0 hover:z-10"
     >
       <img
         src={fw.icon}
         alt={fw.name}
-        className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 object-contain filter grayscale opacity-60 group-hover:filter-none group-hover:opacity-100 transition-all duration-200"
+        className="w-6 h-6 sm:w-6.5 sm:h-6.5 lg:w-7 lg:h-7 object-contain filter grayscale opacity-60 group-hover:filter-none group-hover:opacity-100 transition-all duration-200"
         loading="lazy"
       />
     </div>
@@ -43,7 +43,7 @@ function Cell({ fw }) {
 }
 
 function EmptyCell() {
-  return <div className="w-11 h-11 sm:w-12 sm:h-12 lg:w-14 lg:h-14 -mr-px -mb-px shrink-0 pointer-events-none" />;
+  return <div className="w-10 h-10 sm:w-11 sm:h-11 lg:w-12 lg:h-12 -mr-px -mb-px shrink-0 pointer-events-none" />;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -70,11 +70,21 @@ export function Pillars() {
         <div className="border-t border-b border-white/[0.08] divide-y divide-white/[0.08]">
           {/* Top 2-Column Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-white/[0.08]">
-            {/* Card 1: 15 Frameworks with Equalizer Wireframe Matrix and 1-Line Headline */}
-            <div className="flex flex-col justify-between p-6 sm:p-8 lg:p-10 h-full">
-              {/* Top: Equalizer Wireframe Grid (Large & Right-Aligned) */}
-              <div className="flex justify-end w-full mb-6 sm:mb-8">
-                <div className="flex flex-col shrink-0">
+            {/* Card 1: 15 Frameworks with Equalizer Wireframe Matrix Aligned at Bottom Side-by-Side */}
+            <div className="flex flex-col justify-end p-6 sm:p-8 lg:p-10 h-full">
+              <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 sm:gap-6 w-full">
+                {/* Left: 1-Line Headline + Stacked Subtext */}
+                <div className="shrink-0">
+                  <h3 className="text-[20px] sm:text-[24px] font-semibold tracking-tight text-white leading-snug whitespace-nowrap">
+                    15 JS & TS frameworks.
+                  </h3>
+                  <p className="text-[20px] sm:text-[24px] text-zinc-500 font-normal tracking-tight leading-snug mt-1 sm:mt-0.5 whitespace-nowrap">
+                    And counting.
+                  </p>
+                </div>
+
+                {/* Right: Equalizer Wireframe Grid aligned at bottom */}
+                <div className="flex flex-col shrink-0 self-end sm:self-auto">
                   {/* Row 1: 6 connected square cells */}
                   <div className="flex">
                     {FRAMEWORKS.row1.map((fw) => (
@@ -111,16 +121,6 @@ export function Pillars() {
                     ))}
                   </div>
                 </div>
-              </div>
-
-              {/* Bottom: 1-Line Headline + Stacked Subtext */}
-              <div className="mt-auto">
-                <h3 className="text-[20px] sm:text-[24px] font-semibold tracking-tight text-white leading-snug whitespace-nowrap">
-                  15 JS & TS frameworks.
-                </h3>
-                <p className="text-[20px] sm:text-[24px] text-zinc-500 font-normal tracking-tight leading-snug mt-1 sm:mt-0.5">
-                  And counting.
-                </p>
               </div>
             </div>
 
