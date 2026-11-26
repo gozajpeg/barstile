@@ -49,6 +49,20 @@ Barstile mitigates this using `ReplayCache`:
 2. If another request arrives with the same `signature:nonce`, the cache reports a match and returns `403 Forbidden` (`reason: replay_detected`).
 3. Entries expire automatically when their parent challenge expires.
 
+### Server Action Clearance Replay Defense (`singleUse: true`)
+When an HTML form is submitted through a Next.js Server Action, the submitted token is often a persistent clearance token. If an attacker intercepts or copies this clearance token, they could attempt to replay the Server Action.
+
+Passing `{ singleUse: true }` to `verifyAction(formData, { engine, singleUse: true })` checks the clearance token against `engine.replayCache` (`clearance:<token>`). If the token has already been submitted, the action is rejected with `replay_detected`.
+
+### Reverse Proxy IP Extraction and Spoofing Defense
+When deployed behind reverse proxies, CDNs, or load balancers, client IP addresses are forwarded via HTTP headers.
+* When `trustProxy: false` (default), Barstile reads only the direct socket address (`req.socket.remoteAddress` or `req.ip`), ignoring all forwarding headers to prevent header spoofing.
+* When `trustProxy: true`, Barstile inspects proxy headers in priority order:
+  1. `cf-connecting-ip` (Cloudflare edge proxy)
+  2. `x-forwarded-for` (client IP from first comma-separated hop)
+  3. `x-real-ip`
+Only enable `trustProxy: true` if your application is strictly routed through trusted proxies that overwrite these headers.
+
 ### Request Allowance Budget & Clearance Velocity Mitigation
 Without a request quota, an attacker could solve 1 challenge once (taking ~20 ms of CPU) and use that clearance token to scrape 50,000 items during the 15-minute validity window.
 
@@ -57,7 +71,7 @@ Barstile mitigates this attack via `AllowanceCache` (or atomic Redis `INCR` in c
 2. The remaining quota is tracked per token signature and exposed via `X-Barstile-Remaining`.
 3. When the quota reaches zero, the clearance is revoked and a fresh HTTP 449 challenge is issued.
 4. Scraping 100,000 items forces the bot to solve 1,000 separate PoW challenges (65.5 million hashes), turning scraping into a high-cost compute bottleneck.
-5. Legitimate human users rarely exceed 100 requests per 15 minutes; when they do, `barstileFetch` solves the renewal in ~20 ms in the background with minimal user friction.
+5. Legitimate human users rarely exceed 100 requests per 15 minutes; when they do, `barstileFetch` solves the renewal in the background with minimal delay (estimated 5 to 50 ms on desktop hardware).
 
 ### Multi-Factor Risk Assessment & Probe Markers
 
@@ -105,4 +119,4 @@ The server's memory usage depends on the replay cache size:
 ### Multi-Instance & Clustered Deployments
 * **Secret Synchronization**: If running multiple Node.js server instances behind a load balancer, provide the same `secret` string to all instances (for example, via an environment variable).
 * **Multi-Server Defense Without Redis**: By default, Barstile cryptographically binds both challenge tokens and clearance tokens to the client IP subnet (`/24` for IPv4, `/64` for IPv6) and User-Agent hash. This prevents solutions solved by one client from being submitted by another client or bot machine on a different IP subnet. For synchronized cross-node replay prevention, use Redis.
-* **Clustered Replay Defense With Redis**: For large-scale distributed deployments where the same client might race requests across different pods, pass your existing Redis client directly (`barstileMiddleware({ redis })`). Barstile executes atomic `SET key 1 EX ttl NX` commands to mitigate distributed race windows, and falls back to local memory if Redis disconnects.
+* **Clustered Replay Defense With Redis**: For large-scale distributed deployments where the same client might race requests across different pods, pass your existing Redis client directly (`barstileMiddleware({ redis })`). Barstile executes atomic `SET key 1 EX ttl NX` commands to prevent distributed race conditions, and falls back to local memory if Redis disconnects.

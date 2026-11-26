@@ -10,6 +10,8 @@ describe('Documentation and Export Synchronization', () => {
       'Barstile',
       'createBarstile',
       'barstileMiddleware',
+      'handleRequest',
+      'verifyAction',
       'verifySolution',
       'parseSolution',
       'createChallengeToken',

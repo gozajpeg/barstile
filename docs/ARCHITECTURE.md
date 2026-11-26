@@ -38,8 +38,8 @@ Client                                                  Server
   | 5. Subsequent Requests (within clearance window)      |
   |    Header: X-Barstile-Clearance (or Cookie)           |
   |------------------------------------------------------>|
-  |                                                       | [Clearance Validated in <0.05ms]
-  |                                                       | Instant Pass (No PoW required)
+  |                                                       | [Clearance Validated Statelessly]
+  |                                                       | Pass (No PoW required)
   | 6. HTTP 200 OK                                        |
   |<------------------------------------------------------|
 ```
@@ -137,7 +137,7 @@ To avoid requiring legitimate users to solve a Proof-of-Work challenge on every 
 ```
 * **Cryptographic Binding**: Signed over `salt:issuedAt:expiresAt:context` using the server secret, binding the token to the client's IP subnet and User-Agent to prevent token sharing across proxies.
 * **Dual Delivery**: Returned via HTTP response header `X-Barstile-Clearance` and HTTP-only cookie `barstile_clearance`.
-* **Zero Database Overhead**: Validated statelessly on the server in < 0.05 ms using `crypto.timingSafeEqual`.
+* **Zero Database Overhead**: Validated statelessly on the server using `crypto.timingSafeEqual`.
 * **Request Quotas**: Tracked via `AllowanceCache` (default: 100 requests per token) to prevent attackers from scraping infinite pages after a single solve.
 * **Automatic Client Reuse**: `barstileFetch` preserves the token in memory, automatically attaching it to subsequent requests until expiration or quota renewal.
 
@@ -212,3 +212,47 @@ When the server receives a solution at `POST /api/barstile/verify`:
 1. It extracts the `salt` from the challenge token in the solution.
 2. It decodes the telemetry envelope and checks that `expectedSalt.startsWith(probe.salt)`.
 3. If an attacker reuses a captured telemetry payload with a different challenge, the salt check fails immediately and returns HTTP 403 `telemetry_replay_detected`.
+
+---
+
+## 9. Web Standard Request and Server Actions Lifecycle
+
+### Next.js App Router Middleware (`handleRequest`)
+
+`handleRequest` provides a Web Standard Request/Response pipeline compatible with Next.js `middleware.ts`, Cloudflare Workers, Hono, and Bun.
+
+```
+Request arrives at Next.js Edge Middleware
+                 |
+        [handleRequest()]
+                 |
+      +----------+----------+
+      |                     |
+Dedicated Path?        General Route?
+      |                     |
+  [Challenge / Verify]    Clearance present & valid?
+  - Returns Response          |
+                          +---+---+
+                          |       |
+                         Yes      No
+                          |       |
+                     Returns null  Returns HTTP 449 Response
+                     (Next.js      (Browser solves challenge
+                      proceeds)     and retries)
+```
+
+1. **Dedicated Challenge Endpoint**: Responds to `GET /api/barstile/challenge` with a signed challenge token string.
+2. **Dedicated Verify Endpoint**: Responds to `POST /api/barstile/verify`. Reads the solution from headers or body, checks the nonce against the challenge, and returns HTTP 200 with `Set-Cookie: barstile_clearance=...`.
+3. **Route Gate**: For application routes, inspects headers and cookies for a clearance token. If valid, returns `null` to allow Next.js to continue routing. If invalid or missing, returns an HTTP 449 Response.
+
+### Server Actions Verification (`verifyAction`)
+
+Next.js Server Actions receive form submissions directly on the server without going through standard middleware endpoints. `verifyAction` inspects the submitted `FormData` or token string:
+
+1. **Token Extraction**: Reads `barstile-token` (or configured `tokenField`) from the `FormData` payload.
+2. **Token Type Detection**:
+   - If the token contains a colon (`:`), it is evaluated as a one-time Proof-of-Work solution (`challenge:nonce`).
+   - Otherwise, it is evaluated as a signed clearance token.
+3. **Anti-Replay Protection (`singleUse: true`)**:
+   - For high-value actions (checkout, password change, vote), setting `singleUse: true` records the clearance token in `engine.replayCache`.
+   - Subsequent submissions attempting to reuse the same clearance token fail with `replay_detected`.

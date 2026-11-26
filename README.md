@@ -19,18 +19,18 @@
 * [Architecture & Protocol](docs/ARCHITECTURE.md): Token format, HTTP 449 handshake sequence, and replay cache lifecycle.
 * [Security Model](docs/SECURITY.md): Threat mitigation boundaries, timing attack defense, and cluster considerations.
 
-## Official Website
+## Official Website & Demo
 
-<a href="https://barstile.pages.dev">
-  <img src="https://raw.githubusercontent.com/gozajpeg/barstile/main/assets/barstile.svg" alt="Barstile Website" width="120" />
-</a>
+* Website: [barstile.pages.dev](https://barstile.pages.dev)
 
 ## What Does Barstile Export?
 
-Barstile provides four entry points:
+Barstile provides modular entry points:
 
 ### 1. Server (`barstile/server`)
 * `barstileMiddleware()`: HTTP middleware for native Node.js `http`, Express, Connect, and Fastify.
+* `handleRequest()`: Web Standard Fetch API handler for Next.js App Router (`middleware.ts`), Cloudflare Workers, Hono, and Bun.
+* `verifyAction()`: Verifies form submissions in Next.js Server Actions with anti-replay defense.
 * `createBarstile()`: Engine to create challenges and verify solutions directly in code.
 * `TarpitTracker`: Memory-bounded sliding-window rate limiter and quarantine penalty tracker.
 * `calculateRiskScore()`: Multi-factor risk scorer analyzing headers, probe telemetry, and behavior.
@@ -57,6 +57,9 @@ Barstile provides four entry points:
 
 ### 4. Web Component (`barstile/web-component`)
 * `<barstile-widget>` (`BarstileWidgetElement`): Standard HTML5 custom element for Vue, Svelte, Angular, Solid, or vanilla HTML.
+
+### 5. TypeScript (`types/`)
+* Native TypeScript declarations included across all exports. No `@types` packages required.
 
 ## Installation
 
@@ -94,7 +97,47 @@ server.listen(3000);
 
 ---
 
-### 2. Frontend (Browser / Client)
+### 2. Next.js App Router & Server Actions
+
+**Edge / Fetch API Middleware (`middleware.ts`):**
+
+```javascript
+import { handleRequest, createBarstile } from 'barstile/server';
+
+const engine = createBarstile({ difficulty: 3 });
+
+export async function middleware(request) {
+  // Returns HTTP 449 challenge for unverified requests, or null to allow request to proceed
+  return handleRequest(engine, request);
+}
+
+export const config = {
+  matcher: ['/api/:path*', '/dashboard/:path*']
+};
+```
+
+**Next.js Server Actions (`actions.js`):**
+
+```javascript
+'use server';
+import { verifyAction, createBarstile } from 'barstile/server';
+
+const engine = createBarstile({ difficulty: 3 });
+
+export async function submitContact(formData) {
+  // singleUse enforces anti-replay so each clearance token can only be used once
+  const check = await verifyAction(formData, { engine, singleUse: true });
+  if (!check.valid) {
+    throw new Error('Verification failed: ' + check.error);
+  }
+
+  // Process form action safely
+}
+```
+
+---
+
+### 3. Frontend (Browser / Client)
 
 Replace `fetch` with `barstileFetch`. It uses the standard `fetch()` signature, but automatically resolves the challenge-response handshake in the background:
 
@@ -111,9 +154,9 @@ const data = await response.json();
 console.log(data); // { message: 'Access granted', ... }
 ```
 
-Legitimate users experience a brief background calculation (typically 2 to 50 ms depending on difficulty and device CPU). In browsers, `barstileFetch` offloads calculations to an inline Web Worker, offloading hashing from the main UI thread so animations, typing, and scrolling remain responsive. Automated scrapers attempting 1,000 requests per second must compute millions of SHA-256 operations per second.
+Legitimate users experience a brief background calculation (typically 2 to 50 ms depending on difficulty and device CPU). In browsers, `barstileFetch` offloads calculations to an inline Web Worker, keeping the main UI thread responsive during calculation. Automated scrapers attempting 1,000 requests per second must compute millions of SHA-256 operations per second.
 
-### 3. Turnstile-Style HTML Form Widget
+### 4. Turnstile-Style HTML Form Widget
 
 Protect HTML forms with self-hosted verification. Zero third-party trackers, zero external CSS files, and zero visual puzzle captchas.
 By default, widgets run in invisible zero-click mode. For a visible checkbox box, pass `mode: 'interactive'` (or `data-mode="interactive"`).
@@ -179,7 +222,7 @@ export default function LoginForm() {
 </form>
 ```
 
-### 4. Anti-Bot and Adaptive Risk Protection
+### 5. Anti-Bot and Adaptive Risk Protection
 
 Barstile includes multi-factor risk scoring to adjust difficulty automatically and block automated scrapers:
 
@@ -194,7 +237,7 @@ app.use(barstileMiddleware({
 }));
 ```
 
-### 5. Route & Method Adaptive Difficulty
+### 6. Route & Method Adaptive Difficulty
 
 Barstile supports route-specific difficulty and clearance rules. Set higher difficulty on sensitive actions while keeping public browsing fast:
 
@@ -211,7 +254,7 @@ app.use(barstileMiddleware({
 }));
 ```
 
-Cross-route tampering is cryptographically blocked: a solution solved for a difficulty 1 route is rejected if submitted to a difficulty 5 route.
+Cross-route tampering is rejected: a solution solved for a difficulty 1 route is invalid if submitted to a difficulty 5 route.
 
 
 ## Multi-Server & Cluster Deployments
@@ -237,7 +280,7 @@ const redis = new Redis(process.env.REDIS_URL);
 app.use(barstileMiddleware({ redis }));
 ```
 
-Barstile uses atomic `SET key 1 EX ttl NX` operations, mitigating race windows across nodes. If Redis experiences network interruptions, Barstile falls back to local memory.
+Barstile uses atomic `SET key 1 EX ttl NX` operations to avoid race conditions across nodes. If Redis experiences network interruptions, Barstile falls back to local memory.
 
 
 ## How It Works
@@ -321,7 +364,7 @@ console.log(result.solution); // "salt.diff.exp.sig:nonce"
 3. **Constant-Time Verification**: Signature validation uses `crypto.timingSafeEqual` to avoid timing side-channel leaks.
 4. **Stateless Operations**: The server does not store pending challenges in a database; memory is only used for spent nonces until expiration.
 5. **Clearance Request Allowance**: Clearance tokens carry a request quota (default: 100 requests). An attacker cannot solve 1 challenge and scrape 50,000 pages; once exhausted, a fresh challenge is required.
-6. **Pre-Challenge Body Guard**: Incoming requests without a valid solution or clearance token are challenged in microseconds before request body parsing occurs. Oversized pre-challenge payloads are rejected immediately, protecting server heap memory from buffer exhaustion.
+6. **Pre-Challenge Body Guard**: Incoming requests without a valid solution or clearance token are challenged before request body parsing occurs. Oversized pre-challenge payloads exceeding `maxPreChallengeBodyBytes` (default: 64KB) are rejected immediately, protecting server heap memory from buffer exhaustion.
 
 See [docs/SECURITY.md](docs/SECURITY.md) for threat model details and operational trade-offs.
 

@@ -10,6 +10,8 @@ Import path:
 ```javascript
 import {
   barstileMiddleware,
+  handleRequest,
+  verifyAction,
   createBarstile,
   Barstile,
   verifySolution,
@@ -37,7 +39,7 @@ Creates an HTTP middleware compatible with Node.js `http.createServer`, Express,
 | `ttlMs` | `number` | `60000` | Challenge validity window in milliseconds (default: 60 seconds). |
 | `secret` | `string` | Auto-generated | HMAC secret key. If omitted, a random 256-bit key is generated at startup. |
 | `adaptiveRisk` | `boolean` | `false` | Enables multi-factor risk assessment. Adjusts PoW difficulty based on client risk. |
-| `allowSilentPass` | `boolean` | `false` | Grants instant clearance to verified low-risk human clients without requiring PoW calculations. |
+| `allowSilentPass` | `boolean` | `false` | Grants clearance to verified low-risk human clients without requiring PoW calculations. |
 | `blockBots` | `boolean | 'escalate'` | `false` | Rejects automated browsers with HTTP 403 when `true`. When `'escalate'` or under `adaptiveRisk: true`, escalates PoW difficulty to challenge clients instead of hard-blocking. |
 | `maxDifficulty` | `number` | `5` | Maximum difficulty ceiling for automatic escalation (keeps mobile solves under ~1 second). |
 | `telemetryHeader` | `string` | `'x-barstile-telemetry'` | Request header inspected for browser probe telemetry. |
@@ -122,7 +124,7 @@ app.use(barstileMiddleware({
 To prevent bots from forcing Node.js to buffer large request payloads into RAM before PoW verification, mount `barstileMiddleware()` **before** body parsing middleware:
 
 ```javascript
-// Recommended: Barstile intercepts unverified requests in microseconds before body allocation
+// Recommended: Barstile intercepts unverified requests before body allocation
 app.use(barstileMiddleware());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -210,6 +212,103 @@ When `barstileMiddleware()` is mounted, it automatically handles two dedicated v
       "challenge": "<freshToken>"
     }
     ```
+
+---
+
+### `handleRequest(engine, request, options)`
+
+Handles Web Standard `Request` and `Response` bot protection for Next.js App Router (`middleware.ts`), Cloudflare Workers, Hono, Bun, and standard fetch servers.
+
+#### Parameters
+
+* `engine` (`Barstile`): Configured `Barstile` engine instance.
+* `request` (`Request`): Web Standard `Request` object.
+* `options` (Object, optional):
+
+| Parameter | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `difficulty` | `number` | `engine.difficulty` | Challenge difficulty override (range: 1 to 8). |
+| `challengePath` | `string` | `'/api/barstile/challenge'` | Dedicated challenge endpoint pathname. |
+| `verifyPath` | `string` | `'/api/barstile/verify'` | Dedicated verification endpoint pathname. |
+| `challengeHeader` | `string` | `'X-Barstile-Challenge'` | Header name written on challenge responses. |
+| `clearanceHeader` | `string` | `'X-Barstile-Clearance'` | Header name inspected and issued for clearance. |
+| `clearanceCookie` | `string` | `'barstile_clearance'` | Cookie name written and inspected for clearance. |
+| `clearanceTtlMs` | `number` | `900000` | Duration of persistent clearance in milliseconds (default: 15 minutes). |
+| `trustProxy` | `boolean` | `false` | Inspects proxy headers (`cf-connecting-ip`, `x-forwarded-for`, `x-real-ip`) for client IP. |
+| `bindIp` | `boolean` | `true` | Binds tokens to client IP subnet. |
+| `bindSubnet` | `boolean` | `true` | Normalizes IPv4 to `/24` and IPv6 to `/64`. |
+| `bindUserAgent` | `boolean` | `true` | Binds tokens to client User-Agent hash. |
+| `shouldChallenge` | `(req: Request) => boolean` | `undefined` | Predicate returning `false` to bypass protection for matching requests (e.g. static assets). |
+
+#### Return Value
+
+* `Promise<Response | null>`:
+  * Returns a Web Standard `Response` (HTTP 449 challenge or endpoint JSON) when the request requires challenge or verification.
+  * Returns `null` when the request has a valid clearance token or is skipped by `shouldChallenge`, indicating the application should proceed.
+
+#### Example (Next.js `middleware.ts`)
+
+```javascript
+import { handleRequest, createBarstile } from 'barstile/server';
+
+const engine = createBarstile({ difficulty: 3 });
+
+export async function middleware(request) {
+  const challengeResponse = await handleRequest(engine, request, {
+    trustProxy: true
+  });
+  if (challengeResponse) {
+    return challengeResponse;
+  }
+}
+
+export const config = {
+  matcher: ['/api/:path*', '/protected/:path*']
+};
+```
+
+---
+
+### `verifyAction(formData, options)`
+
+Verifies a submission from a Next.js Server Action or FormData payload with anti-replay protection.
+
+#### Parameters
+
+* `formData` (`FormData | Record<string, any> | string`): The submitted FormData instance, plain object, or token string.
+* `options` (Object):
+  * `engine` (`Barstile`, required): Configured `Barstile` engine instance.
+  * `tokenField` (`string`, default: `'barstile-token'`): Field name inspected in formData.
+  * `context` (`string`, optional): Cryptographic client context (e.g. fingerprint).
+  * `singleUse` (`boolean`, default: `false`): When `true`, records used clearance tokens in `engine.replayCache` to prevent replaying the same token.
+
+#### Return Value
+
+* `Promise<{ valid: boolean, error?: string, token?: string, type?: 'clearance' | 'solution' }>`:
+  * `{ valid: true, type: 'clearance' | 'solution', token: string }` on successful verification.
+  * `{ valid: false, error: string }` on failure (e.g. `'missing_token'`, `'replay_detected'`, `'invalid_clearance'`).
+
+#### Example (Next.js Server Action)
+
+```javascript
+'use server';
+import { verifyAction, createBarstile } from 'barstile/server';
+
+const engine = createBarstile({ difficulty: 3 });
+
+export async function submitForm(formData) {
+  const result = await verifyAction(formData, {
+    engine,
+    singleUse: true
+  });
+
+  if (!result.valid) {
+    throw new Error('Form verification failed: ' + result.error);
+  }
+
+  // Action is verified
+}
+```
 
 ---
 
@@ -420,6 +519,25 @@ Computes multi-factor risk assessment combining HTTP headers, browser environmen
 
 ---
 
+### `extractClientIp(req, options?)`
+
+Extracts and normalizes the client IP address from Node.js `http`, Express, Fastify, or Web Standard Request pseudo-objects.
+
+#### Parameters
+
+* `req` (`any`): Incoming request object.
+* `options.trustProxy` (`boolean`, default: `false`): When `true`, inspects reverse proxy headers in priority order:
+  1. `cf-connecting-ip` (Cloudflare edge proxy)
+  2. `x-forwarded-for` (first hop IP)
+  3. `x-real-ip`
+  When `false`, reads the socket address directly (`req.ip`, `req.socket.remoteAddress`, or `req.connection.remoteAddress`).
+
+#### Return Value
+
+* `string`: Normalized client IP address (or `'127.0.0.1'` fallback).
+
+---
+
 ## Client Module (`barstile/client`)
 
 Import path:
@@ -559,7 +677,7 @@ Asynchronous Proof-of-Work solver. Yields periodically to the event loop so brow
 
 ### `solveWorker(challenge, options)`
 
-Background thread Proof-of-Work solver using an inline Blob Web Worker. Keeps the main browser UI thread unblocked and responsive during calculation, preserving smooth animations and instant input responsiveness.
+Background thread Proof-of-Work solver using an inline Blob Web Worker. Keeps the main browser UI thread responsive during calculation, avoiding frame drops and preserving UI interactions.
 
 If Web Workers are unavailable (e.g. Node.js or SSR) or blocked by strict Content Security Policy directives, `solveWorker()` automatically and transparently falls back to `solve()` without throwing.
 
