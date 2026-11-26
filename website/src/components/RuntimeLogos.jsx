@@ -57,14 +57,23 @@ export function RuntimeLogos() {
       const dt = Math.min((now - lastTime) / 1000, 0.1);
       lastTime = now;
 
-      if (!isHovered.current) {
-        const elapsed = now - startTime;
-        let speed = 0;
-        if (elapsed >= 1800) {
-          const boost = elapsed < 4800 ? 0.45 * Math.pow(1 - (elapsed - 1800) / 3000, 3) : 0;
-          speed = 0.038 + boost;
+      const elapsed = now - startTime;
+      if (elapsed < 1800) {
+        if (container.style.visibility !== 'hidden') {
+          container.style.visibility = 'hidden';
         }
-        offset += speed * dt;
+        animId = requestAnimationFrame(tick);
+        return;
+      }
+
+      if (container.style.visibility !== 'visible') {
+        container.style.visibility = 'visible';
+      }
+
+      if (!isHovered.current) {
+        // High-velocity right-to-left spin (1.8 rad/s) after arc finishes, decelerating over 3s
+        const boost = elapsed < 4800 ? 1.8 * Math.pow(1 - (elapsed - 1800) / 3000, 3) : 0;
+        offset += (0.038 + boost) * dt;
       }
 
       for (let i = 0; i < count; i++) {
@@ -167,7 +176,7 @@ export function RuntimeLogos() {
     <div
       ref={containerRef}
       className="absolute inset-0 pointer-events-none overflow-hidden z-10 select-none"
-      style={{ animation: 'innerGlowFade 700ms ease-out 1800ms both' }}
+      style={{ visibility: 'hidden' }}
       role="region"
       aria-label="Supported frameworks and runtimes"
     >
