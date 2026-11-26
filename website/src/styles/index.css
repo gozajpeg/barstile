@@ -334,3 +334,42 @@ body {
   transform-origin: 50% 15%;
   animation: widgetRing 4s ease-in-out infinite;
 }
+
+/* -------------------------------------------------------------------------- */
+/* Blueprint Gate: CAD Laser Drafting Animations                             */
+/* -------------------------------------------------------------------------- */
+@keyframes drawStroke {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes pulseCrosshairSlow {
+  0%, 100% { opacity: 0.95; transform: scale(1); }
+  50% { opacity: 0.45; transform: scale(0.92); }
+}
+
+.bp-stroke-main-slow {
+  stroke-dasharray: 800;
+  stroke-dashoffset: 800;
+  animation: drawStroke 2.2s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+}
+
+.bp-stroke-pillars-slow {
+  stroke-dasharray: 500;
+  stroke-dashoffset: 500;
+  animation: drawStroke 2.1s cubic-bezier(0.25, 0.8, 0.25, 1) 0.3s forwards;
+}
+
+.bp-stroke-slats-slow {
+  stroke-dasharray: 400;
+  stroke-dashoffset: 400;
+  animation: drawStroke 1.9s cubic-bezier(0.25, 0.8, 0.25, 1) 0.5s forwards;
+}
+
+.bp-crosshair-slow {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: pulseCrosshairSlow 2.4s ease-in-out infinite;
+}
+

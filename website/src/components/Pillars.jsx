@@ -4,40 +4,21 @@ import { UtilityPole } from './UtilityPole.jsx';
 import { NoDesignNeeded } from './NoDesignNeeded.jsx';
 
 const FRAMEWORKS = {
-  row1: [
-    { name: 'Node.js', icon: '/frameworks/nodejs.svg' },
-    { name: 'Bun', icon: '/frameworks/bun.svg' },
-    { name: 'Deno', icon: '/frameworks/deno.svg' },
-    { name: 'Next.js', icon: '/frameworks/nextjs.svg' },
-    { name: 'Express', icon: '/frameworks/express.svg' },
-    { name: 'React', icon: '/frameworks/react.svg' }
-  ],
-  row2: [
-    { name: 'Vue', icon: '/frameworks/vue.svg' },
-    { name: 'Svelte', icon: '/frameworks/svelte.svg' },
-    { name: 'Fastify', icon: '/frameworks/fastify.svg' }
-  ],
-  row3: [
-    { name: 'Hono', icon: '/frameworks/hono.svg' },
-    { name: 'Astro', icon: '/frameworks/astro.svg' },
-    { name: 'Angular', icon: '/frameworks/angular.svg' },
-    { name: 'Solid', icon: '/frameworks/solidjs.svg' }
-  ],
-  row4: [
-    { name: 'Remix', icon: '/frameworks/remix.svg' },
-    { name: 'Koa', icon: '/frameworks/koa.svg' }
-  ]
+  row1: ['nodejs', 'bun', 'deno', 'nextjs', 'express', 'react'],
+  row2: ['vue', 'svelte', 'fastify'],
+  row3: ['hono', 'astro', 'angular', 'solidjs'],
+  row4: ['remix', 'koa']
 };
 
-function Cell({ fw }) {
+function Cell({ slug }) {
   return (
     <div
-      title={fw.name}
+      title={slug}
       className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 border border-white/[0.12] -mr-px -mb-px flex items-center justify-center p-1 sm:p-1.5 lg:p-1.5 bg-white/[0.015] hover:border-white/[0.4] hover:bg-white/[0.08] transition-all duration-200 group cursor-default relative shrink-0 z-0 hover:z-20"
     >
       <img
-        src={fw.icon}
-        alt={fw.name}
+        src={`/frameworks/${slug}.svg`}
+        alt={slug}
         className="w-full h-full object-contain opacity-100 group-hover:scale-105 transition-all duration-200"
         loading="lazy"
       />
@@ -79,8 +60,8 @@ export function Pillars() {
               <div className="flex flex-col shrink-0 self-end z-0">
                 {/* Row 1: 6 connected square cells */}
                 <div className="flex">
-                  {FRAMEWORKS.row1.map((fw) => (
-                    <Cell key={fw.name} fw={fw} />
+                  {FRAMEWORKS.row1.map((slug) => (
+                    <Cell key={slug} slug={slug} />
                   ))}
                 </div>
 
@@ -88,8 +69,8 @@ export function Pillars() {
                 <div className="flex">
                   <EmptyCell />
                   <EmptyCell />
-                  {FRAMEWORKS.row2.map((fw) => (
-                    <Cell key={fw.name} fw={fw} />
+                  {FRAMEWORKS.row2.map((slug) => (
+                    <Cell key={slug} slug={slug} />
                   ))}
                 </div>
 
@@ -97,8 +78,8 @@ export function Pillars() {
                 <div className="flex">
                   <EmptyCell />
                   <EmptyCell />
-                  {FRAMEWORKS.row3.map((fw) => (
-                    <Cell key={fw.name} fw={fw} />
+                  {FRAMEWORKS.row3.map((slug) => (
+                    <Cell key={slug} slug={slug} />
                   ))}
                 </div>
 
@@ -108,8 +89,8 @@ export function Pillars() {
                   <EmptyCell />
                   <EmptyCell />
                   <EmptyCell />
-                  {FRAMEWORKS.row4.map((fw) => (
-                    <Cell key={fw.name} fw={fw} />
+                  {FRAMEWORKS.row4.map((slug) => (
+                    <Cell key={slug} slug={slug} />
                   ))}
                 </div>
               </div>
