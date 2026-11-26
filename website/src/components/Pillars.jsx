@@ -35,7 +35,7 @@ function Cell({ fw }) {
       <img
         src={fw.icon}
         alt={fw.name}
-        className="w-7 h-7 sm:w-8 sm:h-8 lg:w-9 lg:h-9 object-contain filter grayscale opacity-70 group-hover:filter-none group-hover:opacity-100 transition-all duration-200"
+        className="w-7 h-7 sm:w-8 sm:h-8 lg:w-9 lg:h-9 object-contain opacity-100 group-hover:scale-105 transition-all duration-200"
         loading="lazy"
       />
     </div>
