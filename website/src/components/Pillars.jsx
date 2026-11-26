@@ -1,4 +1,5 @@
 import React from 'react';
+import { BlueprintGate } from './BlueprintGate.jsx';
 
 const FRAMEWORKS = {
   row1: [
@@ -122,14 +123,22 @@ export function Pillars() {
               </div>
             </div>
 
-            {/* Card 2: Silent Treatment (Option 2) */}
-            <div className="flex flex-col justify-end p-6 sm:p-7 lg:p-7 h-full">
-              <h3 className="text-[20px] sm:text-[24px] font-semibold tracking-tight text-white leading-snug whitespace-nowrap">
-                Silent treatment.
-              </h3>
-              <p className="text-[20px] sm:text-[24px] text-zinc-500 font-normal tracking-tight leading-snug mt-1 sm:mt-0.5">
-                Work with a reason.
-              </p>
+            {/* Card 2: Silent Treatment with Architectural Blueprint Gate */}
+            <div className="relative flex flex-col justify-between sm:justify-end p-6 sm:p-7 lg:p-7 h-full overflow-hidden min-h-[300px] sm:min-h-0">
+              {/* Gate Illustration: Centered on mobile, flush right on desktop */}
+              <div className="flex justify-center sm:justify-end shrink-0 z-0 sm:self-end">
+                <BlueprintGate />
+              </div>
+
+              {/* Headline + Subtext: Below gate on mobile, bottom-left aligned on desktop */}
+              <div className="z-10 mt-6 sm:mt-0 sm:absolute sm:bottom-7 sm:left-7 pointer-events-none">
+                <h3 className="text-[18px] sm:text-[24px] font-semibold tracking-tight text-white leading-snug whitespace-nowrap">
+                  Silent treatment.
+                </h3>
+                <p className="text-[18px] sm:text-[24px] text-zinc-500 font-normal tracking-tight leading-snug mt-1 sm:mt-0.5 whitespace-nowrap">
+                  Work with a reason.
+                </p>
+              </div>
             </div>
           </div>
 
