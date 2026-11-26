@@ -30,12 +30,12 @@ function Cell({ fw }) {
   return (
     <div
       title={fw.name}
-      className="w-10 h-10 sm:w-11 sm:h-11 lg:w-12 lg:h-12 border border-white/[0.12] -mr-px -mb-px flex items-center justify-center bg-white/[0.015] hover:border-white/[0.4] hover:bg-white/[0.08] transition-all duration-200 group cursor-default relative shrink-0 z-0 hover:z-10"
+      className="w-11 h-11 sm:w-12 sm:h-12 lg:w-[50px] lg:h-[50px] border border-white/[0.12] -mr-px -mb-px flex items-center justify-center bg-white/[0.015] hover:border-white/[0.4] hover:bg-white/[0.08] transition-all duration-200 group cursor-default relative shrink-0 z-0 hover:z-10"
     >
       <img
         src={fw.icon}
         alt={fw.name}
-        className="w-6 h-6 sm:w-6.5 sm:h-6.5 lg:w-7 lg:h-7 object-contain filter grayscale opacity-60 group-hover:filter-none group-hover:opacity-100 transition-all duration-200"
+        className="w-7 h-7 sm:w-8 sm:h-8 lg:w-9 lg:h-9 object-contain filter grayscale opacity-70 group-hover:filter-none group-hover:opacity-100 transition-all duration-200"
         loading="lazy"
       />
     </div>
@@ -43,7 +43,7 @@ function Cell({ fw }) {
 }
 
 function EmptyCell() {
-  return <div className="w-10 h-10 sm:w-11 sm:h-11 lg:w-12 lg:h-12 -mr-px -mb-px shrink-0 pointer-events-none" />;
+  return <div className="w-11 h-11 sm:w-12 sm:h-12 lg:w-[50px] lg:h-[50px] -mr-px -mb-px shrink-0 pointer-events-none" />;
 }
 
 /* -------------------------------------------------------------------------- */
