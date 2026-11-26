@@ -1,6 +1,7 @@
 import React from 'react';
 import { BlueprintGate } from './BlueprintGate.jsx';
 import { UtilityPole } from './UtilityPole.jsx';
+import { EmptyCookieJar } from './EmptyCookieJar.jsx';
 
 const FRAMEWORKS = {
   row1: [
@@ -165,6 +166,11 @@ export function Pillars() {
 
             {/* Card 4: Zero Cookies */}
             <div className="relative flex flex-col justify-end p-6 sm:p-7 lg:p-7 h-full overflow-hidden min-h-[260px] sm:min-h-[280px]">
+              {/* Graphic: Tipped Empty Glass Jar on the right */}
+              <div className="absolute inset-0 pointer-events-none flex items-center justify-end overflow-hidden z-0">
+                <EmptyCookieJar />
+              </div>
+
               <div className="absolute bottom-6 sm:bottom-7 lg:bottom-7 left-6 sm:left-7 lg:left-7 z-10 pointer-events-none">
                 <h3 className="text-[18px] sm:text-[24px] font-semibold tracking-tight text-white leading-snug whitespace-nowrap">
                   Zero cookies.
