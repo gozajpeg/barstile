@@ -30,12 +30,12 @@ function Cell({ fw }) {
   return (
     <div
       title={fw.name}
-      className="w-11 h-11 sm:w-14 sm:h-14 lg:w-16 lg:h-16 border border-white/[0.12] -mr-px -mb-px flex items-center justify-center bg-white/[0.015] hover:border-white/[0.4] hover:bg-white/[0.08] transition-all duration-200 group cursor-default relative shrink-0 z-0 hover:z-20"
+      className="w-11 h-11 sm:w-14 sm:h-14 lg:w-16 lg:h-16 border border-white/[0.12] -mr-px -mb-px flex items-center justify-center p-0.5 sm:p-1 lg:p-1 bg-white/[0.015] hover:border-white/[0.4] hover:bg-white/[0.08] transition-all duration-200 group cursor-default relative shrink-0 z-0 hover:z-20"
     >
       <img
         src={fw.icon}
         alt={fw.name}
-        className="w-8 h-8 sm:w-10 sm:h-10 lg:w-[52px] lg:h-[52px] object-contain opacity-100 group-hover:scale-105 transition-all duration-200"
+        className="w-full h-full object-contain opacity-100 group-hover:scale-105 transition-all duration-200"
         loading="lazy"
       />
     </div>
@@ -71,7 +71,7 @@ export function Pillars() {
           {/* Top 2-Column Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-white/[0.08]">
             {/* Card 1: 15 Frameworks with Equalizer Wireframe Matrix and Floating Text (z-index up) */}
-            <div className="relative flex flex-col justify-end p-6 sm:p-8 lg:p-10 h-full min-h-[340px] overflow-hidden">
+            <div className="relative flex flex-col justify-end p-6 sm:p-8 lg:p-10 h-full sm:min-h-[300px] lg:min-h-[340px] overflow-hidden">
               {/* Right: Equalizer Wireframe Grid aligned at bottom-right */}
               <div className="flex flex-col shrink-0 self-end z-0">
                 {/* Row 1: 6 connected square cells */}
@@ -112,7 +112,7 @@ export function Pillars() {
               </div>
 
               {/* Left: 1-Line Headline + Stacked Subtext with z-index up so icon sizing never affects text spacing */}
-              <div className="sm:absolute sm:bottom-8 lg:bottom-10 sm:left-8 lg:left-10 z-10 pointer-events-none mt-6 sm:mt-0">
+              <div className="sm:absolute sm:bottom-8 lg:bottom-10 sm:left-8 lg:left-10 z-10 pointer-events-none mt-4 sm:mt-0">
                 <h3 className="text-[20px] sm:text-[24px] font-semibold tracking-tight text-white leading-snug whitespace-nowrap">
                   15 JS & TS frameworks.
                 </h3>
