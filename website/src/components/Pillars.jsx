@@ -43,10 +43,10 @@ export function Pillars() {
         {/* Section Top Heading: Exact Match to Section 2 Typography & Spacing */}
         <div className="mb-16 text-center">
           <h2 className="text-[20px] sm:text-[24px] font-semibold tracking-tight text-white leading-none">
-            Privacy isn't a feature. It's the architecture.
+            Privacy isn't a feature.
           </h2>
           <p className="text-[20px] sm:text-[24px] text-zinc-500 font-normal tracking-tight leading-none mt-1 sm:mt-0.5">
-            Zero cookies, zero external dependencies, zero user profiling.
+            It's the architecture.
           </p>
         </div>
 
