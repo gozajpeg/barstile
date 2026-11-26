@@ -8,12 +8,16 @@ import React, { useState, useEffect, useRef } from 'react';
  * - Finely fluted / ribbed dark double doors with center seam
  * - Tall, slender brushed brass vertical pull handles with latch lever
  *
- * Animation:
- * 1. Blueprint Phase (0-1.1s): Cyan drafting wireframe lines actively draw in (laser CAD style),
- *    displaying dimension callouts (4.20m, 3.40m), alignment crosshairs, and coordinate grid.
- * 2. Construction Phase (1.1-2.2s): Blueprint lines transition as the solid gate surfaces materialize:
- *    stone pillars solidify, fluted slats gain depth and shadows, brass handles lock in place.
- * 3. Solid Phase (2.2s+): The gate stands impenetrable, modern, and solid.
+ * Animation (Slow & Viewport-Triggered):
+ * 1. ONLY triggers when scrolled into view (IntersectionObserver on Section/Card).
+ *    Zero background execution while above the section.
+ * 2. Blueprint Phase (0s – 2.6s): Slow, deliberate CAD laser drafting lines actively sketch
+ *    the canopy, pillars, gate perimeter, and fluted ribs.
+ *    Dimension callouts (4.20m, 3.40m), alignment crosshairs, and coordinate grid glow in cyan.
+ * 3. Construction Phase (2.6s – 5.2s): Smooth materialization where solid masonry stone fills the pillars,
+ *    vertical fluted slats gain 3D specular depth, and brass handles slide and gleam into place,
+ *    while blueprint lines dissolve away.
+ * 4. Solid Phase (5.2s+): Impenetrable, solid, dark architectural gate stands permanently.
  *    STRICTLY NON-LOOPING: Plays once on entry, never loops.
  */
 export function BlueprintGate({ className = '' }) {
@@ -24,51 +28,52 @@ export function BlueprintGate({ className = '' }) {
     const el = containerRef.current;
     if (!el) return;
 
-    let timer1, timer2, timer3;
+    let timer1, timer2;
 
-    // Trigger on scroll into view
+    // Trigger STRICTLY when the gate container enters the user's viewport
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting && phase === 'idle') {
+          if (entry.isIntersecting) {
+            // Disconnect immediately so it only triggers once
             observer.disconnect();
             setPhase('drafting');
-            timer1 = setTimeout(() => setPhase('building'), 1100);
-            timer2 = setTimeout(() => setPhase('solid'), 2200);
+            // Slow, deliberate build pacing:
+            // Drafting: 0s to 2.6s
+            // Building/Materializing: 2.6s to 5.2s
+            // Solid permanent: 5.2s+
+            timer1 = setTimeout(() => setPhase('building'), 2600);
+            timer2 = setTimeout(() => setPhase('solid'), 5200);
           }
         });
       },
-      { threshold: 0.15 }
+      {
+        threshold: 0.2,
+        rootMargin: '0px 0px -40px 0px'
+      }
     );
 
     observer.observe(el);
-
-    // Fallback trigger
-    timer3 = setTimeout(() => {
-      setPhase((p) => {
-        if (p === 'idle') {
-          setTimeout(() => setPhase('building'), 1100);
-          setTimeout(() => setPhase('solid'), 2200);
-          return 'drafting';
-        }
-        return p;
-      });
-    }, 300);
 
     return () => {
       observer.disconnect();
       clearTimeout(timer1);
       clearTimeout(timer2);
-      clearTimeout(timer3);
     };
   }, []);
 
+  const isIdle = phase === 'idle';
   const isDrafting = phase === 'drafting';
   const isBuilding = phase === 'building';
   const isSolid = phase === 'solid';
 
-  const blueprintOpacity = isDrafting ? 1 : isBuilding ? 0.35 : 0;
-  const solidOpacity = isDrafting ? 0 : isBuilding ? 0.9 : 1;
+  // Opacities:
+  // idle: blueprint 0, solid 0 (clean canvas awaiting user scroll)
+  // drafting: blueprint 1, solid 0 (active CAD drafting)
+  // building: blueprint fades from 1 -> 0, solid fades from 0 -> 1
+  // solid: blueprint 0, solid 1 (permanent finished state)
+  const blueprintOpacity = isDrafting ? 1 : isBuilding ? 0.25 : 0;
+  const solidOpacity = isIdle || isDrafting ? 0 : 1;
 
   // 15 flutes per door
   const FLUTES_COUNT = 15;
@@ -80,38 +85,53 @@ export function BlueprintGate({ className = '' }) {
       className={`relative flex items-center justify-center select-none overflow-visible ${className}`}
     >
       <style>{`
-        @keyframes drawStroke {
-          from {
-            stroke-dashoffset: 600;
+        @keyframes drawStrokeMainSlow {
+          0% {
+            stroke-dashoffset: 800;
           }
-          to {
+          100% {
             stroke-dashoffset: 0;
           }
         }
-        @keyframes drawStrokeFast {
-          from {
-            stroke-dashoffset: 300;
+        @keyframes drawStrokePillarsSlow {
+          0% {
+            stroke-dashoffset: 500;
           }
-          to {
+          100% {
             stroke-dashoffset: 0;
           }
         }
-        @keyframes pulseCrosshair {
-          0%, 100% { opacity: 0.9; }
-          50% { opacity: 0.4; }
+        @keyframes drawStrokeSlatsSlow {
+          0% {
+            stroke-dashoffset: 400;
+          }
+          100% {
+            stroke-dashoffset: 0;
+          }
         }
-        .bp-stroke-main {
-          stroke-dasharray: 600;
-          stroke-dashoffset: 0;
-          animation: drawStroke 1s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+        @keyframes pulseCrosshairSlow {
+          0%, 100% { opacity: 0.95; transform: scale(1); }
+          50% { opacity: 0.45; transform: scale(0.92); }
         }
-        .bp-stroke-fast {
-          stroke-dasharray: 300;
-          stroke-dashoffset: 0;
-          animation: drawStrokeFast 0.85s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+        .bp-stroke-main-slow {
+          stroke-dasharray: 800;
+          stroke-dashoffset: 800;
+          animation: drawStrokeMainSlow 2.2s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
         }
-        .bp-crosshair {
-          animation: pulseCrosshair 1.5s ease-in-out infinite;
+        .bp-stroke-pillars-slow {
+          stroke-dasharray: 500;
+          stroke-dashoffset: 500;
+          animation: drawStrokePillarsSlow 2.1s cubic-bezier(0.25, 0.8, 0.25, 1) 0.3s forwards;
+        }
+        .bp-stroke-slats-slow {
+          stroke-dasharray: 400;
+          stroke-dashoffset: 400;
+          animation: drawStrokeSlatsSlow 1.9s cubic-bezier(0.25, 0.8, 0.25, 1) 0.5s forwards;
+        }
+        .bp-crosshair-slow {
+          transform-box: fill-box;
+          transform-origin: center;
+          animation: pulseCrosshairSlow 2.4s ease-in-out infinite;
         }
       `}</style>
 
@@ -182,7 +202,7 @@ export function BlueprintGate({ className = '' }) {
         {/* 1. SOLID ARCHITECTURAL GATE (Materializes in Stage 2)          */}
         {/* ============================================================== */}
         <g
-          className="transition-opacity duration-1000 ease-out"
+          className="transition-opacity duration-[1600ms] ease-out"
           style={{ opacity: solidOpacity }}
         >
           {/* Ground Warm/White Uplight Glow at Gate Threshold */}
@@ -335,10 +355,10 @@ export function BlueprintGate({ className = '' }) {
         </g>
 
         {/* ============================================================== */}
-        {/* 2. BLUEPRINT TECHNICAL DRAFTING OVERLAY (Animated on mount)     */}
+        {/* 2. BLUEPRINT TECHNICAL DRAFTING OVERLAY (Animated on View)      */}
         {/* ============================================================== */}
         <g
-          className="transition-opacity duration-700 ease-in-out pointer-events-none"
+          className="transition-opacity duration-[1200ms] ease-in-out pointer-events-none"
           style={{
             opacity: blueprintOpacity,
             filter: 'url(#blueprintGlow)'
@@ -410,13 +430,13 @@ export function BlueprintGate({ className = '' }) {
             [170, 153],
             [190, 153]
           ].map(([cx, cy], idx) => (
-            <g key={`crosshair-${idx}`} stroke="#38bdf8" strokeWidth="0.8" className="bp-crosshair">
+            <g key={`crosshair-${idx}`} stroke="#38bdf8" strokeWidth="0.8" className="bp-crosshair-slow">
               <line x1={cx - 3} y1={cy} x2={cx + 3} y2={cy} />
               <line x1={cx} y1={cy - 3} x2={cx + 3} y2={cy + 3} />
             </g>
           ))}
 
-          {/* Wireframe Laser Drafting Strokes */}
+          {/* Wireframe Laser Drafting Strokes (Slow CAD Animation) */}
           {/* Canopy Outline */}
           <rect
             x="22"
@@ -426,7 +446,7 @@ export function BlueprintGate({ className = '' }) {
             stroke="#38bdf8"
             strokeWidth="1.25"
             fill="none"
-            className={isDrafting ? 'bp-stroke-main' : ''}
+            className={isDrafting ? 'bp-stroke-main-slow' : isBuilding || isSolid ? '' : 'opacity-0'}
           />
           {/* Pergola cross slats */}
           {[23.5, 26.5, 29.5, 32.5, 37].map((sy, i) => (
@@ -451,7 +471,7 @@ export function BlueprintGate({ className = '' }) {
             stroke="#38bdf8"
             strokeWidth="1.25"
             fill="none"
-            className={isDrafting ? 'bp-stroke-fast' : ''}
+            className={isDrafting ? 'bp-stroke-pillars-slow' : isBuilding || isSolid ? '' : 'opacity-0'}
           />
           <line x1="36" y1="94" x2="80" y2="94" stroke="#38bdf8" strokeWidth="0.75" />
           <line x1="36" y1="141" x2="80" y2="141" stroke="#38bdf8" strokeWidth="0.75" />
@@ -466,7 +486,7 @@ export function BlueprintGate({ className = '' }) {
             stroke="#38bdf8"
             strokeWidth="1.25"
             fill="none"
-            className={isDrafting ? 'bp-stroke-fast' : ''}
+            className={isDrafting ? 'bp-stroke-pillars-slow' : isBuilding || isSolid ? '' : 'opacity-0'}
           />
           <line x1="280" y1="94" x2="324" y2="94" stroke="#38bdf8" strokeWidth="0.75" />
           <line x1="280" y1="141" x2="324" y2="141" stroke="#38bdf8" strokeWidth="0.75" />
@@ -481,7 +501,7 @@ export function BlueprintGate({ className = '' }) {
             stroke="#38bdf8"
             strokeWidth="1.25"
             fill="none"
-            className={isDrafting ? 'bp-stroke-main' : ''}
+            className={isDrafting ? 'bp-stroke-main-slow' : isBuilding || isSolid ? '' : 'opacity-0'}
           />
 
           {/* Center Seam Wireframe */}
@@ -501,8 +521,26 @@ export function BlueprintGate({ className = '' }) {
             const xr = 183 + i * 6.2;
             return (
               <g key={`draft-ribs-${i}`}>
-                <line x1={xl} y1="68" x2={xl} y2="231" stroke="#38bdf8" strokeWidth="0.5" strokeOpacity="0.55" />
-                <line x1={xr} y1="68" x2={xr} y2="231" stroke="#38bdf8" strokeWidth="0.5" strokeOpacity="0.55" />
+                <line
+                  x1={xl}
+                  y1="68"
+                  x2={xl}
+                  y2="231"
+                  stroke="#38bdf8"
+                  strokeWidth="0.5"
+                  strokeOpacity="0.55"
+                  className={isDrafting ? 'bp-stroke-slats-slow' : isBuilding || isSolid ? '' : 'opacity-0'}
+                />
+                <line
+                  x1={xr}
+                  y1="68"
+                  x2={xr}
+                  y2="231"
+                  stroke="#38bdf8"
+                  strokeWidth="0.5"
+                  strokeOpacity="0.55"
+                  className={isDrafting ? 'bp-stroke-slats-slow' : isBuilding || isSolid ? '' : 'opacity-0'}
+                />
               </g>
             );
           })}
