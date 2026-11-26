@@ -30,7 +30,7 @@ function Cell({ fw }) {
   return (
     <div
       title={fw.name}
-      className="w-11 h-11 sm:w-14 sm:h-14 lg:w-16 lg:h-16 border border-white/[0.12] -mr-px -mb-px flex items-center justify-center p-1 sm:p-1.5 lg:p-1.5 bg-white/[0.015] hover:border-white/[0.4] hover:bg-white/[0.08] transition-all duration-200 group cursor-default relative shrink-0 z-0 hover:z-20"
+      className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 border border-white/[0.12] -mr-px -mb-px flex items-center justify-center p-1 sm:p-1.5 lg:p-1.5 bg-white/[0.015] hover:border-white/[0.4] hover:bg-white/[0.08] transition-all duration-200 group cursor-default relative shrink-0 z-0 hover:z-20"
     >
       <img
         src={fw.icon}
@@ -43,7 +43,7 @@ function Cell({ fw }) {
 }
 
 function EmptyCell() {
-  return <div className="w-11 h-11 sm:w-14 sm:h-14 lg:w-16 lg:h-16 -mr-px -mb-px shrink-0 pointer-events-none" />;
+  return <div className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 -mr-px -mb-px shrink-0 pointer-events-none" />;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -71,7 +71,7 @@ export function Pillars() {
           {/* Top 2-Column Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-white/[0.08]">
             {/* Card 1: 15 Frameworks with Equalizer Wireframe Matrix */}
-            <div className="relative flex flex-col justify-end p-6 sm:p-7 lg:p-7 h-full overflow-hidden">
+            <div className="relative flex flex-col justify-end p-6 sm:p-7 lg:p-7 h-full overflow-hidden min-h-[240px] sm:min-h-0">
               {/* Right: Equalizer Wireframe Grid */}
               <div className="flex flex-col shrink-0 self-end z-0">
                 {/* Row 1: 6 connected square cells */}
@@ -111,12 +111,12 @@ export function Pillars() {
                 </div>
               </div>
 
-              {/* Left: 1-Line Headline + Stacked Subtext with z-index up */}
-              <div className="sm:absolute sm:bottom-7 lg:bottom-7 sm:left-7 lg:left-7 z-10 pointer-events-none mt-4 sm:mt-0">
-                <h3 className="text-[20px] sm:text-[24px] font-semibold tracking-tight text-white leading-snug whitespace-nowrap">
+              {/* Left: 1-Line Headline + Stacked Subtext aligned with last icons at bottom */}
+              <div className="absolute bottom-6 sm:bottom-7 lg:bottom-7 left-6 sm:left-7 lg:left-7 z-10 pointer-events-none">
+                <h3 className="text-[18px] sm:text-[24px] font-semibold tracking-tight text-white leading-snug whitespace-nowrap">
                   15 JS & TS frameworks.
                 </h3>
-                <p className="text-[20px] sm:text-[24px] text-zinc-500 font-normal tracking-tight leading-snug mt-1 sm:mt-0.5 whitespace-nowrap">
+                <p className="text-[18px] sm:text-[24px] text-zinc-500 font-normal tracking-tight leading-snug mt-1 sm:mt-0.5 whitespace-nowrap">
                   And counting.
                 </p>
               </div>
