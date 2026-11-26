@@ -30,12 +30,12 @@ function Cell({ fw }) {
   return (
     <div
       title={fw.name}
-      className="w-11 h-11 sm:w-12 sm:h-12 lg:w-[50px] lg:h-[50px] border border-white/[0.12] -mr-px -mb-px flex items-center justify-center bg-white/[0.015] hover:border-white/[0.4] hover:bg-white/[0.08] transition-all duration-200 group cursor-default relative shrink-0 z-0 hover:z-10"
+      className="w-11 h-11 sm:w-14 sm:h-14 lg:w-16 lg:h-16 border border-white/[0.12] -mr-px -mb-px flex items-center justify-center bg-white/[0.015] hover:border-white/[0.4] hover:bg-white/[0.08] transition-all duration-200 group cursor-default relative shrink-0 z-0 hover:z-20"
     >
       <img
         src={fw.icon}
         alt={fw.name}
-        className="w-9 h-9 sm:w-10 sm:h-10 lg:w-11 lg:h-11 object-contain opacity-100 group-hover:scale-105 transition-all duration-200"
+        className="w-8 h-8 sm:w-10 sm:h-10 lg:w-[52px] lg:h-[52px] object-contain opacity-100 group-hover:scale-105 transition-all duration-200"
         loading="lazy"
       />
     </div>
@@ -43,7 +43,7 @@ function Cell({ fw }) {
 }
 
 function EmptyCell() {
-  return <div className="w-11 h-11 sm:w-12 sm:h-12 lg:w-[50px] lg:h-[50px] -mr-px -mb-px shrink-0 pointer-events-none" />;
+  return <div className="w-11 h-11 sm:w-14 sm:h-14 lg:w-16 lg:h-16 -mr-px -mb-px shrink-0 pointer-events-none" />;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -70,57 +70,55 @@ export function Pillars() {
         <div className="border-t border-b border-white/[0.08] divide-y divide-white/[0.08]">
           {/* Top 2-Column Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-white/[0.08]">
-            {/* Card 1: 15 Frameworks with Equalizer Wireframe Matrix Aligned at Bottom Side-by-Side */}
-            <div className="flex flex-col justify-end p-6 sm:p-8 lg:p-10 h-full">
-              <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 sm:gap-6 w-full">
-                {/* Left: 1-Line Headline + Stacked Subtext */}
-                <div className="shrink-0">
-                  <h3 className="text-[20px] sm:text-[24px] font-semibold tracking-tight text-white leading-snug whitespace-nowrap">
-                    15 JS & TS frameworks.
-                  </h3>
-                  <p className="text-[20px] sm:text-[24px] text-zinc-500 font-normal tracking-tight leading-snug mt-1 sm:mt-0.5 whitespace-nowrap">
-                    And counting.
-                  </p>
+            {/* Card 1: 15 Frameworks with Equalizer Wireframe Matrix and Floating Text (z-index up) */}
+            <div className="relative flex flex-col justify-end p-6 sm:p-8 lg:p-10 h-full min-h-[340px] overflow-hidden">
+              {/* Right: Equalizer Wireframe Grid aligned at bottom-right */}
+              <div className="flex flex-col shrink-0 self-end z-0">
+                {/* Row 1: 6 connected square cells */}
+                <div className="flex">
+                  {FRAMEWORKS.row1.map((fw) => (
+                    <Cell key={fw.name} fw={fw} />
+                  ))}
                 </div>
 
-                {/* Right: Equalizer Wireframe Grid aligned at bottom */}
-                <div className="flex flex-col shrink-0 self-end sm:self-auto">
-                  {/* Row 1: 6 connected square cells */}
-                  <div className="flex">
-                    {FRAMEWORKS.row1.map((fw) => (
-                      <Cell key={fw.name} fw={fw} />
-                    ))}
-                  </div>
-
-                  {/* Row 2: 2 empty spacer slots + 3 connected square cells */}
-                  <div className="flex">
-                    <EmptyCell />
-                    <EmptyCell />
-                    {FRAMEWORKS.row2.map((fw) => (
-                      <Cell key={fw.name} fw={fw} />
-                    ))}
-                  </div>
-
-                  {/* Row 3: 2 empty spacer slots + 4 connected square cells */}
-                  <div className="flex">
-                    <EmptyCell />
-                    <EmptyCell />
-                    {FRAMEWORKS.row3.map((fw) => (
-                      <Cell key={fw.name} fw={fw} />
-                    ))}
-                  </div>
-
-                  {/* Row 4: 4 empty spacer slots + 2 connected square cells */}
-                  <div className="flex">
-                    <EmptyCell />
-                    <EmptyCell />
-                    <EmptyCell />
-                    <EmptyCell />
-                    {FRAMEWORKS.row4.map((fw) => (
-                      <Cell key={fw.name} fw={fw} />
-                    ))}
-                  </div>
+                {/* Row 2: 2 empty spacer slots + 3 connected square cells */}
+                <div className="flex">
+                  <EmptyCell />
+                  <EmptyCell />
+                  {FRAMEWORKS.row2.map((fw) => (
+                    <Cell key={fw.name} fw={fw} />
+                  ))}
                 </div>
+
+                {/* Row 3: 2 empty spacer slots + 4 connected square cells */}
+                <div className="flex">
+                  <EmptyCell />
+                  <EmptyCell />
+                  {FRAMEWORKS.row3.map((fw) => (
+                    <Cell key={fw.name} fw={fw} />
+                  ))}
+                </div>
+
+                {/* Row 4: 4 empty spacer slots + 2 connected square cells */}
+                <div className="flex">
+                  <EmptyCell />
+                  <EmptyCell />
+                  <EmptyCell />
+                  <EmptyCell />
+                  {FRAMEWORKS.row4.map((fw) => (
+                    <Cell key={fw.name} fw={fw} />
+                  ))}
+                </div>
+              </div>
+
+              {/* Left: 1-Line Headline + Stacked Subtext with z-index up so icon sizing never affects text spacing */}
+              <div className="sm:absolute sm:bottom-8 lg:bottom-10 sm:left-8 lg:left-10 z-10 pointer-events-none mt-6 sm:mt-0">
+                <h3 className="text-[20px] sm:text-[24px] font-semibold tracking-tight text-white leading-snug whitespace-nowrap">
+                  15 JS & TS frameworks.
+                </h3>
+                <p className="text-[20px] sm:text-[24px] text-zinc-500 font-normal tracking-tight leading-snug mt-1 sm:mt-0.5 whitespace-nowrap">
+                  And counting.
+                </p>
               </div>
             </div>
 
