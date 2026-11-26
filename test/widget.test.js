@@ -100,6 +100,13 @@ function createMockDOM() {
       click() {
         this.dispatchEvent({ type: 'click' });
       },
+      requestSubmit() {
+        if (this._onRequestSubmit) {
+          this._onRequestSubmit();
+        } else if (this._onSubmitNative) {
+          this._onSubmitNative();
+        }
+      },
       submit() {
         if (this._onSubmitNative) {
           this._onSubmitNative();
@@ -386,6 +393,42 @@ describe('Drop-in Client Widget and Verification Flow', () => {
 
     const hiddenInput = container.querySelector('input[name="barstile-token"]');
     assert.ok(hiddenInput.value, 'Hidden input must be populated with token');
+
+    widget.destroy();
+  });
+
+  test('form submission prefers requestSubmit over submit for Next.js/React framework compatibility', async () => {
+    const form = mockDOM.createElement('form');
+    const container = mockDOM.createElement('div');
+    form.appendChild(container);
+
+    let requestSubmitCalled = false;
+    let fallbackSubmitCalled = false;
+    form._onRequestSubmit = () => {
+      requestSubmitCalled = true;
+    };
+    form._onSubmitNative = () => {
+      fallbackSubmitCalled = true;
+    };
+
+    const widget = renderWidget(container, {
+      challengeUrl: `${serverUrl}/api/barstile/challenge`,
+      verifyUrl: `${serverUrl}/api/barstile/verify`
+    });
+
+    form.dispatchEvent({
+      type: 'submit',
+      preventDefault: () => {}
+    });
+
+    const deadline = Date.now() + 2000;
+    while (!requestSubmitCalled && Date.now() < deadline) {
+      await new Promise(r => setTimeout(r, 20));
+    }
+
+    assert.equal(requestSubmitCalled, true, 'Must call requestSubmit() to preserve framework handlers');
+    assert.equal(fallbackSubmitCalled, false, 'Must not call fallback submit() when requestSubmit() is present');
+    assert.equal(widget.getStatus(), 'verified');
 
     widget.destroy();
   });

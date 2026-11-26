@@ -432,8 +432,12 @@ export function renderWidget(target, {
       e.preventDefault();
       try {
         await executeVerification();
-        // Re-submit parent form natively once verified
-        parentForm.submit();
+        // Re-submit parent form, preferring requestSubmit for React/Next.js/SPA compatibility
+        if (typeof parentForm.requestSubmit === 'function') {
+          parentForm.requestSubmit();
+        } else {
+          parentForm.submit();
+        }
       } catch {
         // Keep blocked on verification failure
       }
