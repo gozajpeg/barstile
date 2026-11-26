@@ -220,6 +220,13 @@ export async function verifyAction(formData, options = {}) {
     clearanceRes = engine.verifyClearance(token, { context: '' });
   }
   if (clearanceRes.valid) {
+    if (options.singleUse && engine.replayCache) {
+      const replayKey = `clearance:${token}`;
+      const isFresh = await engine.replayCache.checkAndAdd(replayKey, clearanceRes.expiresAt);
+      if (!isFresh) {
+        return { valid: false, error: 'replay_detected' };
+      }
+    }
     return { valid: true, type: 'clearance', token };
   }
 

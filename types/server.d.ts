@@ -214,6 +214,7 @@ export interface VerifyActionOptions {
   engine: Barstile;
   tokenField?: string;
   context?: string;
+  singleUse?: boolean;
 }
 
 export interface VerifyActionResult {

@@ -185,5 +185,35 @@ describe('Web Standard Fetch API & Next.js Server Action Protection', () => {
       assert.equal(secondResult.valid, false);
       assert.equal(secondResult.error, 'replay_detected');
     });
+
+    test('prevents clearance token replay attack when singleUse is true', async () => {
+      const clearance = engine.issueClearance(900000);
+
+      const formData = new FormData();
+      formData.set('barstile-token', clearance);
+
+      // First submission passes
+      const firstResult = await verifyAction(formData, { engine, singleUse: true });
+      assert.equal(firstResult.valid, true);
+      assert.equal(firstResult.type, 'clearance');
+
+      // Second submission fails with replay error
+      const secondResult = await verifyAction(formData, { engine, singleUse: true });
+      assert.equal(secondResult.valid, false);
+      assert.equal(secondResult.error, 'replay_detected');
+    });
+
+    test('allows repeated clearance token submission when singleUse is not enabled', async () => {
+      const clearance = engine.issueClearance(900000);
+
+      const formData = new FormData();
+      formData.set('barstile-token', clearance);
+
+      const firstResult = await verifyAction(formData, { engine });
+      assert.equal(firstResult.valid, true);
+
+      const secondResult = await verifyAction(formData, { engine });
+      assert.equal(secondResult.valid, true);
+    });
   });
 });
