@@ -30,7 +30,7 @@ function Cell({ fw }) {
   return (
     <div
       title={fw.name}
-      className="w-11 h-11 sm:w-14 sm:h-14 lg:w-16 lg:h-16 border border-white/[0.12] -mr-px -mb-px flex items-center justify-center p-0.5 bg-white/[0.015] hover:border-white/[0.4] hover:bg-white/[0.08] transition-all duration-200 group cursor-default relative shrink-0 z-0 hover:z-20"
+      className="w-11 h-11 sm:w-14 sm:h-14 lg:w-16 lg:h-16 border border-white/[0.12] -mr-px -mb-px flex items-center justify-center p-1 sm:p-1.5 lg:p-1.5 bg-white/[0.015] hover:border-white/[0.4] hover:bg-white/[0.08] transition-all duration-200 group cursor-default relative shrink-0 z-0 hover:z-20"
     >
       <img
         src={fw.icon}
@@ -70,10 +70,10 @@ export function Pillars() {
         <div className="border-t border-b border-white/[0.08] divide-y divide-white/[0.08]">
           {/* Top 2-Column Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-white/[0.08]">
-            {/* Card 1: 15 Frameworks with Equalizer Wireframe Matrix Anchored Flush to Bottom-Right */}
-            <div className="relative flex flex-col justify-end p-6 sm:p-8 lg:p-10 h-full sm:min-h-[285px] lg:min-h-[300px] overflow-hidden">
-              {/* Right: Equalizer Wireframe Grid anchored flush to bottom-right of container */}
-              <div className="sm:absolute sm:bottom-0 sm:right-0 flex flex-col shrink-0 self-end sm:self-auto z-0 -mr-6 sm:mr-0 -mb-2 sm:mb-0">
+            {/* Card 1: 15 Frameworks with Equalizer Wireframe Matrix */}
+            <div className="relative flex flex-col justify-end p-6 sm:p-7 lg:p-7 h-full overflow-hidden">
+              {/* Right: Equalizer Wireframe Grid */}
+              <div className="flex flex-col shrink-0 self-end z-0">
                 {/* Row 1: 6 connected square cells */}
                 <div className="flex">
                   {FRAMEWORKS.row1.map((fw) => (
@@ -112,7 +112,7 @@ export function Pillars() {
               </div>
 
               {/* Left: 1-Line Headline + Stacked Subtext with z-index up */}
-              <div className="sm:absolute sm:bottom-8 lg:bottom-10 sm:left-8 lg:left-10 z-10 pointer-events-none mt-4 sm:mt-0">
+              <div className="sm:absolute sm:bottom-7 lg:bottom-7 sm:left-7 lg:left-7 z-10 pointer-events-none mt-4 sm:mt-0">
                 <h3 className="text-[20px] sm:text-[24px] font-semibold tracking-tight text-white leading-snug whitespace-nowrap">
                   15 JS & TS frameworks.
                 </h3>
@@ -123,7 +123,7 @@ export function Pillars() {
             </div>
 
             {/* Card 2: Silent Treatment (Option 2) */}
-            <div className="flex flex-col justify-end p-6 sm:p-8 lg:p-10 h-full">
+            <div className="flex flex-col justify-end p-6 sm:p-7 lg:p-7 h-full">
               <h3 className="text-[20px] sm:text-[24px] font-semibold tracking-tight text-white leading-snug whitespace-nowrap">
                 Silent treatment.
               </h3>
@@ -136,7 +136,7 @@ export function Pillars() {
           {/* Bottom 3-Column Grid: Exact Same Container & Card Sizing as Section 2 */}
           <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-white/[0.08]">
             {/* Card 3: No Third Parties */}
-            <div className="flex flex-col p-6 sm:p-8 lg:p-10 h-full justify-end">
+            <div className="flex flex-col p-6 sm:p-7 lg:p-7 h-full justify-end">
               <h3 className="text-[20px] sm:text-[24px] font-semibold tracking-tight text-white leading-snug">
                 No third parties.
               </h3>
@@ -146,7 +146,7 @@ export function Pillars() {
             </div>
 
             {/* Card 4: Zero Cookies */}
-            <div className="flex flex-col p-6 sm:p-8 lg:p-10 h-full justify-end">
+            <div className="flex flex-col p-6 sm:p-7 lg:p-7 h-full justify-end">
               <h3 className="text-[20px] sm:text-[24px] font-semibold tracking-tight text-white leading-snug">
                 Zero cookies.
               </h3>
@@ -156,7 +156,7 @@ export function Pillars() {
             </div>
 
             {/* Card 5: No Analytics */}
-            <div className="flex flex-col p-6 sm:p-8 lg:p-10 h-full justify-end">
+            <div className="flex flex-col p-6 sm:p-7 lg:p-7 h-full justify-end">
               <h3 className="text-[20px] sm:text-[24px] font-semibold tracking-tight text-white leading-snug">
                 No analytics.
               </h3>
