@@ -35,8 +35,14 @@ function FrameworksMarquee() {
     if (!container) return;
 
     const count = REPEATED_FRAMEWORKS.length;
-    const spacing = 125; // spacing between logo + name pairs
+    const spacing = 165; // spacing between [icon + name] chips
     const totalSpan = count * spacing;
+
+    // True circular arc parameters (uniform curvature from left edge to right edge)
+    const cx = 600;
+    const apexY = 55;
+    const R = 1500;
+    const cy = apexY + R; // 1555
 
     let animId;
     let offset = 0;
@@ -60,14 +66,13 @@ function FrameworksMarquee() {
 
         // Calculate x position along track
         let x = (i * spacing - offset) % totalSpan;
-        if (x < -200) x += totalSpan;
+        if (x < -300) x += totalSpan;
 
-        // Normalized distance from center (cx = 600, range -1 to 1 across visible 1200px)
-        const dist = (x - 600) / 600;
-        const absDist = Math.abs(dist);
+        const dx = x - cx;
+        const absDx = Math.abs(dx);
 
-        // Hide items outside visible range
-        if (absDist > 1.25) {
+        // Hide items far outside visible boundaries
+        if (absDx > 750) {
           if (g.style.visibility !== 'hidden') {
             g.style.visibility = 'hidden';
             img.style.opacity = '0';
@@ -76,39 +81,39 @@ function FrameworksMarquee() {
           continue;
         }
 
-        // Cosine factor: 1.0 at center (apex), 0.0 at outer edges
-        const cosFactor = (Math.cos(Math.min(absDist, 1) * Math.PI) + 1) / 2;
+        // 1. True circular arc: uniform curve across whole span with zero flat edges
+        const safeDx = Math.max(-R + 1, Math.min(R - 1, dx));
+        const y = cy - Math.sqrt(R * R - safeDx * safeDx);
+        const rot = Math.asin(safeDx / R) * (180 / Math.PI);
 
-        // 1. Natural, gentle circular/cosine curve: Apex at y = 60, smooth 42px curve down to y = 102
-        const y = 60 + (1 - cosFactor) * 42;
+        // Normalized distance from center (0 at apex, 1 at 650px outer boundaries)
+        const normDist = Math.min(absDx / 650, 1);
+        const cosFactor = (Math.cos(normDist * Math.PI) + 1) / 2;
 
-        // 2. Smooth tangent rotation along the curve (-9deg on left to +9deg on right)
-        const rot = dist * 9;
+        // 2. Proportional scale: scales icon + name together smoothly (0.72 at sides to 1.14 in center)
+        const scale = (0.72 + 0.42 * cosFactor).toFixed(3);
 
-        // 3. Balanced, proportional scale: 0.78 at edges up to 1.12 at center (no harsh fisheye pinch)
-        const scale = (0.78 + 0.34 * cosFactor).toFixed(3);
-
-        // 4. Dynamic Center Color Reveal:
-        // absDist <= 0.20 -> 0% grayscale (100% full vibrant authentic color)
-        // absDist >= 0.55 -> 100% grayscale (muted monochrome)
-        // 0.20 to 0.55   -> smooth color fade transition
+        // 3. Dynamic Center Color Reveal:
+        // absDx <= 180 -> 0% grayscale (100% full vibrant authentic color)
+        // absDx >= 460 -> 100% grayscale (muted monochrome)
+        // 180 to 460   -> smooth color fade transition
         let grayscale = 100;
-        let textBrightness = 113; // #71717a
+        let textBright = 113; // #71717a
 
-        if (absDist <= 0.20) {
+        if (absDx <= 180) {
           grayscale = 0;
-          textBrightness = 244; // #f4f4f5
-        } else if (absDist < 0.55) {
-          const colorRatio = (absDist - 0.20) / 0.35; // 0 at center, 1 at edges
+          textBright = 244; // #f4f4f5
+        } else if (absDx < 460) {
+          const colorRatio = (absDx - 180) / 280; // 0 at center, 1 at edges
           grayscale = Math.round(colorRatio * 100);
-          textBrightness = Math.round(244 - colorRatio * 131);
+          textBright = Math.round(244 - colorRatio * 131);
         }
 
-        // 5. Smooth Edge Dissolve: exactly 0 at absDist >= 1.05 (zero pop)
+        // 4. Smooth Edge Dissolve at outer margins (zero pop on entry/exit)
         let opacity = 0;
-        if (absDist < 1.05) {
-          const edgeFade = absDist > 0.75 ? (1.05 - absDist) / 0.30 : 1.0;
-          opacity = Math.max(0, (0.45 + 0.55 * cosFactor) * edgeFade);
+        if (absDx < 680) {
+          const edgeFade = absDx > 520 ? (680 - absDx) / 160 : 1.0;
+          opacity = Math.max(0, (0.4 + 0.6 * cosFactor) * edgeFade);
         }
 
         if (opacity <= 0.001) {
@@ -121,9 +126,9 @@ function FrameworksMarquee() {
           txt.style.opacity = (opacity * 0.95).toFixed(3);
         }
 
-        // Apply dynamic grayscale filter
+        // Apply dynamic grayscale filter to logo and color brightness to text
         img.style.filter = `grayscale(${grayscale}%) brightness(${grayscale === 0 ? 100 : 85}%) contrast(${grayscale === 0 ? 100 : 85}%)`;
-        txt.style.fill = `rgb(${textBrightness}, ${textBrightness}, ${textBrightness})`;
+        txt.style.fill = `rgb(${textBright}, ${textBright}, ${textBright})`;
 
         g.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0) rotate(${rot.toFixed(1)}deg) scale(${scale})`;
       }
@@ -158,16 +163,16 @@ function FrameworksMarquee() {
   return (
     <div
       ref={containerRef}
-      className="w-full h-[160px] sm:h-[185px] relative overflow-hidden pointer-events-none select-none mt-4 sm:mt-6"
+      className="w-full h-[170px] sm:h-[195px] relative overflow-hidden pointer-events-none select-none mt-4 sm:mt-6"
       style={{
         maskImage:
-          'linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%)',
+          'linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)',
         WebkitMaskImage:
-          'linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%)'
+          'linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)'
       }}
     >
       <svg
-        viewBox="0 0 1200 175"
+        viewBox="0 0 1200 190"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         className="w-full h-full overflow-visible"
@@ -184,13 +189,14 @@ function FrameworksMarquee() {
               visibility: 'hidden'
             }}
           >
+            {/* Logo Icon on Left Side */}
             <image
               ref={(el) => (imagesRef.current[idx] = el)}
               href={fw.icon}
-              width="48"
-              height="48"
-              x="-24"
-              y="-26"
+              width="42"
+              height="42"
+              x="-48"
+              y="-21"
               preserveAspectRatio="xMidYMid meet"
               style={{
                 filter: 'grayscale(100%)',
@@ -198,15 +204,16 @@ function FrameworksMarquee() {
                 transition: 'none'
               }}
             />
+            {/* Framework Name on Right Side (scales proportionally with icon) */}
             <text
               ref={(el) => (textsRef.current[idx] = el)}
-              x="0"
-              y="36"
-              textAnchor="middle"
+              x="4"
+              y="6"
+              textAnchor="start"
               fontFamily="monospace"
-              fontSize="11"
+              fontSize="14"
               fontWeight="600"
-              letterSpacing="0.03em"
+              letterSpacing="0.02em"
               style={{
                 fill: '#71717a',
                 opacity: 0,
@@ -255,7 +262,7 @@ export function Pillars() {
               </p>
             </div>
 
-            {/* Big Curved Non-Hoverable Marquee with Dynamic Color Reveal & Names */}
+            {/* Big Curved Non-Hoverable Marquee with Side-by-Side Name & Continuous Arc */}
             <FrameworksMarquee />
           </div>
 
