@@ -26,12 +26,6 @@ export function UtilityPole({ className = '' }) {
         shapeRendering="geometricPrecision"
       >
         <defs>
-          {/* Subtle sky ambient glow centered near crossarm */}
-          <radialGradient id="poleSkyGlow" cx="72%" cy="26%" r="65%">
-            <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.08" />
-            <stop offset="45%" stopColor="#ffffff" stopOpacity="0.02" />
-            <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
-          </radialGradient>
 
           {/* High-Quality Cable Conductor Gradient */}
           <linearGradient id="hqCableGrad" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -74,8 +68,6 @@ export function UtilityPole({ className = '' }) {
           </linearGradient>
         </defs>
 
-        {/* Ambient Sky Backlight */}
-        <ellipse cx="270" cy="80" rx="150" ry="90" fill="url(#poleSkyGlow)" />
 
         {/* ============================================================== */}
         {/* 1. SINGLE HIGH-QUALITY TRANSMISSION LINE (All Across)           */}
