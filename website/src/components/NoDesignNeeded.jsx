@@ -1,87 +1,128 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 /**
  * NoDesignNeeded Component
- * Casual hand-drawn cursive annotation for the combined "Zero cookies. No analytics." card.
- * Self-aware developer humor: literally no design, no tracking, just an honest handwritten note.
+ * Animated cursive handwritten annotation:
+ * - Centered and significantly larger in the visual canvas
+ * - Types out line-by-line in flowing cursive, pauses, deletes smoothly, and loops
+ * - Authentic cursive font stack ('Segoe Script', 'Snell Roundhand', cursive)
+ * - Blinking handwriting caret and dynamic hand-drawn underline
  */
 export function NoDesignNeeded({ className = '' }) {
+  const line1Full = "like, we mean it.";
+  const line2Full = "no design needed.";
+
+  // Animation states: 'typing-1' | 'typing-2' | 'paused' | 'deleting-2' | 'deleting-1' | 'idle'
+  const [phase, setPhase] = useState('typing-1');
+  const [line1, setLine1] = useState('');
+  const [line2, setLine2] = useState('');
+
+  useEffect(() => {
+    let timer;
+
+    if (phase === 'typing-1') {
+      if (line1.length < line1Full.length) {
+        timer = setTimeout(() => {
+          setLine1(line1Full.slice(0, line1.length + 1));
+        }, 55);
+      } else {
+        timer = setTimeout(() => setPhase('typing-2'), 180);
+      }
+    } else if (phase === 'typing-2') {
+      if (line2.length < line2Full.length) {
+        timer = setTimeout(() => {
+          setLine2(line2Full.slice(0, line2.length + 1));
+        }, 50);
+      } else {
+        timer = setTimeout(() => setPhase('paused'), 2400);
+      }
+    } else if (phase === 'paused') {
+      timer = setTimeout(() => setPhase('deleting-2'), 300);
+    } else if (phase === 'deleting-2') {
+      if (line2.length > 0) {
+        timer = setTimeout(() => {
+          setLine2(line2.slice(0, -1));
+        }, 28);
+      } else {
+        timer = setTimeout(() => setPhase('deleting-1'), 120);
+      }
+    } else if (phase === 'deleting-1') {
+      if (line1.length > 0) {
+        timer = setTimeout(() => {
+          setLine1(line1.slice(0, -1));
+        }, 25);
+      } else {
+        timer = setTimeout(() => setPhase('idle'), 600);
+      }
+    } else if (phase === 'idle') {
+      timer = setTimeout(() => setPhase('typing-1'), 400);
+    }
+
+    return () => clearTimeout(timer);
+  }, [phase, line1, line2]);
+
+  const showCaretOnLine1 = phase === 'typing-1' || phase === 'deleting-1';
+  const showCaretOnLine2 = phase === 'typing-2' || phase === 'paused' || phase === 'deleting-2';
+  const isFullyTyped = phase === 'paused';
+
   return (
-    <div className={`relative flex items-center justify-center select-none pointer-events-none ${className}`}>
-      <svg
-        viewBox="0 0 320 160"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        className="w-full max-w-[280px] sm:max-w-[310px] overflow-visible"
-      >
-        <g transform="rotate(-4 160 80)">
-          {/* Handwritten text */}
-          <text
-            x="140"
-            y="65"
-            textAnchor="middle"
-            fill="#a1a1aa"
-            fontSize="19"
+    <div className={`relative w-full h-full flex flex-col items-center justify-center select-none pointer-events-none ${className}`}>
+      <div className="flex flex-col items-center justify-center transform -rotate-2 sm:-rotate-3 px-4">
+        {/* Line 1: "like, we mean it." */}
+        <div className="min-h-[38px] sm:min-h-[44px] flex items-center justify-center">
+          <span
+            className="text-[24px] sm:text-[30px] md:text-[34px] text-zinc-400 font-medium tracking-wide drop-shadow-[0_2px_12px_rgba(255,255,255,0.06)]"
             style={{
-              fontFamily: "'Segoe Print', 'Bradley Hand', 'Caveat', 'Comic Sans MS', cursive, sans-serif",
+              fontFamily: "'Segoe Script', 'Snell Roundhand', 'Bradley Hand', 'Brush Script MT', cursive, sans-serif",
               fontStyle: 'italic',
-              letterSpacing: '0.02em',
             }}
           >
-            "like, we mean it.
-          </text>
-          <text
-            x="155"
-            y="95"
-            textAnchor="middle"
-            fill="#e4e4e7"
-            fontSize="21"
-            fontWeight="bold"
+            {line1 ? `"${line1}` : ''}
+            {showCaretOnLine1 && (
+              <span className="inline-block w-[2px] h-[22px] sm:h-[28px] bg-zinc-400 ml-1 translate-y-[2px] animate-pulse" />
+            )}
+          </span>
+        </div>
+
+        {/* Line 2: "no design needed." */}
+        <div className="relative min-h-[44px] sm:min-h-[52px] flex items-center justify-center mt-0.5 sm:mt-1">
+          <span
+            className="text-[28px] sm:text-[34px] md:text-[40px] text-white font-semibold tracking-wide drop-shadow-[0_2px_16px_rgba(255,255,255,0.12)]"
             style={{
-              fontFamily: "'Segoe Print', 'Bradley Hand', 'Caveat', 'Comic Sans MS', cursive, sans-serif",
+              fontFamily: "'Segoe Script', 'Snell Roundhand', 'Bradley Hand', 'Brush Script MT', cursive, sans-serif",
               fontStyle: 'italic',
-              letterSpacing: '0.03em',
             }}
           >
-            no design needed."
-          </text>
+            {line2}
+            {line2.length === line2Full.length && line1 ? '"' : ''}
+            {showCaretOnLine2 && (
+              <span className="inline-block w-[2.5px] h-[26px] sm:h-[32px] bg-white ml-1 translate-y-[3px] animate-pulse" />
+            )}
+          </span>
 
-          {/* Hand-drawn casual underline under "no design needed" */}
-          <path
-            d="M 55 110 C 110 106, 190 108, 255 106"
-            stroke="#71717a"
-            strokeWidth="1.8"
-            strokeLinecap="round"
+          {/* Hand-drawn squiggly underline that appears smoothly when fully typed */}
+          <svg
+            className={`absolute -bottom-2 sm:-bottom-3 left-1/2 -translate-x-1/2 w-[220px] sm:w-[270px] h-[16px] pointer-events-none transition-opacity duration-300 ${
+              isFullyTyped ? 'opacity-90' : 'opacity-0'
+            }`}
+            viewBox="0 0 270 16"
             fill="none"
-          />
-          <path
-            d="M 68 114 C 120 111, 185 112, 240 111"
-            stroke="#52525b"
-            strokeWidth="1.2"
-            strokeLinecap="round"
-            fill="none"
-          />
-
-          {/* Playful hand-drawn curly arrow pointing into the empty void */}
-          <path
-            d="M 262 100 C 278 95, 292 105, 288 120 C 284 134, 268 135, 258 130 C 248 125, 242 110, 235 90 C 230 75, 225 60, 220 52"
-            stroke="#a1a1aa"
-            strokeWidth="1.6"
-            strokeLinecap="round"
-            strokeDasharray="1 1"
-            fill="none"
-          />
-          {/* Arrowhead */}
-          <path
-            d="M 214 58 L 220 52 L 228 56"
-            stroke="#a1a1aa"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            fill="none"
-          />
-        </g>
-      </svg>
+          >
+            <path
+              d="M 10 10 C 60 6, 140 7, 260 9"
+              stroke="#a1a1aa"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+            />
+            <path
+              d="M 25 13 C 85 10, 165 11, 245 12"
+              stroke="#71717a"
+              strokeWidth="1.4"
+              strokeLinecap="round"
+            />
+          </svg>
+        </div>
+      </div>
     </div>
   );
 }

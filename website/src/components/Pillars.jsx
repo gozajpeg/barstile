@@ -166,8 +166,8 @@ export function Pillars() {
 
             {/* Card 4: Combined Zero Cookies & No Analytics */}
             <div className="relative flex flex-col justify-end p-6 sm:p-7 lg:p-7 h-full overflow-hidden min-h-[260px] sm:min-h-[280px]">
-              {/* Graphic: Self-aware cursive hand-drawn annotation on the right */}
-              <div className="absolute inset-0 pointer-events-none flex items-center justify-end overflow-hidden z-0 pr-4 sm:pr-8">
+              {/* Graphic: Big, Centered Animated Cursive Writing */}
+              <div className="absolute inset-0 pointer-events-none flex items-center justify-center overflow-hidden z-0 pb-16 sm:pb-20">
                 <NoDesignNeeded />
               </div>
 
