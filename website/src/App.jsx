@@ -3,6 +3,7 @@ import { Navbar } from './components/Navbar.jsx';
 import { Hero } from './components/Hero.jsx';
 import { Comparison } from './components/Comparison.jsx';
 import { Benchmarks } from './components/Benchmarks.jsx';
+import { Pillars } from './components/Pillars.jsx';
 import { VersionDrop } from './components/VersionDrop.jsx';
 import { FAQ } from './components/FAQ.jsx';
 import { Action } from './components/Action.jsx';
@@ -81,6 +82,7 @@ export default function App() {
               <Hero onNavigate={handleNavigate} />
               <Comparison />
               <Benchmarks />
+              <Pillars />
               <CapabilitiesCarousel onNavigate={handleNavigate} />
               <VersionDrop onNavigate={handleNavigate} />
               <FAQ />
