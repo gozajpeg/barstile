@@ -1,5 +1,6 @@
 import React from 'react';
 import { BlueprintGate } from './BlueprintGate.jsx';
+import { UtilityPole } from './UtilityPole.jsx';
 
 const FRAMEWORKS = {
   row1: [
@@ -144,34 +145,46 @@ export function Pillars() {
 
           {/* Bottom 3-Column Grid: Exact Same Container & Card Sizing as Section 2 */}
           <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-white/[0.08]">
-            {/* Card 3: No Third Parties */}
-            <div className="flex flex-col p-6 sm:p-7 lg:p-7 h-full justify-end">
-              <h3 className="text-[20px] sm:text-[24px] font-semibold tracking-tight text-white leading-snug">
-                No third parties.
-              </h3>
-              <p className="text-[20px] sm:text-[24px] text-zinc-500 font-normal tracking-tight leading-snug mt-1 sm:mt-0.5">
-                None accumulated.
-              </p>
+            {/* Card 3: No Third Parties with Utility Pole Graphic */}
+            <div className="relative flex flex-col justify-end p-6 sm:p-7 lg:p-7 h-full overflow-hidden min-h-[260px] sm:min-h-[280px]">
+              {/* Graphic: Utility Pole with dedicated clean lines */}
+              <div className="absolute inset-0 pointer-events-none flex items-center justify-end overflow-hidden z-0">
+                <UtilityPole />
+              </div>
+
+              {/* Text: z-10 on bottom-left, matching Card 1 */}
+              <div className="absolute bottom-6 sm:bottom-7 lg:bottom-7 left-6 sm:left-7 lg:left-7 z-10 pointer-events-none">
+                <h3 className="text-[18px] sm:text-[24px] font-semibold tracking-tight text-white leading-snug whitespace-nowrap">
+                  No third parties.
+                </h3>
+                <p className="text-[18px] sm:text-[24px] text-zinc-500 font-normal tracking-tight leading-snug mt-1 sm:mt-0.5 whitespace-nowrap">
+                  None accumulated.
+                </p>
+              </div>
             </div>
 
             {/* Card 4: Zero Cookies */}
-            <div className="flex flex-col p-6 sm:p-7 lg:p-7 h-full justify-end">
-              <h3 className="text-[20px] sm:text-[24px] font-semibold tracking-tight text-white leading-snug">
-                Zero cookies.
-              </h3>
-              <p className="text-[20px] sm:text-[24px] text-zinc-500 font-normal tracking-tight leading-snug mt-1 sm:mt-0.5">
-                Not even the crumbs.
-              </p>
+            <div className="relative flex flex-col justify-end p-6 sm:p-7 lg:p-7 h-full overflow-hidden min-h-[260px] sm:min-h-[280px]">
+              <div className="absolute bottom-6 sm:bottom-7 lg:bottom-7 left-6 sm:left-7 lg:left-7 z-10 pointer-events-none">
+                <h3 className="text-[18px] sm:text-[24px] font-semibold tracking-tight text-white leading-snug whitespace-nowrap">
+                  Zero cookies.
+                </h3>
+                <p className="text-[18px] sm:text-[24px] text-zinc-500 font-normal tracking-tight leading-snug mt-1 sm:mt-0.5 whitespace-nowrap">
+                  Not even the crumbs.
+                </p>
+              </div>
             </div>
 
             {/* Card 5: No Analytics */}
-            <div className="flex flex-col p-6 sm:p-7 lg:p-7 h-full justify-end">
-              <h3 className="text-[20px] sm:text-[24px] font-semibold tracking-tight text-white leading-snug">
-                No analytics.
-              </h3>
-              <p className="text-[20px] sm:text-[24px] text-zinc-500 font-normal tracking-tight leading-snug mt-1 sm:mt-0.5">
-                Just pure work.
-              </p>
+            <div className="relative flex flex-col justify-end p-6 sm:p-7 lg:p-7 h-full overflow-hidden min-h-[260px] sm:min-h-[280px]">
+              <div className="absolute bottom-6 sm:bottom-7 lg:bottom-7 left-6 sm:left-7 lg:left-7 z-10 pointer-events-none">
+                <h3 className="text-[18px] sm:text-[24px] font-semibold tracking-tight text-white leading-snug whitespace-nowrap">
+                  No analytics.
+                </h3>
+                <p className="text-[18px] sm:text-[24px] text-zinc-500 font-normal tracking-tight leading-snug mt-1 sm:mt-0.5 whitespace-nowrap">
+                  Just pure work.
+                </p>
+              </div>
             </div>
           </div>
         </div>
