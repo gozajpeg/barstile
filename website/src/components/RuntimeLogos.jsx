@@ -161,6 +161,7 @@ export function RuntimeLogos() {
     <div
       ref={containerRef}
       className="absolute inset-0 pointer-events-none overflow-hidden z-10 select-none"
+      style={{ animation: 'innerGlowFade 1.2s cubic-bezier(0.16, 1, 0.3, 1) 2s both' }}
       role="region"
       aria-label="Supported frameworks and runtimes"
     >
