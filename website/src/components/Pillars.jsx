@@ -115,7 +115,7 @@ export function Pillars() {
               </div>
 
               {/* Left: 1-Line Headline + Stacked Subtext aligned with last icons at bottom */}
-              <div className="absolute bottom-6 sm:bottom-7 lg:bottom-7 left-6 sm:left-7 lg:left-7 z-10 pointer-events-none">
+              <div className="absolute bottom-3 sm:bottom-7 lg:bottom-7 left-6 sm:left-7 lg:left-7 z-10 pointer-events-none">
                 <h3 className="text-[18px] sm:text-[24px] font-semibold tracking-tight text-white leading-snug whitespace-nowrap">
                   15 JS & TS frameworks.
                 </h3>
