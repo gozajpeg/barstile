@@ -2,13 +2,14 @@ import React from 'react';
 
 /**
  * EmptyCookieJar Component
- * Straight 1:1 copy of the reference photo, mirrored to sit on the right side:
- * - Squat, round, bulbous glass cookie jar resting on its side
- * - Large, prominent circular threaded glass mouth facing forward/down-left
- * - Thick glass lip with 3 raised screw threads around the rim
- * - Rustic frayed jute twine wrapped around the neck with a prominent bow on top
- * - Bulbous curved glass body with realistic specular highlights and molded base
- * - Completely empty inside: "Zero cookies. Not even the crumbs."
+ * Modeled directly after reference photo:
+ * - Clear glass mason jar resting flat on its side on the surface
+ * - Wide open threaded mouth facing forward/down-left toward the viewer
+ * - Multiple raised glass threads around the neck collar
+ * - Natural jute twine rope wrapped around the neck with a rustic knot/bow
+ * - Clean glass transparency: pitch-black background breathes through with crisp specular highlights
+ * - Contact shadow grounding the jar directly on the surface
+ * - Completely, cleanly empty: "Zero cookies. Not even the crumbs."
  */
 export function EmptyCookieJar({ className = '' }) {
   return (
@@ -21,305 +22,305 @@ export function EmptyCookieJar({ className = '' }) {
         shapeRendering="geometricPrecision"
       >
         <defs>
-          {/* Ground Contact Shadow */}
-          <radialGradient id="jarFloorShadow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#000000" stopOpacity="0.9" />
-            <stop offset="45%" stopColor="#000000" stopOpacity="0.5" />
+          {/* Ground Contact Shadow (Soft diffuse shadow under resting glass) */}
+          <radialGradient id="jarContactShadow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#000000" stopOpacity="0.95" />
+            <stop offset="40%" stopColor="#030712" stopOpacity="0.7" />
+            <stop offset="70%" stopColor="#000000" stopOpacity="0.3" />
             <stop offset="100%" stopColor="#000000" stopOpacity="0" />
           </radialGradient>
 
-          {/* Bulbous Glass Body Volume Gradient */}
-          <radialGradient id="bulbousGlass" cx="45%" cy="35%" r="65%">
-            <stop offset="0%" stopColor="#333b4d" stopOpacity="0.4" />
-            <stop offset="35%" stopColor="#1e2430" stopOpacity="0.3" />
-            <stop offset="70%" stopColor="#10141c" stopOpacity="0.25" />
-            <stop offset="95%" stopColor="#1c222e" stopOpacity="0.5" />
-            <stop offset="100%" stopColor="#2e3849" stopOpacity="0.75" />
-          </radialGradient>
+          {/* Transparent Glass Ambient Sheen */}
+          <linearGradient id="clearGlassSheen" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#94a3b8" stopOpacity="0.12" />
+            <stop offset="30%" stopColor="#ffffff" stopOpacity="0.02" />
+            <stop offset="70%" stopColor="#38bdf8" stopOpacity="0.03" />
+            <stop offset="100%" stopColor="#cbd5e1" stopOpacity="0.15" />
+          </linearGradient>
 
-          {/* Deep Dark Empty Interior */}
-          <radialGradient id="deepInterior" cx="40%" cy="50%" r="55%">
-            <stop offset="0%" stopColor="#141822" stopOpacity="0.8" />
-            <stop offset="65%" stopColor="#090c12" stopOpacity="0.95" />
-            <stop offset="100%" stopColor="#020305" stopOpacity="1" />
-          </radialGradient>
+          {/* Top Edge Specular Glint */}
+          <linearGradient id="crestGlint" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#ffffff" stopOpacity="0.3" />
+            <stop offset="20%" stopColor="#ffffff" stopOpacity="1" />
+            <stop offset="60%" stopColor="#e2e8f0" stopOpacity="0.85" />
+            <stop offset="100%" stopColor="#ffffff" stopOpacity="0.25" />
+          </linearGradient>
 
-          {/* Glass Rim Glint Gradient */}
-          <linearGradient id="rimGlint" x1="0%" y1="0%" x2="100%" y2="100%">
+          {/* Bottom Table Reflection Glint */}
+          <linearGradient id="bounceGlint" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#ffffff" stopOpacity="0.2" />
+            <stop offset="35%" stopColor="#93c5fd" stopOpacity="0.75" />
+            <stop offset="70%" stopColor="#e2e8f0" stopOpacity="0.85" />
+            <stop offset="100%" stopColor="#ffffff" stopOpacity="0.3" />
+          </linearGradient>
+
+          {/* Glass Mouth Rim Lip Gradient */}
+          <linearGradient id="rimLipGrad" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#ffffff" stopOpacity="1" />
-            <stop offset="25%" stopColor="#cbd5e1" stopOpacity="0.8" />
-            <stop offset="50%" stopColor="#64748b" stopOpacity="0.5" />
-            <stop offset="75%" stopColor="#e2e8f0" stopOpacity="0.85" />
+            <stop offset="30%" stopColor="#cbd5e1" stopOpacity="0.85" />
+            <stop offset="60%" stopColor="#64748b" stopOpacity="0.6" />
+            <stop offset="85%" stopColor="#e2e8f0" stopOpacity="0.9" />
             <stop offset="100%" stopColor="#ffffff" stopOpacity="1" />
           </linearGradient>
 
-          {/* Upper Body Specular Highlight */}
-          <linearGradient id="shoulderGlint" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#ffffff" stopOpacity="0.2" />
-            <stop offset="30%" stopColor="#ffffff" stopOpacity="0.9" />
-            <stop offset="70%" stopColor="#94a3b8" stopOpacity="0.6" />
-            <stop offset="100%" stopColor="#ffffff" stopOpacity="0.2" />
-          </linearGradient>
-
           {/* Jute Twine Rope Gradient */}
-          <linearGradient id="juteTwine" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#f6d396" />
-            <stop offset="30%" stopColor="#c8934c" />
-            <stop offset="65%" stopColor="#925e2b" />
-            <stop offset="100%" stopColor="#553412" />
+          <linearGradient id="juteTwineRope" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#f5ce93" />
+            <stop offset="35%" stopColor="#bf8542" />
+            <stop offset="70%" stopColor="#875322" />
+            <stop offset="100%" stopColor="#543314" />
           </linearGradient>
         </defs>
 
-        {/* 1. GROUND CONTACT SHADOW */}
-        <ellipse cx="265" cy="188" rx="82" ry="18" fill="url(#jarFloorShadow)" />
-        <ellipse cx="240" cy="182" rx="55" ry="12" fill="#000000" fillOpacity="0.75" />
+        {/* 1. GROUND CONTACT SHADOW (Directly grounding the glass base and rim) */}
+        <ellipse cx="270" cy="196" rx="88" ry="14" fill="url(#jarContactShadow)" />
+        <ellipse cx="230" cy="198" rx="45" ry="8" fill="#000000" fillOpacity="0.9" />
+        <ellipse cx="295" cy="195" rx="55" ry="9" fill="#000000" fillOpacity="0.8" />
 
-        {/* 2. SQUAT BULBOUS JAR GROUP: Tilted on its side on the right */}
-        {/* Facing forward-left with wide open mouth like the photo */}
-        <g transform="translate(230, 122) rotate(-20)">
+        {/* 2. HORIZONTAL RESTING MASON JAR */}
+        {/* Tilted -5 degrees to match the natural tilt of a resting jar */}
+        <g transform="translate(172, 94) rotate(-5)">
 
-          {/* A. REAR INTERIOR CAVITY (Seen looking into the open mouth) */}
+          {/* A. REAR INTERIOR WALL CURVATURE (Faint glass refraction line in back) */}
           <path
-            d="M 10 -48
-               C 38 -64, 75 -66, 102 -54
-               C 126 -32, 126 32, 102 54
-               C 75 66, 38 64, 10 48
-               Z"
-            fill="url(#deepInterior)"
-          />
-
-          {/* Rounded inner rear base of the squat jar */}
-          <path
-            d="M 98 -46 C 114 -24, 114 24, 98 46"
+            d="M 134 16 C 146 36, 146 68, 134 88"
             stroke="#ffffff"
-            strokeWidth="1.2"
-            strokeOpacity="0.2"
-            strokeDasharray="3 3"
+            strokeWidth="0.75"
+            strokeOpacity="0.18"
+            strokeDasharray="2 3"
           />
 
-          {/* B. BULBOUS GLASS BODY (Short, wide, round jar shell) */}
+          {/* B. TRANSPARENT GLASS CYLINDER BODY */}
           <path
-            d="M 8 -44
-               C 18 -55, 34 -68, 58 -70
-               C 85 -72, 110 -64, 124 -45
-               C 138 -25, 138 25, 124 45
-               C 110 64, 85 72, 58 70
-               C 34 68, 18 55, 8 44
+            d="M 10 14
+               C 24 11, 36 8, 50 6
+               L 134 7
+               C 152 7, 158 18, 158 52
+               C 158 86, 152 97, 134 97
+               L 50 98
+               C 36 96, 24 93, 10 90
                Z"
-            fill="url(#bulbousGlass)"
-            stroke="#475569"
-            strokeWidth="1.2"
-            strokeOpacity="0.6"
+            fill="url(#clearGlassSheen)"
+            stroke="#64748b"
+            strokeWidth="0.8"
+            strokeOpacity="0.4"
           />
 
-          {/* C. MOLDED SQUAT BASE (Rear right curve) */}
+          {/* C. THICK MOLDED GLASS BASE (Right end) */}
+          {/* Base outer curvature */}
           <path
-            d="M 102 -54 C 132 -32, 132 32, 102 54"
+            d="M 134 7 C 158 20, 158 84, 134 97"
             stroke="#ffffff"
-            strokeWidth="2.2"
+            strokeWidth="2"
             strokeOpacity="0.75"
             strokeLinecap="round"
           />
-          {/* Base outer contour reflection */}
+          {/* Base inner punt ring */}
           <path
-            d="M 112 -38 C 126 -20, 126 20, 112 38"
+            d="M 142 16 C 150 32, 150 72, 142 88"
+            stroke="#94a3b8"
+            strokeWidth="1.2"
+            strokeOpacity="0.4"
+          />
+          {/* Specular base arc highlight */}
+          <path
+            d="M 152 30 C 157 42, 157 62, 152 74"
             stroke="#ffffff"
-            strokeWidth="1.4"
-            strokeOpacity="0.45"
+            strokeWidth="1.8"
+            strokeOpacity="0.9"
             strokeLinecap="round"
           />
 
-          {/* D. BULBOUS SHOULDER SPECULAR HIGHLIGHTS */}
-          {/* Broad curved top reflection across the bulbous curve */}
+          {/* D. GLASS BODY SPECULAR HIGHLIGHTS */}
+          {/* Top Horizontal Glint (Crisp white line running along upper crest) */}
           <path
-            d="M 24 -56 C 50 -68, 85 -66, 112 -48"
-            stroke="url(#shoulderGlint)"
-            strokeWidth="2.8"
+            d="M 46 10 L 138 11"
+            stroke="url(#crestGlint)"
+            strokeWidth="2.4"
             strokeLinecap="round"
           />
-          {/* Secondary top glint arc */}
+          {/* Secondary upper streak */}
           <path
-            d="M 32 -48 C 55 -58, 85 -56, 105 -40"
+            d="M 52 17 L 130 18"
             stroke="#ffffff"
-            strokeWidth="1"
+            strokeWidth="0.8"
             strokeOpacity="0.35"
             strokeLinecap="round"
           />
-          {/* Lower table bounce glint along the bottom curve */}
+          {/* Bottom Table Contact Bounce Glint Line */}
           <path
-            d="M 22 56 C 50 68, 85 66, 112 48"
-            stroke="#ffffff"
+            d="M 44 94 L 136 93"
+            stroke="url(#bounceGlint)"
             strokeWidth="2"
-            strokeOpacity="0.5"
             strokeLinecap="round"
           />
-          {/* Secondary lower reflection */}
+          {/* Secondary lower reflection streak */}
           <path
-            d="M 32 48 C 55 58, 85 56, 105 40"
+            d="M 50 87 L 128 87"
             stroke="#93c5fd"
-            strokeWidth="1"
-            strokeOpacity="0.4"
+            strokeWidth="0.8"
+            strokeOpacity="0.35"
             strokeLinecap="round"
           />
 
-          {/* E. THREADED GLASS NECK (3 distinct raised glass threads like photo) */}
-          {/* Thread Ridge 1 (Closest to body) */}
+          {/* E. GLASS SCREW THREADS ON THE NECK (3 distinct raised mason jar threads) */}
+          {/* Thread Ridge 1 */}
           <path
-            d="M 6 -46 C 14 -44, 20 -35, 20 0 C 20 35, 14 44, 6 46"
+            d="M 0 15 C 7 14, 11 22, 11 52 C 11 82, 7 90, 0 89"
             stroke="#ffffff"
-            strokeWidth="1.8"
+            strokeWidth="1.6"
             strokeOpacity="0.6"
             fill="none"
           />
-          {/* Thread Ridge 2 (Middle) */}
+          {/* Thread Ridge 2 */}
           <path
-            d="M 0 -45 C 8 -43, 14 -34, 14 0 C 14 34, 8 43, 0 45"
+            d="M 5 14 C 12 13, 16 21, 16 52 C 16 83, 12 91, 5 90"
             stroke="#cbd5e1"
-            strokeWidth="1.5"
+            strokeWidth="1.4"
             strokeOpacity="0.5"
             fill="none"
           />
-          {/* Thread Ridge 3 (Near rim) */}
+          {/* Thread Ridge 3 */}
           <path
-            d="M -6 -44 C 2 -42, 8 -33, 8 0 C 8 33, 2 42, -6 44"
+            d="M 11 13 C 18 12, 22 20, 22 52 C 22 84, 18 92, 11 91"
             stroke="#ffffff"
             strokeWidth="1.6"
             strokeOpacity="0.65"
             fill="none"
           />
 
-          {/* F. THICK JUTE TWINE CORD WRAPPED AROUND NECK WITH BIG FRAYED BOW */}
-          {/* Cord wrapping pass 1 */}
+          {/* F. NATURAL JUTE TWINE CORD WRAPPED AROUND NECK */}
+          {/* Rope pass 1 */}
           <path
-            d="M 8 -46 C 16 -44, 22 -35, 22 0 C 22 35, 16 44, 8 46"
-            stroke="url(#juteTwine)"
-            strokeWidth="4"
+            d="M 16 14 C 23 13, 28 21, 28 52 C 28 83, 23 91, 16 90"
+            stroke="url(#juteTwineRope)"
+            strokeWidth="3.4"
             fill="none"
           />
-          {/* Cord wrapping pass 2 */}
+          {/* Rope pass 2 */}
           <path
-            d="M 12 -47 C 20 -45, 26 -36, 26 0 C 26 36, 20 45, 12 47"
-            stroke="url(#juteTwine)"
-            strokeWidth="3.6"
+            d="M 20 15 C 26 14, 31 22, 31 52 C 31 82, 26 90, 20 89"
+            stroke="url(#juteTwineRope)"
+            strokeWidth="3"
             fill="none"
           />
-          {/* Twisted twine fiber highlights */}
+          {/* Twine fiber spiral highlight */}
           <path
-            d="M 10 -46 C 18 -44, 24 -35, 24 0 C 24 35, 18 44, 10 46"
+            d="M 18 14 C 25 13, 29 21, 29 52 C 29 83, 25 91, 18 90"
             stroke="#fde68a"
-            strokeWidth="1"
+            strokeWidth="0.8"
             strokeOpacity="0.75"
             strokeDasharray="2 2"
             fill="none"
           />
 
-          {/* Big Rustic Twine Bow (Resting right on the upper rim of neck like photo) */}
-          {/* Center Knot Bundle */}
-          <circle cx="10" cy="-46" r="5.5" fill="#a16207" stroke="#713f12" strokeWidth="1" />
-          <circle cx="11" cy="-47" r="3.5" fill="#ca8a04" />
-          {/* Left Large Bow Loop */}
+          {/* Rustic Twine Knot & Bow on the upper neck */}
+          {/* Knot core */}
+          <circle cx="18" cy="14" r="4.2" fill="#875322" stroke="#543314" strokeWidth="0.8" />
+          <circle cx="19" cy="13" r="2.5" fill="#bf8542" />
+          {/* Bow loop left */}
           <path
-            d="M 10 -46 C -6 -66, -14 -52, 6 -44"
-            stroke="url(#juteTwine)"
-            strokeWidth="3.2"
-            strokeLinecap="round"
-            fill="none"
-          />
-          <path
-            d="M 9 -46 C -4 -64, -12 -50, 5 -44"
-            stroke="#fde68a"
-            strokeWidth="0.8"
-            strokeOpacity="0.7"
-            fill="none"
-          />
-          {/* Right Large Bow Loop */}
-          <path
-            d="M 11 -46 C 28 -68, 40 -54, 15 -43"
-            stroke="url(#juteTwine)"
-            strokeWidth="3.2"
-            strokeLinecap="round"
-            fill="none"
-          />
-          <path
-            d="M 12 -46 C 26 -66, 38 -52, 16 -43"
-            stroke="#fde68a"
-            strokeWidth="0.8"
-            strokeOpacity="0.7"
-            fill="none"
-          />
-          {/* Frayed Trailing Cord End 1 (Draping down across the glass neck) */}
-          <path
-            d="M 9 -44 C 2 -26, -4 -12, -10 -8 C -14 -6, -18 -8, -22 -4"
-            stroke="url(#juteTwine)"
+            d="M 18 14 C 6 2, 0 10, 16 15"
+            stroke="url(#juteTwineRope)"
             strokeWidth="2.4"
             strokeLinecap="round"
             fill="none"
           />
-          {/* Frayed Trailing Cord End 2 (Curving down) */}
           <path
-            d="M 12 -43 C 18 -28, 22 -14, 16 -2"
-            stroke="url(#juteTwine)"
-            strokeWidth="2.2"
+            d="M 17 14 C 7 3, 2 9, 15 15"
+            stroke="#fde68a"
+            strokeWidth="0.7"
+            strokeOpacity="0.7"
+            fill="none"
+          />
+          {/* Bow loop right */}
+          <path
+            d="M 19 14 C 32 0, 40 8, 22 16"
+            stroke="url(#juteTwineRope)"
+            strokeWidth="2.4"
+            strokeLinecap="round"
+            fill="none"
+          />
+          <path
+            d="M 18 14 C 30 2, 38 9, 21 16"
+            stroke="#fde68a"
+            strokeWidth="0.7"
+            strokeOpacity="0.7"
+            fill="none"
+          />
+          {/* Loose twine cord end 1 */}
+          <path
+            d="M 17 16 C 12 28, 6 36, 0 38"
+            stroke="url(#juteTwineRope)"
+            strokeWidth="2"
+            strokeLinecap="round"
+            fill="none"
+          />
+          {/* Loose twine cord end 2 */}
+          <path
+            d="M 19 16 C 23 30, 26 40, 21 46"
+            stroke="url(#juteTwineRope)"
+            strokeWidth="1.8"
             strokeLinecap="round"
             fill="none"
           />
 
-          {/* G. PROMINENT OPEN GLASS MOUTH & RIM (Wide circular opening facing viewer) */}
-          {/* Outer Molded Glass Lip Bevel */}
+          {/* G. WIDE OPEN GLASS MOUTH & RIM (Facing forward-left toward the viewer) */}
+          {/* Outer Glass Lip Bevel */}
           <ellipse
-            cx="-14"
-            cy="0"
-            rx="18"
-            ry="50"
-            stroke="url(#rimGlint)"
-            strokeWidth="3.2"
+            cx="-4"
+            cy="52"
+            rx="13"
+            ry="41"
+            stroke="url(#rimLipGrad)"
+            strokeWidth="3"
             fill="none"
           />
-          {/* Inner Glass Lip Thickness Ring */}
+          {/* Inner Lip Glass Thickness Ring */}
           <ellipse
-            cx="-12"
-            cy="0"
-            rx="13"
-            ry="45"
+            cx="-2"
+            cy="52"
+            rx="9"
+            ry="37"
             stroke="#cbd5e1"
-            strokeWidth="1.6"
+            strokeWidth="1.5"
             strokeOpacity="0.8"
             fill="none"
           />
-          {/* Interior Hole Boundary (Clean void straight into the empty jar) */}
+          {/* Inner Void Hole (Clear view into the spotless empty jar) */}
           <ellipse
-            cx="-10"
-            cy="0"
-            rx="10"
-            ry="42"
+            cx="-1"
+            cy="52"
+            rx="6.5"
+            ry="34"
             stroke="#64748b"
-            strokeWidth="1"
-            strokeOpacity="0.45"
+            strokeWidth="0.8"
+            strokeOpacity="0.4"
             fill="none"
           />
 
-          {/* Front Glass Lip Specular Glints (Catching light on the smooth rim) */}
-          {/* Upper Lip Glint */}
+          {/* Front Glass Lip Specular Glints */}
+          {/* Top bright glint on lip */}
           <path
-            d="M -16 -46 C -7 -30, -7 -8, -12 6"
+            d="M -6 16 C 1 26, 1 42, -3 50"
             stroke="#ffffff"
-            strokeWidth="2.8"
+            strokeWidth="2.6"
             strokeOpacity="0.95"
             strokeLinecap="round"
           />
-          {/* Lower Lip Bounce Glint */}
+          {/* Bottom bounce glint on lip */}
           <path
-            d="M -12 18 C -7 30, -7 40, -16 46"
+            d="M -3 60 C 1 70, 1 80, -5 88"
             stroke="#ffffff"
-            strokeWidth="2.4"
+            strokeWidth="2.2"
             strokeOpacity="0.9"
             strokeLinecap="round"
           />
-          {/* Frontmost Edge Hairline */}
+          {/* Frontmost edge reflection */}
           <path
-            d="M -28 -20 C -31 -5, -31 15, -28 28"
+            d="M -16 36 C -18 46, -18 60, -16 68"
             stroke="#ffffff"
-            strokeWidth="1.6"
+            strokeWidth="1.5"
             strokeOpacity="0.95"
             strokeLinecap="round"
           />
