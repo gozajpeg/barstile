@@ -21,46 +21,46 @@ export function Pillars() {
         <div className="border-t border-b border-white/[0.08] divide-y divide-white/[0.08]">
           {/* Row 1: Wide Card (7 cols) + Compact Card (5 cols) */}
           <div className="grid grid-cols-1 md:grid-cols-12 divide-y md:divide-y-0 md:divide-x divide-white/[0.08]">
-            {/* Card 1: Zero Third Parties (Wide: 7 cols) */}
+            {/* Card 1: No Third Parties (Wide: 7 cols) */}
             <div className="md:col-span-7 flex flex-col p-8 sm:p-10 lg:p-12 justify-center">
               <h3 className="text-[20px] sm:text-[24px] font-semibold tracking-tight text-white leading-snug">
-                Zero Third Parties
+                No third parties.
               </h3>
               <p className="text-[20px] sm:text-[24px] text-zinc-500 font-normal tracking-tight leading-snug mt-1 sm:mt-0.5">
-                Runs in memory. Zero outbound network calls.
+                None accumulated.
               </p>
             </div>
 
             {/* Card 2: Zero Cookies (Compact: 5 cols) */}
             <div className="md:col-span-5 flex flex-col p-8 sm:p-10 lg:p-12 justify-center">
               <h3 className="text-[20px] sm:text-[24px] font-semibold tracking-tight text-white leading-snug">
-                Zero Cookies
+                Zero cookies.
               </h3>
               <p className="text-[20px] sm:text-[24px] text-zinc-500 font-normal tracking-tight leading-snug mt-1 sm:mt-0.5">
-                No tracking cookies or storage residue.
+                Not even the crumbs.
               </p>
             </div>
           </div>
 
           {/* Row 2: Compact Card (5 cols) + Wide Card (7 cols) */}
           <div className="grid grid-cols-1 md:grid-cols-12 divide-y md:divide-y-0 md:divide-x divide-white/[0.08]">
-            {/* Card 3: Zero Analytics (Compact: 5 cols) */}
+            {/* Card 3: No Analytics (Compact: 5 cols) */}
             <div className="md:col-span-5 flex flex-col p-8 sm:p-10 lg:p-12 justify-center">
               <h3 className="text-[20px] sm:text-[24px] font-semibold tracking-tight text-white leading-snug">
-                Zero Analytics
+                No analytics.
               </h3>
               <p className="text-[20px] sm:text-[24px] text-zinc-500 font-normal tracking-tight leading-snug mt-1 sm:mt-0.5">
-                No IP tracking, profiling, or telemetry.
+                Just pure work.
               </p>
             </div>
 
-            {/* Card 4: 15 Frameworks (Wide: 7 cols) */}
+            {/* Card 4: 15 JS & TS Frameworks (Wide: 7 cols) */}
             <div className="md:col-span-7 flex flex-col p-8 sm:p-10 lg:p-12 justify-center">
               <h3 className="text-[20px] sm:text-[24px] font-semibold tracking-tight text-white leading-snug">
-                15 Native Frameworks
+                15 JS & TS frameworks.
               </h3>
               <p className="text-[20px] sm:text-[24px] text-zinc-500 font-normal tracking-tight leading-snug mt-1 sm:mt-0.5">
-                Native to Next.js, Express, Fastify, Bun, and Deno.
+                And counting.
               </p>
             </div>
           </div>
