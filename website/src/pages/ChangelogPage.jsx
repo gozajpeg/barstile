@@ -23,19 +23,19 @@ const RELEASES = [
       },
       {
         title: 'Next.js Server Action Protection (verifyAction)',
-        desc: 'Cryptographic verification for FormData in Next.js Server Actions with optional singleUse anti-replay defense.'
+        desc: 'Verifies FormData in Next.js Server Actions with optional singleUse anti-replay checks.'
       },
       {
         title: 'Cloudflare Proxy IP Extraction',
-        desc: 'Added cf-connecting-ip header precedence in extractClientIp when trustProxy is enabled.'
+        desc: 'Checks cf-connecting-ip first in extractClientIp when trustProxy is enabled.'
       },
       {
         title: 'SPA Form Compatibility (requestSubmit)',
-        desc: 'Widget invokes form.requestSubmit() when available to preserve React and Next.js form submission handlers.'
+        desc: 'Widget uses form.requestSubmit() when available so React and Next.js form handlers run normally.'
       },
       {
         title: 'Node 18 & SSR Event Compatibility',
-        desc: 'Added safe CustomEvent degrading to ensure crash-free execution in Node 18 environments and non-browser SSR.'
+        desc: 'Safe CustomEvent fallback prevents crashes in Node 18 and server-side rendering.'
       },
       {
         title: 'Multi-OS CI Matrix',
@@ -56,8 +56,8 @@ const RELEASES = [
         desc: 'Defaulted widgets to invisible across HTML, React, and Web Components with lazy solving (idle on load, solving only on interaction or submit).'
       },
       {
-        title: 'Anti-Thundering Herd Coalescing',
-        desc: 'Coalesced concurrent barstileFetch calls into a single in-flight Web Worker solve, preventing multi-request CPU spikes.'
+        title: 'Combined Network Solves',
+        desc: 'Combines multiple simultaneous fetch calls into one background solve, preventing unnecessary CPU spikes.'
       },
       {
         title: 'Client/Server Clock Skew Tolerance',
@@ -79,10 +79,10 @@ const RELEASES = [
     date: 'Patch Release',
     title: 'v1.0.1 Patch Release',
     summary:
-      'Contract alignments, solution parsing resilience, and parameter polymorphism across the core engine and middleware.',
+      'More flexible solution inputs, header name aliases, and direct difficulty options.',
     highlights: [
       {
-        title: 'Polymorphic Solution Parsing',
+        title: 'Flexible Solution Parsing',
         desc: 'parseSolution accepts both { challenge, nonce } and { token, nonce } object formats alongside standard colon-separated strings.'
       },
       {
@@ -90,7 +90,7 @@ const RELEASES = [
         desc: 'barstileMiddleware resolves either solutionHeader or headerName, defaulting cleanly to x-barstile-solution.'
       },
       {
-        title: 'issueChallenge Parameter Polymorphism',
+        title: 'Direct Difficulty Option',
         desc: 'issueChallenge accepts a direct difficulty number override (e.g. barstile.issueChallenge(5)) or a full options object.'
       },
       {

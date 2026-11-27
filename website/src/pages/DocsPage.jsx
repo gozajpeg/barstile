@@ -105,7 +105,7 @@ fetch('/api/submit', { method: 'POST' });`
       {
         num: '4',
         title: 'Server grants a 15-minute clearance token',
-        desc: 'The server verifies the answer using constant-time HMAC validation and a single SHA-256 hash. It issues a 15-minute clearance cookie so the user can browse without solving again.',
+        desc: 'The server quickly checks the signature and math answer. It issues a 15-minute clearance cookie so the user can browse without solving again.',
         code: `// Subsequent requests pass with valid clearance
 // req.barstile = { verified: true, clearance: true };`
       }
@@ -397,12 +397,12 @@ export default function LoginForm() {
     },
     capabilities: [
       {
-        title: 'Adaptive bot escalation',
-        desc: 'If Barstile detects that a visitor is running headless tools like Puppeteer, it automatically raises difficulty so scrapers burn CPU, while human visitors stay on fast mode.'
+        title: 'No false-positive blocks',
+        desc: 'Instead of locking out visitors who use privacy browsers or ad blockers, Barstile only raises the puzzle difficulty slightly. Real visitors still pass in a few milliseconds, while automated scrapers run out of CPU.'
       },
       {
         title: 'Mobile safe limit',
-        desc: 'Automatic escalation is capped at difficulty 5 to prevent mobile lag.'
+        desc: 'Automatic escalation is capped at difficulty 5 so mobile phones and older laptops never lag.'
       }
     ]
   },
@@ -455,8 +455,8 @@ app.use(barstileMiddleware({
         ['secure', 'boolean', 'auto', 'Adds the Secure flag to cookies (auto-detects HTTPS by default).'],
         ['tarpit', 'object', 'undefined', 'Rate limiter that slows down and temporarily blocks abusive IP addresses.'],
         ['maxPreChallengeBodyBytes', 'number', '65536', 'Drops unverified requests over 64KB before reading into memory.'],
-        ['blockBots', "boolean | 'escalate'", 'false', "Rejects automated tools when true, or escalates difficulty when 'escalate'."],
-        ['adaptiveRisk', 'boolean', 'false', 'Automatically escalates puzzle difficulty when probe anomalies are detected.'],
+        ['blockBots', "boolean | 'escalate'", 'false', "Rejects automated tools when true, or escalates difficulty to avoid false positives when 'escalate'."],
+        ['adaptiveRisk', 'boolean', 'false', 'Raises puzzle difficulty if browser signals look suspicious instead of blocking immediately.'],
         ['redis', 'any', 'undefined', 'Redis client instance for sharing solved tokens across multiple servers.']
       ]
     },
@@ -475,42 +475,42 @@ app.use(barstileMiddleware({
     id: 'security',
     category: 'Reference and Security',
     title: 'What Barstile Stops',
-    summary: 'Clear boundaries of what Barstile defends against and what requires a cloud WAF.',
-    desc: 'Barstile is an application-layer defense system. It stops automated bot traffic and resource abuse on your Node.js servers. Review the separated guides below to see what Barstile handles and when you still need edge network protection.',
+    summary: 'An honest guide to what Barstile handles on your server, and what still needs a cloud firewall.',
+    desc: 'Barstile protects your backend from bots and automated spam. Here is an honest breakdown of what Barstile defends on your server, and what requires cloud edge protection.',
     mitigates: [
       {
-        title: 'High-speed scrapers and automated crawlers',
-        desc: 'Stops automated scraping tools from downloading your data or scraping hundreds of pages per minute. Because every challenge requires real computational proof, mass scraping quickly burns out an attacker CPU power and cloud budget.'
+        title: 'High-speed scrapers and crawlers',
+        desc: 'Stops automated tools from scraping hundreds of pages per minute. Because each request requires solving a fast math puzzle, mass scraping quickly becomes too slow and expensive for attackers.'
       },
       {
-        title: 'Credential stuffing and brute-force login bots',
-        desc: 'Protects user accounts from automated password guessing attacks. By requiring proof on POST /api/login, botnets trying thousands of leaked username and password combinations are drastically slowed down to a crawl.'
+        title: 'Password guessing and login spam',
+        desc: 'Protects login routes from automated credential attacks. Asking for a quick math solve on POST /api/login slows down automated password guessing to a crawl.'
       },
       {
         title: 'Form spam and fake signups',
-        desc: 'Blocks automated bots from submitting contact forms, fake registrations, and newsletter spam. Real human visitors submit without interruption, while automated scripts fail the background verification.'
+        desc: 'Stops automated scripts from spamming contact forms, signups, and newsletters. Real visitors submit without friction, while bots fail the background verification.'
       },
       {
-        title: 'Memory exhaustion and Slowloris uploads',
-        desc: 'Defends your Node.js server against large unverified request bodies. If an unverified client tries to upload more than 64KB before solving proof-of-work, Barstile terminates the TCP socket immediately before memory is allocated.'
+        title: 'Large unverified upload floods',
+        desc: 'Protects server memory. If an unverified client sends more than 64KB before solving the puzzle, Barstile closes the connection early before Node.js allocates memory for the body.'
       },
       {
-        title: 'Replay attacks and token theft',
-        desc: 'Prevents solved puzzles and clearance tokens from being reused. Solved nonces are recorded in memory or synchronized across Redis clusters, and Server Actions support singleUse anti-replay checks.'
+        title: 'Replay attacks and stolen tokens',
+        desc: 'Prevents solved puzzles and clearance tokens from being reused. Solved answers are tracked in memory or Redis, and Server Actions support singleUse checks.'
       }
     ],
     requiresWaf: [
       {
-        title: 'Gigantic volumetric network floods (Layer 3 and 4)',
-        desc: 'Bandwidth attacks (like multi-gigabit UDP or SYN floods) saturate your host network interface before traffic even reaches your Node.js process. You still need an edge CDN or cloud scrubbing provider (such as Cloudflare, AWS Shield, or Fastly) to protect the network pipe.'
+        title: 'Huge bandwidth network floods (DDoS)',
+        desc: 'Giant bandwidth attacks (like multi-gigabit UDP floods) fill up your network pipe before traffic reaches your server. You still need a cloud network provider (like Cloudflare or AWS) to absorb raw bandwidth floods.'
       },
       {
         title: 'Manual human click farms',
-        desc: 'Proof-of-work verifies that computational effort was spent. It does not stop real humans who are paid to sit in front of screens and manually fill out and submit forms by hand.'
+        desc: 'Proof-of-work checks that computer work was done. It does not stop real humans paid to manually fill out forms by hand.'
       },
       {
         title: 'Slow, low-frequency scrapers',
-        desc: 'A custom bot that makes only one request every two minutes behaves identically to a real human casually reading a website. For low-frequency access, rely on application authorization, API keys, or database rate limits.'
+        desc: 'A bot that makes only one request every few minutes looks just like a normal person reading a page. For slow scrapers, use user accounts, API keys, or database rate limits.'
       }
     ]
   }

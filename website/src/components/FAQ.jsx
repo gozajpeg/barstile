@@ -5,27 +5,32 @@ const FAQ_ITEMS = [
   {
     question: 'How is Barstile different from Cloudflare Turnstile or Google reCAPTCHA?',
     answer:
-      'Barstile runs entirely on your own infrastructure with zero external network calls. Unlike Cloudflare or Google, Barstile never sets third-party tracking cookies, never requires an external cloud verification ping, and is unaffected by third-party cloud service outages. The proof-of-work handshake happens entirely between the visitor and your server.'
+      'Barstile runs completely on your own server with zero external network calls. It never sets third-party tracking cookies, never pings an outside cloud service, and keeps working even if third-party cloud providers go down. The verification happens directly between the visitor and your backend.'
   },
   {
-    question: 'Does client-side Proof-of-Work drain mobile battery or freeze the page?',
+    question: 'Will Barstile accidentally block real visitors or privacy browsers?',
     answer:
-      'No. At difficulty 3 (recommended for web forms and interactive endpoints), the cryptographic challenge resolves in 5 to 20 milliseconds on modern CPUs. In browser environments, the computation runs inside an isolated Web Worker off the main UI thread, avoiding UI frame drops and minimizing CPU overhead for human visitors.'
+      'No. Traditional bot tools often show an error or puzzle failure when visitors use privacy browsers, extensions, or VPNs. Instead of hard-blocking, Barstile simply asks for a slightly harder math puzzle. A real human browser still solves it in a few milliseconds and continues smoothly without getting locked out.'
   },
   {
-    question: 'How does Barstile scale across multi-server or load-balanced clusters?',
+    question: 'Does client-side Proof-of-Work drain battery or freeze the page?',
     answer:
-      'Barstile exports a built-in Redis replay store (RedisReplayStore) alongside its standard in-memory cache. Replay tokens and sliding-window rate tracking can be shared across load-balanced Node.js or Bun instances with low-latency atomic Redis lookups.'
+      'No. At difficulty 3 (recommended for web forms), the math puzzle usually solves in 5 to 25 milliseconds on desktop devices. In browsers, the calculation runs in a background Web Worker so your page never freezes and scrolling stays smooth.'
   },
   {
-    question: 'Can attackers pre-compute challenge solutions in advance?',
+    question: 'How does Barstile scale across multiple servers?',
     answer:
-      'No. Every challenge token is cryptographically signed using an HMAC secret known only to your server. Challenge nonces include high-entropy randomness, a client environment fingerprint, and a strict time-to-live (default 60 seconds). Pre-computed or expired tokens fail validation.'
+      'Barstile includes a built-in Redis store (RedisReplayStore) alongside its local memory cache. If you run multiple servers behind a load balancer, connect Redis so all servers share solved tokens and rate limits.'
   },
   {
-    question: 'Which backend and frontend frameworks are supported?',
+    question: 'Can attackers calculate puzzle answers in advance?',
     answer:
-      'On the backend, Barstile natively supports Node.js 18+, Express, Fastify, Connect, Next.js App Router (via handleRequest and verifyAction), Cloudflare Workers, Hono, Bun, and standard node:http servers. On the frontend, it works with React, Next.js, Vite, and standard HTML5 custom elements (<barstile-widget>).'
+      'No. Every challenge is signed with a secret key known only to your server. Each challenge includes random data, client details, and a 60-second expiration time. Pre-computed or expired answers are immediately rejected.'
+  },
+  {
+    question: 'Which frameworks are supported?',
+    answer:
+      'On the backend, Barstile supports Node.js 18+, Express, Fastify, Connect, Next.js App Router (via handleRequest and verifyAction), Cloudflare Workers, Hono, Bun, and standard node:http. On the frontend, it works with React, Next.js, Vite, and standard HTML custom elements (<barstile-widget>).'
   }
 ];
 
