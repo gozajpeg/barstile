@@ -581,7 +581,7 @@ export function DocsPage({ onNavigate }) {
   const handleSelectSection = (id) => {
     setActiveId(id);
     setMobileMenuOpen(false);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo(0, 0);
   };
 
   return (
@@ -665,7 +665,7 @@ export function DocsPage({ onNavigate }) {
                       <button
                         key={sec.id}
                         onClick={() => handleSelectSection(sec.id)}
-                        className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center justify-between cursor-pointer touch-manipulation ${
+                        className={`w-full text-left px-3 py-2 rounded-lg text-sm flex items-center justify-between cursor-pointer touch-manipulation focus:outline-none ${
                           isActive
                             ? 'bg-white text-zinc-950 font-medium'
                             : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
@@ -701,14 +701,14 @@ export function DocsPage({ onNavigate }) {
                     <button
                       key={sec.id}
                       onClick={() => handleSelectSection(sec.id)}
-                      className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center justify-between cursor-pointer ${
+                      className={`w-full text-left px-3 py-2 rounded-lg text-sm border flex items-center justify-between cursor-pointer focus:outline-none select-none ${
                         isActive
-                          ? 'bg-white/[0.08] text-white font-medium border border-white/[0.12]'
-                          : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.03]'
+                          ? 'bg-white/[0.08] text-white font-medium border-white/[0.12]'
+                          : 'border-transparent text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.03] active:bg-white/[0.06] transition-colors duration-100'
                       }`}
                     >
                       <span>{sec.title}</span>
-                      {isActive && <ChevronRight className="w-3.5 h-3.5 text-zinc-400" />}
+                      {isActive && <ChevronRight className="w-3.5 h-3.5 text-zinc-400 shrink-0" />}
                     </button>
                   );
                 })}
