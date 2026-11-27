@@ -19,9 +19,11 @@
 * [Architecture & Protocol](docs/ARCHITECTURE.md): Token format, HTTP 449 handshake sequence, and replay cache lifecycle.
 * [Security Model](docs/SECURITY.md): Threat mitigation boundaries, timing attack defense, and cluster considerations.
 
-## Official Website & Demo
+## Official Website
 
-* Website: [barstile.pages.dev](https://barstile.pages.dev)
+<a href="https://barstile.pages.dev">
+  <img src="https://raw.githubusercontent.com/gozajpeg/barstile/main/assets/barstile.svg" alt="Barstile Website" width="120" />
+</a>
 
 ## What Does Barstile Export?
 
