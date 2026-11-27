@@ -25,7 +25,7 @@ const FAQ_ITEMS = [
   {
     question: 'Which backend and frontend frameworks are supported?',
     answer:
-      'On the backend, Barstile natively supports Node.js 18+, Express, Fastify, Connect, and standard node:http servers. On the frontend, it works with React, Next.js, Bun, Vite, and standard HTML5 custom elements (<barstile-widget>).'
+      'On the backend, Barstile natively supports Node.js 18+, Express, Fastify, Connect, Next.js App Router (via handleRequest and verifyAction), Cloudflare Workers, Hono, Bun, and standard node:http servers. On the frontend, it works with React, Next.js, Vite, and standard HTML5 custom elements (<barstile-widget>).'
   }
 ];
 

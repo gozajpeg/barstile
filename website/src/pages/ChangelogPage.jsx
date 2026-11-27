@@ -23,7 +23,15 @@ const RELEASES = [
       },
       {
         title: 'Next.js Server Action Protection (verifyAction)',
-        desc: 'One-line cryptographic verification for FormData in Next.js Server Actions with automated anti-replay defense.'
+        desc: 'Cryptographic verification for FormData in Next.js Server Actions with optional singleUse anti-replay defense.'
+      },
+      {
+        title: 'Cloudflare Proxy IP Extraction',
+        desc: 'Added cf-connecting-ip header precedence in extractClientIp when trustProxy is enabled.'
+      },
+      {
+        title: 'SPA Form Compatibility (requestSubmit)',
+        desc: 'Widget invokes form.requestSubmit() when available to preserve React and Next.js form submission handlers.'
       },
       {
         title: 'Node 18 & SSR Event Compatibility',

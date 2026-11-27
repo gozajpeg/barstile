@@ -104,9 +104,9 @@ fetch('/api/submit', { method: 'POST' });`
       },
       {
         num: '4',
-        title: 'Server grants a 15-minute VIP pass',
-        desc: 'The server verifies the answer in 0.05 milliseconds. It hands the browser a 15-minute clearance cookie so the user can browse without solving again.',
-        code: `// Subsequent requests pass instantly with 200 OK
+        title: 'Server grants a 15-minute clearance token',
+        desc: 'The server verifies the answer using constant-time HMAC validation and a single SHA-256 hash. It issues a 15-minute clearance cookie so the user can browse without solving again.',
+        code: `// Subsequent requests pass with valid clearance
 // req.barstile = { verified: true, clearance: true };`
       }
     ]
@@ -198,6 +198,37 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(3000);`
+      },
+      {
+        id: 'nextjs',
+        name: 'Next.js & Edge',
+        code: `// 1. Next.js App Router (middleware.ts)
+import { handleRequest, createBarstile } from 'barstile/server';
+
+const engine = createBarstile({ difficulty: 3 });
+
+export async function middleware(request) {
+  // Returns HTTP 449 challenge for unverified requests, or null to proceed
+  return handleRequest(engine, request);
+}
+
+export const config = {
+  matcher: ['/api/:path*', '/dashboard/:path*']
+};
+
+// 2. Next.js Server Actions (actions.js)
+'use server';
+import { verifyAction, createBarstile } from 'barstile/server';
+
+const serverEngine = createBarstile({ difficulty: 3 });
+
+export async function submitContact(formData) {
+  // singleUse enforces anti-replay so clearance cannot be reused
+  const check = await verifyAction(formData, { engine: serverEngine, singleUse: true });
+  if (!check.valid) {
+    throw new Error('Verification failed: ' + check.error);
+  }
+}`
       }
     ],
     capabilities: [
@@ -257,7 +288,7 @@ server.listen(3000);`
       },
       {
         title: 'Multiple forms share clearance',
-        desc: 'If you have multiple forms on the same page, solving one form unlocks the other forms instantly.'
+        desc: 'If you have multiple forms on the same page, solving one form allows other forms to reuse the clearance token without re-solving.'
       }
     ]
   },
@@ -417,9 +448,9 @@ app.use(barstileMiddleware({
         ['difficulty', 'number', '4', 'Math difficulty level (1 to 5). We recommend 3 for web forms.'],
         ['ttlMs', 'number', '60000', 'How long a puzzle stays valid in milliseconds (60 seconds).'],
         ['secret', 'string', 'auto-generated', 'HMAC secret key. Set this in multi-server setups so all pods share tokens.'],
-        ['clearance', 'boolean', 'true', 'Gives verified users a VIP pass so they do not have to solve on every click.'],
-        ['clearanceTtlMs', 'number', '900000', 'How long the VIP pass lasts in milliseconds (15 minutes).'],
-        ['clearanceQuota', 'number', '100', 'Maximum requests allowed per VIP pass before asking for a fresh solve.'],
+        ['clearance', 'boolean', 'true', 'Gives verified users a clearance token so they do not have to solve on every click.'],
+        ['clearanceTtlMs', 'number', '900000', 'How long the clearance token lasts in milliseconds (15 minutes).'],
+        ['clearanceQuota', 'number', '100', 'Maximum requests allowed per clearance token before asking for a fresh solve.'],
         ['routes', 'object', 'undefined', 'Custom difficulty and clearance rules for specific routes.'],
         ['secure', 'boolean', 'auto', 'Adds the Secure flag to cookies (auto-detects HTTPS by default).'],
         ['tarpit', 'object', 'undefined', 'Rate limiter that slows down and temporarily blocks abusive IP addresses.'],
@@ -428,7 +459,17 @@ app.use(barstileMiddleware({
         ['adaptiveRisk', 'boolean', 'false', 'Automatically escalates puzzle difficulty when probe anomalies are detected.'],
         ['redis', 'any', 'undefined', 'Redis client instance for sharing solved tokens across multiple servers.']
       ]
-    }
+    },
+    capabilities: [
+      {
+        title: 'Fetch API (handleRequest)',
+        desc: 'For Next.js App Router (middleware.ts), Cloudflare Workers, Hono, and Bun, import handleRequest(engine, request, options).'
+      },
+      {
+        title: 'Server Actions (verifyAction)',
+        desc: 'For Next.js Server Actions, import verifyAction(formData, { engine, singleUse: true }) to validate tokens with anti-replay defense.'
+      }
+    ]
   },
   {
     id: 'security',
@@ -455,7 +496,7 @@ app.use(barstileMiddleware({
       },
       {
         title: 'Replay attacks and token theft',
-        desc: 'Guarantees that each solved puzzle can only be used once. Solved nonces are recorded in memory or synchronized across Redis clusters, blocking attackers from capturing and replaying valid tokens.'
+        desc: 'Prevents solved puzzles and clearance tokens from being reused. Solved nonces are recorded in memory or synchronized across Redis clusters, and Server Actions support singleUse anti-replay checks.'
       }
     ],
     requiresWaf: [
