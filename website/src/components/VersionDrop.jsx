@@ -24,7 +24,7 @@ export function getSideHeading(versionStr) {
   return `Barstile ${major}`;
 }
 
-const CURRENT_VERSION = 'v1.1.0';
+const CURRENT_VERSION = 'v1.2.0';
 
 export function VersionDrop({ onNavigate }) {
   const displayVersion = formatVersionDisplay(CURRENT_VERSION);
