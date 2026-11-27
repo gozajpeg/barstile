@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.2.0] - 2026-11-25
 
 ### Added
-* First-class TypeScript declarations (`types/`) across all entry points (`barstile`, `server`, `client`, `react`, `web-component`).
+* TypeScript declarations (`types/`) across all entry points (`barstile`, `server`, `client`, `react`, `web-component`).
 * Web Standard Fetch API support via `handleRequest(engine, request, options)` for Next.js App Router (`middleware.ts`), Cloudflare Workers, Hono, and Bun.
 * Next.js Server Action verification via `verifyAction(formData, options)` with optional `singleUse` anti-replay defense.
 * Cloudflare proxy IP extraction via `cf-connecting-ip` header in `extractClientIp`.

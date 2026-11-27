@@ -11,7 +11,7 @@ const RELEASES = [
     date: 'Minor Release',
     title: 'v1.2.0 TypeScript Typings, Fetch API & Next.js Server Actions',
     summary:
-      'First-class TypeScript declarations across all entry points, Web Standard Request/Response middleware, and Next.js Server Action verification.',
+      'TypeScript declarations across all entry points, Web Standard Request/Response middleware, and Next.js Server Action verification.',
     highlights: [
       {
         title: 'Full TypeScript Declarations',
@@ -286,9 +286,8 @@ export function ChangelogPage({ onNavigate }) {
             <article
               key={rel.id}
               id={rel.id}
-              className={`py-14 sm:py-18 space-y-6 scroll-mt-28 ${
-                idx === 0 ? 'first:pt-0' : ''
-              } ${idx === RELEASES.length - 1 ? 'pb-12 sm:pb-16' : ''}`}
+              className={`py-14 sm:py-18 space-y-6 scroll-mt-28 ${idx === 0 ? 'first:pt-0' : ''
+                } ${idx === RELEASES.length - 1 ? 'pb-12 sm:pb-16' : ''}`}
             >
               <div>
                 <h2 className="text-[24px] font-semibold tracking-tight text-white leading-snug">
